@@ -1,0 +1,1 @@
+Alternatively, you can set the paths for ffmpeg and ffprobe yourself.

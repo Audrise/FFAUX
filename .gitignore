@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+config/app_config.json
+config/app.log
+assets/templates/*.json
+bin/*.dll
+bin/*.exe
+.venv/
+build/
+dist/
+*.spec
+*.flac
