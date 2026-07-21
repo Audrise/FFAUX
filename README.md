@@ -18,7 +18,9 @@
     <a href="https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/index.html">
       <img src="https://img.shields.io/badge/PySide 6-neon?style=for-the-badge&logo=qt&logoColor=white"/>
     </a>
+    <a href="https://docs.pytest.org/en/stable/">
     <img src="https://img.shields.io/badge/PyTest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white"/>
+    </a>
     <br>
     <img src="https://img.shields.io/badge/GPL--3.0-blue?style=for-the-badge"/>
     <img src="https://img.shields.io/badge/windows%20terminal-4D4D4D?style=for-the-badge&logo=windows11&%20terminal&logoColor=white"/>
