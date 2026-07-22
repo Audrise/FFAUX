@@ -2,7 +2,6 @@ from core.models.audio_file import AudioFile
 from core.models.job import Job, OperationType
 from ffmpeg.command_builder import build
 
-
 def test_build_convert_basic():
     audio_file = AudioFile(path="input.wav")
     job = Job(
@@ -17,7 +16,6 @@ def test_build_convert_basic():
     assert "-c:a" in args and "libmp3lame" in args
     assert args[-1] == "output.mp3"
 
-
 def test_build_requires_output_path():
     audio_file = AudioFile(path="input.wav")
     job = Job(audio_file=audio_file, operation=OperationType.CONVERT, params={})
@@ -26,7 +24,6 @@ def test_build_requires_output_path():
         assert False, "Seharusnya raise ValueError"
     except ValueError:
         pass
-
 
 def test_build_apply_metadata():
     audio_file = AudioFile(path="input.mp3")
@@ -42,7 +39,6 @@ def test_build_apply_metadata():
     assert "title=Judul Lagu" in args
     assert "artist=Artis" in args
 
-
 def test_build_apply_metadata_with_deleted_keys():
     audio_file = AudioFile(path="input.mp3")
     audio_file.metadata.title = "Judul Lagu"
@@ -55,13 +51,9 @@ def test_build_apply_metadata_with_deleted_keys():
     )
     args = build(job)
 
-    # Tag yang dihapus tetap ada di argumen, tapi valuenya kosong (cara
-    # FFmpeg menghapus tag lewat -metadata key=).
     assert "comment=" in args
     assert "isrc=" in args
-    # Tag yang tidak dihapus tetap normal.
     assert "title=Judul Lagu" in args
-
 
 def test_build_apply_metadata_deleted_key_overrides_existing_value():
     """Kalau key yang dihapus KEBETULAN masih ada nilainya di
@@ -81,4 +73,4 @@ def test_build_apply_metadata_deleted_key_overrides_existing_value():
 
     comment_indices = [i for i, a in enumerate(args) if a.startswith("comment=")]
     assert comment_indices, "harus ada argumen comment="
-    assert args[comment_indices[-1]] == "comment="  # yang terakhir harus yang kosong (dihapus)
+    assert args[comment_indices[-1]] == "comment="

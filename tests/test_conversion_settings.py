@@ -3,7 +3,6 @@ from core.models.conversion_settings import ConversionSettings, OutputFormat
 from core.models.job import Job, OperationType
 from ffmpeg.command_builder import build
 
-
 def test_flac_settings_always_include_soxr_and_preserve_streams():
     settings = ConversionSettings(output_format=OutputFormat.FLAC)
     params = settings.to_job_params()
@@ -13,7 +12,6 @@ def test_flac_settings_always_include_soxr_and_preserve_streams():
     assert "flac_compression_level" in params
     assert "bitrate_kbps" not in params
 
-
 def test_wav_settings_include_soxr_and_sample_fmt_but_no_compression_level():
     settings = ConversionSettings(output_format=OutputFormat.WAV, bit_depth=24)
     params = settings.to_job_params()
@@ -21,9 +19,8 @@ def test_wav_settings_include_soxr_and_sample_fmt_but_no_compression_level():
     assert params["preserve_streams"] is True
     assert params["sample_fmt"] == "s32"
     assert params["codec"] == "pcm_s24le"
-    assert "flac_compression_level" not in params  # WAV tidak punya opsi ini
+    assert "flac_compression_level" not in params # WAV does not have this option
     assert "bitrate_kbps" not in params
-
 
 def test_mp3_settings_use_bitrate_and_have_no_soxr():
     settings = ConversionSettings(output_format=OutputFormat.MP3, bitrate_kbps=256)
@@ -34,7 +31,6 @@ def test_mp3_settings_use_bitrate_and_have_no_soxr():
     assert "preserve_streams" not in params
     assert "sample_fmt" not in params
 
-
 def test_alac_settings_have_no_bitrate_and_no_soxr():
     settings = ConversionSettings(output_format=OutputFormat.ALAC)
     params = settings.to_job_params()
@@ -42,14 +38,12 @@ def test_alac_settings_have_no_bitrate_and_no_soxr():
     assert "use_soxr" not in params
     assert params["codec"] == "alac"
 
-
 def test_wav_codec_depends_on_bit_depth():
     settings = ConversionSettings(output_format=OutputFormat.WAV, bit_depth=24)
     assert settings.codec_name() == "pcm_s24le"
 
     settings16 = ConversionSettings(output_format=OutputFormat.WAV, bit_depth=16)
     assert settings16.codec_name() == "pcm_s16le"
-
 
 def test_command_builder_flac_matches_given_spec_order():
     audio_file = AudioFile(path="input.wav")
@@ -68,7 +62,7 @@ def test_command_builder_flac_matches_given_spec_order():
     )
     args = build(job)
 
-    # -map 0 -map_metadata 0 -c:v copy harus ada (preserve_streams)
+    # -map 0 -map_metadata 0 -c:v copy must have (preserve_streams)
     assert "-map" in args
     assert args[args.index("-map") + 1] == "0"
     assert "-map_metadata" in args
@@ -87,9 +81,8 @@ def test_command_builder_flac_matches_given_spec_order():
     assert "-c:a" in args and "flac" in args
     assert "-compression_level" in args and "8" in args
 
-    # Tidak ada -b:a sama sekali untuk FLAC
+    # No -b:a at all for FLAC
     assert "-b:a" not in args
-
 
 def test_command_builder_wav_has_no_compression_level():
     audio_file = AudioFile(path="input.wav")
@@ -105,7 +98,6 @@ def test_command_builder_wav_has_no_compression_level():
     assert "-c:a" in args and "pcm_s16le" in args
     assert "-b:a" not in args
 
-
 def test_command_builder_bitrate_kbps_formats_as_kbps_string():
     audio_file = AudioFile(path="input.wav")
     settings = ConversionSettings(output_format=OutputFormat.MP3, bitrate_kbps=256)
@@ -118,11 +110,10 @@ def test_command_builder_bitrate_kbps_formats_as_kbps_string():
     args = build(job)
     assert "-b:a" in args
     assert "256k" in args
-    # MP3 tidak boleh punya -map/-af soxr/-sample_fmt sama sekali
+    # MP3s should not have -map/-af soxr/-sample_fmt at all
     assert "-map" not in args
     assert "-af" not in args
     assert "-sample_fmt" not in args
-
 
 def test_command_builder_legacy_bitrate_string_still_works():
     audio_file = AudioFile(path="input.wav")

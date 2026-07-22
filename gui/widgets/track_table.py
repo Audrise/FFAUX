@@ -1,7 +1,7 @@
 """
-Tabel ini sekaligus menjadi drop area: file/folder audio bisa langsung
-di-drag & drop ke tabel (menggantikan widget DropArea terpisah yang
-sebelumnya ada). Mendukung multi-select untuk aksi Edit/Convert/Hapus.
+# This table also serves as a drop area: audio files/folders can be directly
+dragged and dropped onto the table (replacing the separate DropArea widget
+that existed previously). It supports multi-selection for Edit/Convert/Delete actions.
 """
 from __future__ import annotations
 
@@ -13,12 +13,12 @@ from core.models.audio_file import AudioFile, FileStatus
 from utils.file_utils import collect_audio_files, format_duration, format_file_size, format_sample_rate
 
 _STATUS_LABELS = {
-    FileStatus.PENDING: "Menunggu",
-    FileStatus.QUEUED: "Dalam antrian",
-    FileStatus.RUNNING: "Diproses",
-    FileStatus.DONE: "Selesai",
-    FileStatus.FAILED: "Gagal",
-    FileStatus.CANCELLED: "Dibatalkan",
+    FileStatus.PENDING: "Pending",
+    FileStatus.QUEUED: "Queued",
+    FileStatus.RUNNING: "Processing",
+    FileStatus.DONE: "Completed",
+    FileStatus.FAILED: "Failed",
+    FileStatus.CANCELLED: "Cancelled",
 }
 
 (
@@ -34,14 +34,14 @@ _HEADERS = [
 _ID_ROLE = Qt.ItemDataRole.UserRole
 
 class TrackTable(QTableWidget):
-    """Tabel yang menyimpan audio_file_id sebagai data pada tiap baris
-    (lewat Qt.ItemDataRole.UserRole di kolom Title), bukan lewat dict
-    posisi statis -- supaya index tidak "basi" setelah baris dihapus
-    atau diurutkan ulang. `_row_by_id` di-rebuild dari data ini setiap
-    kali struktur baris berubah.
+    """Table storing audio_file_id as data in each row
+    (via Qt.ItemDataRole.UserRole in the Title column), rather than in a dict
+    static position -- so the index doesn't become "stale" after a row is deleted
+    or reordered. `_row_by_id` is rebuilt from this data whenever
+    the row structure changes.
     """
 
-    filesDropped = Signal(list)  # list[str] path file audio hasil drop
+    filesDropped = Signal(list)  # list[str] path of dropped audio files
 
     def __init__(self, parent=None):
         super().__init__(0, len(_HEADERS), parent)
@@ -88,7 +88,7 @@ class TrackTable(QTableWidget):
             header.resizeSection(col, _DEFAULT_WIDTHS.get(col, 100))
 
     # ------------------------------------------------------------------
-    # Drag & drop langsung di tabel
+    # Drag and drop directly within the table.
     # ------------------------------------------------------------------
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         if event.mimeData().hasUrls():
@@ -106,7 +106,7 @@ class TrackTable(QTableWidget):
         event.acceptProposedAction()
 
     # ------------------------------------------------------------------
-    # Isi & baca data baris
+    # Fill & read row data
     # ------------------------------------------------------------------
     def add_file(self, audio_file: AudioFile) -> None:
         row = self.rowCount()
@@ -130,8 +130,8 @@ class TrackTable(QTableWidget):
         for col, text in values.items():
             self.setItem(row, col, QTableWidgetItem(str(text)))
 
-        # audio_file.id ditempel sebagai data pada item kolom Title, dipakai
-        # untuk membangun ulang _row_by_id kapan pun struktur baris berubah.
+        # audio_file.id is stored as data in the Title column item; it is used
+        # to rebuild _row_by_id whenever the row structure changes.
         self.item(row, _COL_TITLE).setData(_ID_ROLE, audio_file.id)
 
         progress_bar = QProgressBar()
@@ -144,7 +144,7 @@ class TrackTable(QTableWidget):
         self._row_by_id[audio_file.id] = row
 
     def remove_ids(self, audio_file_ids: list[str]) -> None:
-        """Hapus baris untuk sekumpulan audio_file_id sekaligus (multi-select)."""
+        # Delete rows for a set of audio_file_ids at once (multi-select)
         ids_to_remove = set(audio_file_ids)
         rows_to_remove = sorted(
             (row for file_id, row in self._row_by_id.items() if file_id in ids_to_remove),
@@ -155,7 +155,7 @@ class TrackTable(QTableWidget):
         self._rebuild_row_index()
 
     def remove_selected_rows(self) -> list[str]:
-        """Hapus semua baris yang sedang terpilih. Mengembalikan id yang dihapus."""
+        # Delete all currently selected rows. Returns the IDs of the deleted rows.
         selected_ids = self.selected_row_ids()
         self.remove_ids(selected_ids)
         return selected_ids
@@ -189,17 +189,17 @@ class TrackTable(QTableWidget):
         self._row_by_id.clear()
 
     # ------------------------------------------------------------------
-    # Seleksi
+    # Selection
     # ------------------------------------------------------------------
     def selected_row_id(self) -> str | None:
-        """Kembalikan id baris pertama yang terpilih (kompatibel dengan
-        pemanggil lama yang hanya butuh satu file).
+        """Return the ID of the first selected row (compatible with
+        legacy callers that only require a single file).
         """
         ids = self.selected_row_ids()
         return ids[0] if ids else None
 
     def selected_row_ids(self) -> list[str]:
-        """Kembalikan semua audio_file_id yang sedang terpilih (multi-select)."""
+        # Return all currently selected audio_file_ids (multi-select).
         rows = sorted({index.row() for index in self.selectionModel().selectedRows()})
         ids = []
         for row in rows:

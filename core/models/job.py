@@ -1,4 +1,4 @@
-"""Model data untuk satu unit pekerjaan (Job) yang dieksekusi FFmpeg."""
+# The data model for a single unit of work (Job) executed by FFmpeg
 from __future__ import annotations
 
 import uuid
@@ -8,14 +8,8 @@ from typing import Any, Optional
 
 from core.models.audio_file import AudioFile
 
-
 class OperationType(str, Enum):
-    """Jenis operasi yang didukung.
-
-    Menambah operasi baru = menambah entri di sini + satu builder function
-    di ffmpeg/command_builder.py. Tidak perlu mengubah JobManager atau
-    FFmpegWorker sama sekali (lihat prinsip Strategy pattern pada rancangan).
-    """
+    # Adding a new operation = adding an entry here + one builder function in ffmpeg/command_builder.py
 
     CONVERT = "convert"
     APPLY_METADATA = "apply_metadata"
@@ -24,7 +18,6 @@ class OperationType(str, Enum):
     NORMALIZE = "normalize"
     TRIM = "trim"
 
-
 class JobStatus(str, Enum):
     PENDING = "pending"
     RUNNING = "running"
@@ -32,11 +25,8 @@ class JobStatus(str, Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
-
 @dataclass
 class Job:
-    """Satu unit pekerjaan: satu operasi FFmpeg untuk satu AudioFile."""
-
     audio_file: AudioFile
     operation: OperationType
     params: dict[str, Any] = field(default_factory=dict)

@@ -1,7 +1,8 @@
-"""Parsing output real-time FFmpeg menjadi persentase progress.
+"""
+# Parsing real-time FFmpeg output into progress percentage.
 
-FFmpeg dijalankan dengan flag `-progress pipe:1` sehingga ia menulis baris
-key=value ke stdout, contoh:
+FFmpeg is run with the `-progress pipe:1` flag, causing it to write
+`key=value` lines to stdout, for example:
 
     frame=120
     fps=25.00
@@ -10,14 +11,13 @@ key=value ke stdout, contoh:
     ...
     progress=end
 
-Modul ini murni parsing/kalkulasi, tanpa I/O -> mudah diuji dengan data
-baris teks statis.
+This module handles only parsing and calculation—with no I/O—making it
+easy to test using static text line data.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Optional
-
 
 @dataclass
 class ProgressState:
@@ -25,14 +25,13 @@ class ProgressState:
     speed: Optional[str] = None
     is_done: bool = False
 
-
 class ProgressParser:
-    """Stateful parser: akumulasi baris `key=value` menjadi ProgressState.
+    """Stateful parser: accumulates `key=value` lines into a `ProgressState`.
 
-    FFmpeg menulis beberapa baris per "frame" progress, diakhiri baris
-    `progress=continue` atau `progress=end`. Panggil `feed_line()` untuk
-    tiap baris; parser mengembalikan ProgressState baru setiap kali sebuah
-    blok selesai (yaitu saat bertemu baris `progress=...`).
+    FFmpeg writes multiple lines per progress "frame," concluding with a
+    `progress=continue` or `progress=end` line. Call `feed_line()` for
+    each line; the parser returns a new `ProgressState` whenever a
+    block is complete (i.e., upon encountering a `progress=...` line).
     """
 
     def __init__(self, total_duration_seconds: Optional[float] = None):
@@ -71,7 +70,7 @@ class ProgressParser:
         )
 
     def percent(self, state: ProgressState) -> Optional[float]:
-        """Hitung persentase 0-100, atau None jika durasi total tidak diketahui."""
+        # Calculate the percentage (0–100), or return None if the total duration is unknown.
         if not self.total_duration_seconds or self.total_duration_seconds <= 0:
             return None
         if state.is_done:

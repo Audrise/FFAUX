@@ -1,4 +1,7 @@
-"""Helper terkait file: validasi ekstensi, pengumpulan file dari drag & drop."""
+"""
+# File-related helpers: 
+extension validation, collecting files from drag & drop.
+"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -7,16 +10,13 @@ SUPPORTED_AUDIO_EXTENSIONS = {
     ".mp3", ".wav", ".flac", ".m4a", ".aac", ".ogg", ".wma", ".opus", ".alac",
 }
 
-
 def is_supported_audio(path: str | Path) -> bool:
     return Path(path).suffix.lower() in SUPPORTED_AUDIO_EXTENSIONS
-
 
 def format_sample_rate(hz: int | None) -> str:
     if not hz or hz <= 0:
         return "-"
     return f"{hz} Hz"
-
 
 def format_duration(seconds: float | None) -> str:
     if not seconds or seconds < 0:
@@ -28,7 +28,6 @@ def format_duration(seconds: float | None) -> str:
         return f"{hours}:{minutes:02d}:{secs:02d}"
     return f"{minutes}:{secs:02d}"
 
-
 def format_file_size(num_bytes: int | None) -> str:
     if not num_bytes or num_bytes < 0:
         return "-"
@@ -39,10 +38,9 @@ def format_file_size(num_bytes: int | None) -> str:
         size /= 1024
     return f"{size:.1f} TB"
 
-
 def collect_audio_files(paths: list[str], recursive: bool = True) -> list[str]:
-    """Terima campuran path file & folder (hasil drag & drop), kembalikan
-    daftar file audio yang didukung, urut & tanpa duplikat.
+    """Accepts a mix of file and folder paths (from drag-and-drop), returns
+    a sorted, duplicate-free list of supported audio files.
     """
     found: set[str] = set()
 

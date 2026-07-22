@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 from core.metadata_service import MetadataService
 from core.models.audio_file import AudioFile
 
-
 def test_extract_cover_art_returns_none_without_ffmpeg_runner():
     service = MetadataService(ffprobe_runner=MagicMock())
     audio_file = AudioFile(path="song.mp3")
@@ -12,16 +11,14 @@ def test_extract_cover_art_returns_none_without_ffmpeg_runner():
     result = service.extract_cover_art_sync(audio_file, "/tmp/covers")
     assert result is None
 
-
 def test_extract_cover_art_returns_none_when_no_embedded_cover():
     ffmpeg_runner = MagicMock()
     service = MetadataService(ffprobe_runner=MagicMock(), ffmpeg_runner=ffmpeg_runner)
-    audio_file = AudioFile(path="song.mp3")  # cover_art_path masih None
+    audio_file = AudioFile(path="song.mp3")  # cover_art_path still None
 
     result = service.extract_cover_art_sync(audio_file, "/tmp/covers")
     assert result is None
     ffmpeg_runner.run.assert_not_called()
-
 
 def test_extract_cover_art_success(tmp_path):
     ffmpeg_runner = MagicMock()

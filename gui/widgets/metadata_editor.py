@@ -1,24 +1,25 @@
-"""Widget form untuk mengedit metadata satu atau banyak AudioFile sekaligus.
+"""
+# Widget form for editing the metadata of one or multiple AudioFiles simultaneously.
 
-Widget ini tidak menyimpan apa pun ke disk / menjalankan FFmpeg -- hanya
-membaca/menulis objek Metadata di memori. Penyimpanan sesungguhnya
-(via job APPLY_METADATA) dilakukan oleh MainWindow/dialog pemanggil.
+This widget does not save anything to disk or execute FFmpeg; it merely
+reads/writes Metadata objects in memory. The actual saving process
+(via the APPLY_METADATA job) is handled by the MainWindow or the calling dialog.
 
-Field yang ditampilkan bersifat DINAMIS mengikuti tag yang benar-benar
-dimiliki file terpilih (lihat core/metadata_field_merger.py), bukan daftar
-field tetap. Saat lebih dari satu file dipilih dan sebuah field punya nilai
-berbeda antar file, field itu ditampilkan read-only berisi gabungan semua
-nilai berbeda tsb (dipisah " - ") dan diabaikan saat disimpan tanpa diubah,
-sehingga nilai asli tiap track tetap dipertahankan.
+The displayed fields are DYNAMIC, based on the tags actually present in the
+selected files (see core/metadata_field_merger.py), rather than a fixed list
+of fields. When multiple files are selected and a field has differing values
+across them, the field is displayed as read-only, showing a combination of
+all those distinct values ​​(separated by " - "); it is ignored during the
+save operation if left unchanged, thereby preserving each track's original value.
 
-Dua kemampuan tambahan:
-- Tambah field metadata baru (tag + value bebas, diketik user) lewat
+Two additional capabilities:
+- Add a new metadata field (custom tag + value entered by the user) via
   add_empty_field().
-- Hapus field (baik field bawaan file maupun field baru yang belum
-  disimpan) lewat delete_selected_field() -- field yang terakhir dapat
-  fokus (diklik/di-tab ke situ) yang dihapus. Field bawaan yang dihapus
-  ditandai supaya saat Save, tag itu benar-benar dibuang dari file
-  (bukan cuma dikosongkan di form) -- lihat get_deleted_keys().
+- Delete a field (whether a built-in file field or a new, unsaved field) via
+  delete_selected_field()—the field currently in focus (clicked or tabbed
+  into) is the one deleted. Deleted built-in fields are marked so that,
+  upon saving, the tag is actually removed from the file (rather than
+  simply being cleared in the form)—see get_deleted_keys().
 """
 from __future__ import annotations
 
@@ -28,10 +29,10 @@ from core.metadata_field_merger import FieldView, build_field_views
 from core.models.audio_file import AudioFile
 from core.models.metadata import Metadata
 
-
 class _FocusTrackingLineEdit(QLineEdit):
-    """QLineEdit biasa, cuma nambah callback saat dapat fokus (diklik/di-tab
-    ke situ), dipakai buat tau field mana yang "dipilih" user untuk Hapus.
+    """
+    A standard QLineEdit, but with an added callback triggered upon gaining focus (when clicked or tabbed into);
+    used to identify which field the user has "selected" for deletion.
     """
 
     def __init__(self, on_focus, *args, **kwargs):
@@ -41,7 +42,6 @@ class _FocusTrackingLineEdit(QLineEdit):
     def focusInEvent(self, event):
         super().focusInEvent(event)
         self._on_focus(self)
-
 
 class MetadataEditor(QWidget):
     def __init__(self, parent=None):
@@ -58,39 +58,38 @@ class MetadataEditor(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(scroll)
 
-        # Hanya field yang NILAINYA SAMA di semua file terpilih yang masuk
-        # ke sini (bisa diedit). Field yang beda antar file ditampilkan
-        # read-only dan sengaja tidak disimpan di _edits, supaya
-        # get_metadata() otomatis mengabaikannya.
+        # Only fields with the SAME VALUE across all selected files are included
+        # here (and are editable). Fields that differ between files are displayed
+        # as read-only and intentionally not stored in _edits, so that
+        # get_metadata() automatically ignores them.
         self._edits: dict[str, QLineEdit] = {}
         self._field_views: list[FieldView] = []
 
-        # widget -> key, untuk SEMUA field bawaan file (editable maupun
-        # read-only) -- dipakai delete_selected_field() cari tau key dari
-        # widget yang lagi dipilih, tanpa perlu nebak-nebak dari label.
+        # widget -> key, for ALL built-in file fields (whether editable or
+        # read-only) -- used by delete_selected_field() to determine the key of
+        # the currently selected widget, without having to guess based on the label.
         self._edit_to_key: dict[QLineEdit, str] = {}
 
-        # Baris "Tambah Metadata" yang belum di-Save: list of (key_edit, value_edit).
-        # Key-nya diketik bebas oleh user, makanya perlu widget terpisah,
-        # bukan QLabel statis seperti field bawaan.
+        # "Add Metadata" rows that haven't been saved yet: list of (key_edit, value_edit).
+        # The key is freely typed by the user, so a separate widget is required,
+        # rather than a static QLabel like the built-in fields.
         self._new_rows: list[tuple[QLineEdit, QLineEdit]] = []
 
         self._deleted_keys: set[str] = set()
         self._selected_edit: QLineEdit | None = None
 
-    # ------------------------------------------------------------------
     def load_metadata(self, metadata: Metadata) -> None:
-        """Kompatibel dengan pemanggil lama: tampilkan field satu Metadata.
-
-        Dipakai juga secara internal oleh load_for_files() untuk kasus satu
-        file terpilih.
+        """Backward-compatible: return a single Metadata field.
+        Also used internally by load_for_files() for the case of a single
+        selected file.
         """
+
         dummy = AudioFile(path="")
         dummy.metadata = metadata
         self.load_for_files([dummy])
 
     def load_for_files(self, audio_files: list[AudioFile]) -> None:
-        """Bangun ulang form berdasarkan field dinamis dari file terpilih."""
+        # Rebuild the form based on dynamic fields from the selected file.
         self._clear_form()
         self._field_views = build_field_views(audio_files)
 
@@ -100,19 +99,21 @@ class MetadataEditor(QWidget):
             if not view.editable:
                 edit.setReadOnly(True)
                 edit.setToolTip(
-                    "Nilai berbeda antar track terpilih -- tidak bisa diedit. "
-                    "Jika disimpan tanpa diubah, tiap track tetap memakai nilainya masing-masing."
+                    "Different values ​​between selected tracks — cannot be edited. "
+                    "If saved without modification, each track retains its respective value.."
                 )
+
             else:
                 self._edits[view.key] = edit
             self._edit_to_key[edit] = view.key
             self._form.addRow(f"{view.label}:", edit)
 
     def add_empty_field(self) -> None:
-        """Tambah baris kosong baru di bawah field terakhir: satu field buat
-        nama tag (diketik bebas user), satu field buat nilainya. Baru
-        benar-benar jadi tag kalau keduanya terisi & dialog di-Save.
+        """Add a new empty row below the last field: one field for the
+        tag name (user-entered), and one for its value. It only
+        becomes a valid tag if both are filled in and the dialog is saved.
         """
+
         key_edit = _FocusTrackingLineEdit(self._on_field_focused)
         key_edit.setPlaceholderText("Tag baru")
 
@@ -124,21 +125,22 @@ class MetadataEditor(QWidget):
         key_edit.setFocus()
 
     def delete_selected_field(self) -> bool:
-        """Hapus field yang terakhir dapat fokus (diklik user). Return True
-        kalau ada yang berhasil dihapus, False kalau belum ada field yang
-        dipilih (user belum klik field mana pun).
+        """Remove the field that most recently had focus (was clicked by the user).
+        Returns True if a field was successfully removed, or False if no
+        field had been selected (i.e., the user hadn't clicked any field).
 
-        - Field baru (belum di-Save, dari add_empty_field) -> dibuang
-          begitu saja dari form, tidak perlu ditandai apa-apa.
-        - Field bawaan file (baik editable maupun read-only) -> baris
-          dibuang dari form DAN key-nya ditandai di _deleted_keys, supaya
-          saat Save tag itu benar-benar dihapus dari file (bukan cuma
-          hilang dari tampilan form).
+        - New field (unsaved, created via add_empty_field) -> simply
+          discarded from the form; no special marking required.
+        - Field originating from the file (whether editable or read-only) ->
+          the row is removed from the form AND its key is added to
+          _deleted_keys, ensuring the tag is actually deleted from the
+          file upon saving (rather than just disappearing from the form view).
         """
+
         if self._selected_edit is None:
             return False
 
-        # Kasus 1: field baru yang belum di-Save.
+        # Case 1: A new field that has not yet been saved.
         for key_edit, value_edit in list(self._new_rows):
             if self._selected_edit in (key_edit, value_edit):
                 self._form.removeRow(key_edit)
@@ -146,7 +148,7 @@ class MetadataEditor(QWidget):
                 self._selected_edit = None
                 return True
 
-        # Kasus 2: field bawaan file (editable atau read-only).
+        # Case 2: Built-in file field (editable or read-only).
         key = self._edit_to_key.get(self._selected_edit)
         if key is not None:
             self._form.removeRow(self._selected_edit)
@@ -173,12 +175,14 @@ class MetadataEditor(QWidget):
 
     # ------------------------------------------------------------------
     def get_metadata(self) -> Metadata:
-        """Kembalikan Metadata dari field yang BISA diedit (nilainya sama
-        di semua file terpilih) DITAMBAH field baru yang diisi lengkap
-        (key & value keduanya terisi) lewat Tambah Metadata. Field yang
-        berbeda antar track (read-only) sengaja TIDAK disertakan supaya
-        tidak menimpa nilai asli masing-masing track saat di-merge.
+        """Return metadata from editable fields (where values ​​are identical
+        across all selected files) PLUS new, fully populated fields
+        (with both key and value) added via 'Add Metadata'. Fields that
+        differ between tracks (read-only) are intentionally excluded
+        to avoid overwriting the original values ​​of individual tracks
+        during the merge.
         """
+
         values = {name: edit.text().strip() or None for name, edit in self._edits.items()}
         for key_edit, value_edit in self._new_rows:
             key = key_edit.text().strip()
@@ -188,16 +192,19 @@ class MetadataEditor(QWidget):
         return Metadata.from_dict({k: v for k, v in values.items() if v is not None})
 
     def get_deleted_keys(self) -> set[str]:
-        """Key tag yang eksplisit dihapus user lewat tombol Hapus Metadata
-        (field bawaan file, bukan field baru yang belum sempat di-Save).
+        """Key tag explicitly removed by the user via the 'Remove Metadata' button
+        (a field inherent to the file, not a new field that hasn't been saved yet).
         """
+
         return set(self._deleted_keys)
 
     def apply_template(self, template_metadata: Metadata) -> None:
-        """Terapkan template di atas nilai form saat ini (hanya field yang
-        BISA diedit dan terisi di template yang menimpa nilai form). Field
-        read-only (beda antar track) tidak disentuh -- belum didukung.
+        """Apply the template to the current form values ​​(only fields that
+        CAN be edited and are populated in the template will overwrite
+        the form values). Read-only fields (which differ between tracks)
+        are left untouched—this is not yet supported.
         """
+
         template_data = template_metadata.to_dict()
         for key, edit in self._edits.items():
             if key in template_data:

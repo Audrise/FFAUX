@@ -1,8 +1,9 @@
-"""Panel progress agregat: rata-rata progress seluruh job dalam batch."""
+"""
+Aggregate progress panel: average progress of all jobs in the batch.
+"""
 from __future__ import annotations
 
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QProgressBar, QWidget
-
 
 class ProgressPanel(QWidget):
     def __init__(self, parent=None):
@@ -12,7 +13,7 @@ class ProgressPanel(QWidget):
 
         self._bar = QProgressBar()
         self._bar.setRange(0, 100)
-        self._label = QLabel("0 / 0 selesai")
+        self._label = QLabel("0 / 0 Complete")
 
         layout.addWidget(self._bar, stretch=1)
         layout.addWidget(self._label)
@@ -26,7 +27,7 @@ class ProgressPanel(QWidget):
         self._done_count = 0
         self._total_count = total
         self._bar.setValue(0)
-        self._label.setText(f"0 / {total} selesai")
+        self._label.setText(f"0 / {total} complete")
 
     def update_job_progress(self, job_id: str, percent: float) -> None:
         self._progress_by_id[job_id] = percent
@@ -34,7 +35,7 @@ class ProgressPanel(QWidget):
 
     def mark_job_done(self) -> None:
         self._done_count += 1
-        self._label.setText(f"{self._done_count} / {self._total_count} selesai")
+        self._label.setText(f"{self._done_count} / {self._total_count} complete")
 
     def _recalculate(self) -> None:
         if not self._progress_by_id:

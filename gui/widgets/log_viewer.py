@@ -1,9 +1,10 @@
-"""Widget log output FFmpeg (read-only, auto-scroll)."""
+"""
+# Widget log output FFmpeg (read-only, auto-scroll).
+"""
 from __future__ import annotations
 
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QPlainTextEdit
-
 
 class LogViewer(QPlainTextEdit):
     def __init__(self, parent=None):

@@ -1,20 +1,22 @@
-"""Wrapper subprocess murni untuk menjalankan FFmpeg.
+"""
+# A pure subprocess wrapper for running FFmpeg.
 
-Modul ini SENGAJA tidak bergantung pada Qt sama sekali, hanya pada
-`subprocess` bawaan Python. Ini yang membuatnya bisa diuji dengan
-`unittest.mock.patch("subprocess.Popen")` tanpa perlu QApplication.
+This module is intentionally designed to have no dependency on Qt whatsoever,
+relying only on Python's built-in `subprocess` module. This allows it to be
+tested using `unittest.mock.patch("subprocess.Popen")` without requiring a
+`QApplication`.
 
-Komunikasi progress/log ke pemanggil dilakukan lewat callback biasa
-(bukan sinyal Qt) -> pemanggil (FFmpegWorker di layer Qt) yang nanti
-menerjemahkan callback ini menjadi emit sinyal.
+Progress and log information is communicated to the caller via standard
+callbacks (not Qt signals); the caller (specifically `FFmpegWorker` in the
+Qt layer) is responsible for translating these callbacks into signal emissions.
 """
 from __future__ import annotations
 
+import sys
 import subprocess
 import threading
 from dataclasses import dataclass, field
 from typing import Callable, Optional
-
 
 @dataclass
 class RunResult:
@@ -24,9 +26,8 @@ class RunResult:
     error_message: Optional[str] = None
     cancelled: bool = False
 
-
 class FFmpegRunner:
-    """Menjalankan satu proses FFmpeg dan streaming outputnya baris demi baris."""
+    # Run a single FFmpeg process and stream its output line by line.
 
     def __init__(self, ffmpeg_path: str = "ffmpeg"):
         self.ffmpeg_path = ffmpeg_path
@@ -38,15 +39,18 @@ class FFmpegRunner:
         cancel_event: Optional[threading.Event] = None,
         extra_args: Optional[list[str]] = None,
     ) -> RunResult:
-        """Jalankan `ffmpeg <extra_args> <args>`.
+
+        """
+        Run `ffmpeg <extra_args> <args>`.
 
         Args:
-            args: argumen CLI hasil dari command_builder.build().
-            on_line: callback dipanggil untuk tiap baris stdout/stderr.
-            cancel_event: jika di-set, proses akan di-terminate.
-            extra_args: argumen global tambahan (mis. ["-progress", "pipe:1",
-                "-nostats"]), disisipkan sebelum `args`.
+            args: CLI arguments resulting from command_builder.build().
+            on_line: Callback invoked for each line of stdout/stderr.
+            cancel_event: If set, the process will be terminated.
+            extra_args: Additional global arguments (e.g., ["-progress", "pipe:1",
+                "-nostats"]), inserted before `args`.
         """
+
         full_args = [self.ffmpeg_path]
         if extra_args:
             full_args += extra_args
@@ -67,7 +71,7 @@ class FFmpegRunner:
             return RunResult(
                 success=False,
                 return_code=None,
-                error_message=f"FFmpeg tidak ditemukan di '{self.ffmpeg_path}': {exc}",
+                error_message=f"No FFmpeg found at '{self.ffmpeg_path}': {exc}",
             )
         except OSError as exc:
             return RunResult(success=False, return_code=None, error_message=str(exc))
@@ -86,7 +90,7 @@ class FFmpegRunner:
                     return_code=process.returncode,
                     output_lines=output_lines,
                     cancelled=True,
-                    error_message="Dibatalkan oleh pengguna",
+                    error_message="Cancelled by the user.",
                 )
 
         return_code = process.wait()
@@ -98,17 +102,13 @@ class FFmpegRunner:
             error_message=None if success else _last_error_hint(output_lines),
         )
 
-
 def _last_error_hint(output_lines: list[str], max_lines: int = 5) -> str:
-    """Ambil beberapa baris terakhir sebagai ringkasan error untuk ditampilkan user."""
+    # Take the last few lines as an error summary to display to the user.
     tail = output_lines[-max_lines:] if output_lines else []
     return "\n".join(tail) or "FFmpeg gagal tanpa output."
 
-
 def _windows_no_console_flag() -> int:
-    """Cegah munculnya jendela console hitam saat FFmpeg dijalankan di Windows."""
-    import sys
-
+    # Prevent the black console window from appearing when FFmpeg runs on Windows.
     if sys.platform == "win32":
         return subprocess.CREATE_NO_WINDOW  # type: ignore[attr-defined]
     return 0

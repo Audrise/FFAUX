@@ -1,9 +1,10 @@
-"""Widget untuk menampilkan & mengganti cover art.
+"""
+# Widget for displaying & changing cover art.
 
-Widget ini hanya urusan visual + memilih file gambar. Ekstraksi cover
-dari file audio (butuh FFmpeg) didelegasikan ke core.metadata_service,
-dipanggil dari luar (dialog) lewat callback, bukan dari widget ini
-langsung -- supaya widget tetap tidak tahu apa-apa soal FFmpeg.
+This widget handles only the visual aspect and image file selection. Cover extraction
+from audio files (requiring FFmpeg) is delegated to `core.metadata_service`,
+invoked externally (via a dialog) through a callback rather than directly
+by the widget—keeping the widget agnostic regarding FFmpeg.
 """
 from __future__ import annotations
 
@@ -16,40 +17,37 @@ from PySide6.QtWidgets import QFileDialog, QHBoxLayout, QLabel, QPushButton, QVB
 from utils.file_utils import format_file_size
 
 _COVER_SIZE = 180
-_IMAGE_FILTER = "Gambar (*.jpg *.jpeg *.png *.bmp *.webp)"
-
+_IMAGE_FILTER = "Image (*.jpg *.jpeg *.png *.bmp *.webp)"
 
 class CoverArtViewer(QWidget):
-    """Emit coverPathChanged(str | None) setiap kali cover diganti/dihapus.
+    """Emit coverPathChanged(str | None) whenever the cover is changed or removed.
+    None means "remove cover art from the output file".
+    """
 
-    None berarti "hapus cover art dari file output".
-        """
-
-    coverPathChanged = Signal(object)  # str atau None
+    coverPathChanged = Signal(object)  # str/None
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._current_path: str | None = None
 
-        self._image_label = QLabel("Tidak ada cover art")
+        self._image_label = QLabel("No cover art")
         self._image_label.setFixedSize(_COVER_SIZE, _COVER_SIZE)
         self._image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._image_label.setStyleSheet("border: 1px solid palette(white); border-radius: 4px; color: palette(mid);")
 
-        # Info resolusi (mis. "1400 x 1400 px") & ukuran file (mis. "312 KB")
-        # cover art yang sedang ditampilkan, di bawah gambarnya.
+        # Resolution info (ex. "1400 x 1400 px") & ukuran file (ex. "312 KB")
         self._info_label = QLabel("")
         self._info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._info_label.setStyleSheet("color: palette(white); font-size: 11px;")
 
-        self._load_btn = QPushButton("Ganti Gambar...")
-        self._extract_btn = QPushButton("Ekstrak dari File")
-        self._remove_btn = QPushButton("Hapus")
+        self._load_btn = QPushButton("Change Cover...")
+        self._extract_btn = QPushButton("Extract from File")
+        self._remove_btn = QPushButton("Remove")
 
         self._load_btn.clicked.connect(self._on_load_clicked)
         self._remove_btn.clicked.connect(self._on_remove_clicked)
-        # _extract_btn sengaja tidak di-connect di sini; MetadataEditorDialog
-        # yang menyambungkannya karena butuh akses ke MetadataService.
+        # _extract_btn is intentionally not connected here; MetadataEditorDialog
+        # handles the connection because it requires access to MetadataService.
 
         btn_row = QHBoxLayout()
         btn_row.addWidget(self._load_btn)
@@ -78,10 +76,10 @@ class CoverArtViewer(QWidget):
 
             file_size = format_file_size(Path(path).stat().st_size)
             self._info_label.setText(
-                f"{source_pixmap.width()} x {source_pixmap.height()} px  -  {file_size}"
+                f"{source_pixmap.width()} x {source_pixmap.height()} px  -  {file_size}" # Label text
             )
         else:
-            self._image_label.setText("Tidak ada cover art")
+            self._image_label.setText("No cover art")
             self._image_label.setPixmap(QPixmap())
             self._info_label.setText("")
 
@@ -89,7 +87,7 @@ class CoverArtViewer(QWidget):
         return self._current_path
 
     def _on_load_clicked(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Pilih gambar cover", "", _IMAGE_FILTER)
+        path, _ = QFileDialog.getOpenFileName(self, "Select cover art", "", _IMAGE_FILTER)
         if path:
             self.load_image(path)
             self.coverPathChanged.emit(path)

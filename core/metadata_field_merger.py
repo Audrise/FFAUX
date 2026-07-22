@@ -1,25 +1,26 @@
-"""Utilitas murni Python untuk membangun daftar field form "Edit Metadata".
+"""
+# A pure-Python utility for constructing the list of fields for the "Edit Metadata" form.
 
-Modul ini sengaja tidak punya dependensi Qt sama sekali (murni dataclass +
-dict) supaya logikanya bisa diuji langsung dengan pytest, konsisten dengan
+This module intentionally has no Qt dependencies (using only dataclasses and
+dicts) so that its logic can be tested directly with pytest, consistent with
 core/models/metadata.py.
 
-Aturan penggabungan field untuk multi-select (lihat juga
+Field merging rules for multi-selection (see also
 gui/widgets/metadata_editor.py):
 
-- Field yang ditampilkan di form = gabungan (union) seluruh tag yang
-  benar-benar dimiliki file-file terpilih -- bukan daftar field tetap.
-  Kalau sebuah lagu punya 20 tag, ke-20 tag itu yang tampil.
-- Field "dikenal" (title, artist, album, dst) selalu tampil lebih dulu
-  sesuai urutan tetap supaya form tidak acak; field ekstra (mis. isrc,
-  publisher, encoder) menyusul sesuai urutan kemunculannya.
-- Kalau nilai field SAMA di semua file terpilih (termasuk saat cuma 1
-  file terpilih), field itu bisa diedit seperti biasa.
-- Kalau nilainya BERBEDA antar file, field ditampilkan read-only berisi
-  semua nilai unik tsb digabung dengan " - ". Field read-only ini tidak
-  didukung untuk diedit sekaligus ke semua track (belum diimplementasikan
-  secara sengaja) -- kalau disimpan tanpa diubah, field itu diabaikan per
-  track sehingga nilai asli masing-masing track tetap dipertahankan.
+- Fields displayed on the form = the union of all tags actually present
+  across the selected files—not a fixed list of fields. If a song has
+  20 tags, all 20 tags are displayed.
+- "Known" fields (title, artist, album, etc.) always appear first in a
+  fixed order to ensure a consistent form layout; extra fields (e.g.,
+  isrc, publisher, encoder) follow in the order they appear.
+- If a field's value is the SAME across all selected files (including
+  when only one file is selected), the field can be edited normally.
+- If values ​​DIFFER between files, the field is displayed as read-only,
+  showing all unique values ​​joined by " - ". Bulk editing is not
+  supported for these read-only fields (an intentional design choice);
+  if saved without modification, the field is ignored for each track,
+  preserving the original value of each individual track.
 """
 from __future__ import annotations
 
@@ -27,51 +28,44 @@ from dataclasses import dataclass
 
 from core.models.audio_file import AudioFile
 
-# Field standar yang sudah dikenal Metadata, dengan label Indonesia serta
-# urutan tampil tetap.
+# Standard metadata fields with English labels
 KNOWN_FIELD_LABELS: dict[str, str] = {
-    "title": "Judul",
-    "artist": "Artis",
+    "title": "Title",
+    "artist": "Artist",
     "album": "Album",
-    "album_artist": "Artis Album",
+    "album_artist": "Album Artist",
     "genre": "Genre",
-    "year": "Tahun",
-    "track_number": "Nomor Trek",
-    "disc_number": "Nomor Disc",
-    "composer": "Komposer",
+    "year": "Year",
+    "track_number": "Track Number",
+    "disc_number": "Disc Number",
+    "composer": "Composer",
     "url": "URL",
-    "comment": "Komentar",
+    "comment": "Comment",
 }
 _KNOWN_FIELD_ORDER = list(KNOWN_FIELD_LABELS.keys())
 
-# Nilai gabungan antar track/album yang berbeda dipisah dengan ini.
+# Combined values ​​across different tracks/albums are separated by this.
 VALUE_SEPARATOR = " - "
 
-
 def field_label(field_key: str) -> str:
-    """Label tampilan untuk sebuah field.
-
-    Field dikenal pakai label Indonesia dari KNOWN_FIELD_LABELS. Field
-    ekstra/tidak dikenal (tag tambahan seperti isrc, publisher) dipakai
-    apa adanya dengan huruf awal tiap kata dikapitalkan.
+    """Display label for a field.
+    Extra or unrecognized fields (additional tags such as ISRC, publisher) are used
+    as-is, with the first letter of each word capitalized.
     """
     if field_key in KNOWN_FIELD_LABELS:
         return KNOWN_FIELD_LABELS[field_key]
     return field_key.replace("_", " ").strip().title()
 
-
 @dataclass
 class FieldView:
-    """Satu baris field pada form Edit Metadata."""
-
     key: str
     label: str
     value: str
-    editable: bool  # False kalau nilainya beda antar track terpilih
+    editable: bool  # False if the values ​​differ across selected tracks
 
 
 def build_field_views(audio_files: list[AudioFile]) -> list[FieldView]:
-    """Bangun daftar FieldView untuk satu atau banyak AudioFile terpilih."""
+    # Build a FieldView list for one or multiple selected AudioFiles.
     if not audio_files:
         return []
 

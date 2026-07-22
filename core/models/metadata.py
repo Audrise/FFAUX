@@ -1,21 +1,19 @@
-"""Model data untuk metadata audio.
-
-Modul ini murni Python (tidak ada dependensi Qt) sehingga bisa diuji
-langsung dengan pytest tanpa perlu QApplication.
+"""
+# Data model for audio metadata.
+This module is pure Python (no Qt dependencies),
+so it can be tested directly with pytest without needing a QApplication.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
 from typing import Optional
 
-
 @dataclass
 class Metadata:
-    """Representasi tag metadata satu file audio.
-
-    Field yang bernilai None berarti "tidak diketahui / tidak diubah",
-    bukan string kosong. Ini penting agar operasi "apply template" tidak
-    menimpa tag yang sudah ada dengan nilai kosong secara tidak sengaja.
+    """
+    A field with a value of `None` means "unknown" or "unchanged,"
+    not an empty string. This is important so that the "apply template" operation
+    does not inadvertently overwrite existing tags with empty values.
     """
 
     title: Optional[str] = None
@@ -32,7 +30,7 @@ class Metadata:
     cover_art_path: Optional[str] = None
 
     extra: dict = field(default_factory=dict)
-    """Tag tambahan yang tidak punya field khusus (mis. ISRC, publisher)."""
+    # Additional tags that do not have specific fields (e.g., ISRC, publisher).
 
     def to_dict(self, include_none: bool = False) -> dict:
         data = asdict(self)

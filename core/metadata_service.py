@@ -1,12 +1,14 @@
-"""Service untuk membaca & menyiapkan operasi tulis metadata + cover art.
+"""
+# Service for reading and preparing metadata + cover art write operations.
 
-Baca metadata: langsung via FFprobeRunner (sinkron, cepat, cocok dipanggil
-saat file baru ditambahkan ke batch list).
+Read metadata: directly via FFprobeRunner (synchronous, fast, suitable for calls
+when new files are added to the batch list).
 
-Tulis metadata / cover art: service ini TIDAK menjalankan FFmpeg sendiri.
-Ia hanya menyiapkan Job (lihat core.models.job) yang nanti dieksekusi oleh
-JobManager, supaya penulisan tetap async & progress-nya bisa dilaporkan
-seperti operasi lain. Ini menjaga satu jalur eksekusi FFmpeg saja.
+Write metadata / cover art: this service does NOT execute FFmpeg itself.
+It merely prepares a Job (see core.models.job) to be executed later by the
+JobManager, ensuring the write operation remains asynchronous and its progress
+can be reported just like other operations. This maintains a single FFmpeg
+execution path.
 """
 from __future__ import annotations
 
@@ -20,17 +22,17 @@ from ffmpeg.command_builder import build as build_command
 from ffmpeg.ffmpeg_runner import FFmpegRunner
 from ffmpeg.ffprobe_runner import FFprobeRunner
 
-# Tag ffprobe (huruf kecil) yang sudah punya field khusus di Metadata dan
-# karenanya TIDAK diduplikasi ke Metadata.extra saat membaca. Semua tag lain
-# yang ditemukan pada file (mis. isrc, publisher, encoder, lyrics-eng, dst)
-# otomatis masuk ke Metadata.extra lewat Metadata.from_dict, supaya "Edit
-# Metadata" bisa menampilkan seluruh tag yang benar-benar dimiliki file,
-# bukan cuma daftar field tetap.
+"""ffprobe tags (lowercase) that already have dedicated fields in Metadata and
+are therefore NOT duplicated into Metadata.extra during reading. All other
+tags found in the file (e.g., isrc, publisher, encoder, lyrics-eng, etc.)
+are automatically added to Metadata.extra via Metadata.from_dict, so that
+"Edit Metadata" can display all tags actually present in the file,
+rather than just a list of fixed fields.
+"""
 _CONSUMED_TAG_KEYS = {
     "title", "artist", "album", "album_artist", "genre",
     "date", "year", "track", "disc", "comment", "composer",
 }
-
 
 class MetadataService:
     def __init__(self, ffprobe_runner: FFprobeRunner, ffmpeg_runner: Optional[FFmpegRunner] = None):
@@ -38,10 +40,9 @@ class MetadataService:
         self._ffmpeg = ffmpeg_runner
 
     def read_metadata(self, audio_file: AudioFile) -> AudioFile:
-        """Isi audio_file.metadata dan duration_seconds dari hasil ffprobe.
-
-        Mengembalikan objek AudioFile yang sama (dimodifikasi in-place)
-        agar mudah dipakai langsung oleh caller.
+        """Populate `audio_file.metadata` and `duration_seconds` from the `ffprobe` output.
+        Returns the same `AudioFile` object (modified in-place)
+        for convenient direct use by the caller.
         """
         result = self._ffprobe.probe(audio_file.path)
         if not result.success:
@@ -67,9 +68,8 @@ class MetadataService:
             "comment": tags.get("comment"),
             "composer": tags.get("composer"),
         }
-        # Tag lain di luar field yang sudah dikenal (mis. isrc, publisher,
-        # encoder, lyrics-eng) ikut disertakan apa adanya -- Metadata.from_dict
-        # akan menaruhnya di Metadata.extra karena bukan nama field dataclass.
+
+        # Metadata.from_dict will place it in Metadata.extra because it is not a dataclass field name.
         for key, value in tags.items():
             if key in _CONSUMED_TAG_KEYS:
                 continue
@@ -86,13 +86,14 @@ class MetadataService:
     def default_output_path(
         audio_file: AudioFile, output_dir: str, suffix: str, extension: Optional[str] = None
     ) -> str:
-        """Tentukan path output default: <output_dir atau folder asal>/<stem><suffix><ext>.
+        """
+        Determine the default output path: <output_dir or source folder>/<stem><suffix><ext>.
 
-        `extension` opsional -- kalau diisi (mis. dari
-        ConversionSettings.file_extension()), dipakai menggantikan ekstensi
-        file sumber. Ini dibutuhkan karena konversi format sekarang bisa
-        mengubah ekstensi (mis. .flac -> .mp3), bukan cuma mempertahankan
-        ekstensi asli seperti sebelumnya.
+        `extension` is optional—if provided (e.g., from
+        ConversionSettings.file_extension()), it replaces the source file
+        extension. This is necessary because format conversion can now
+        change the extension (e.g., .flac -> .mp3), rather than simply
+        preserving the original extension as before.
         """
         source = Path(audio_file.path)
         target_dir = Path(output_dir) if output_dir else source.parent
@@ -100,11 +101,12 @@ class MetadataService:
         return str(target_dir / f"{source.stem}{suffix}{final_extension}")
 
     def extract_cover_art_sync(self, audio_file: AudioFile, output_dir: str) -> Optional[str]:
-        """Ekstrak cover art tertanam ke file gambar, untuk keperluan PREVIEW.
+        """
+        Extracts embedded cover art to an image file for PREVIEW purposes.
 
-        Berjalan sinkron (blocking) -- lihat catatan trade-off di
-        gui/dialogs/metadata_editor_dialog.py. Mengembalikan None jika
-        file tidak punya cover art atau ffmpeg_runner belum diset.
+        Runs synchronously (blocking) — see trade-off notes in
+        gui/dialogs/metadata_editor_dialog.py. Returns None if
+        the file has no cover art or ffmpeg_runner is not set.
         """
         if self._ffmpeg is None:
             return None

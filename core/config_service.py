@@ -1,18 +1,16 @@
-"""Manajemen konfigurasi aplikasi (path binary, preferensi output, dll).
-
-Disimpan sebagai JSON di config/app_config.json. Skema divalidasi ringan
-lewat dataclass supaya salah ketik key tidak lolos diam-diam.
+"""
+# Application configuration management (binary path, output preferences, etc.).
+Stored as JSON in config/app_config.json. The schema undergoes lightweight validation
+via a dataclass to ensure key typos do not go undetected.
 """
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-
 CONFIG_SCHEMA_VERSION = 1
-
 
 @dataclass
 class AppConfig:
@@ -20,17 +18,13 @@ class AppConfig:
     ffmpeg_path: str = "bin/ffmpeg.exe"
     ffprobe_path: str = "bin/ffprobe.exe"
     output_directory: str = ""
-    """Kosong berarti: simpan di folder yang sama dengan file sumber."""
     output_suffix: str = "_converted"
     max_parallel_jobs: int = 2
     default_bitrate: str = "192k"
     last_template: str = ""
     theme: str = "system"
 
-
 class ConfigService:
-    """Sumber tunggal (single source of truth) untuk konfigurasi aplikasi."""
-
     def __init__(self, config_path: str | Path):
         self.config_path = Path(config_path)
         self._config: AppConfig = AppConfig()
@@ -68,5 +62,5 @@ class ConfigService:
 
     def set(self, key: str, value: Any) -> None:
         if not hasattr(self._config, key):
-            raise KeyError(f"Config key tidak dikenal: {key}")
+            raise KeyError(f"Unknown config key: {key}")
         setattr(self._config, key, value)

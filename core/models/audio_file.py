@@ -1,4 +1,4 @@
-"""Model data untuk file audio dalam batch."""
+# Data model for audio files in a batch.
 from __future__ import annotations
 
 import uuid
@@ -9,10 +9,8 @@ from typing import Optional
 
 from core.models.metadata import Metadata
 
-
 class FileStatus(str, Enum):
-    """Status satu file audio dalam antrian batch."""
-
+    # Status of a single audio file in the batch queue
     PENDING = "pending"
     QUEUED = "queued"
     RUNNING = "running"
@@ -20,11 +18,8 @@ class FileStatus(str, Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
-
 @dataclass
 class AudioFile:
-    """Representasi satu file audio dalam batch, beserta status pemrosesannya."""
-
     path: str
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     metadata: Metadata = field(default_factory=Metadata)

@@ -1,5 +1,6 @@
-"""Dialog konfigurasi aplikasi. Membaca/menulis lewat ConfigService,
-tidak pernah menyentuh file JSON secara langsung.
+"""
+# Application configuration dialog.
+Reads/writes via ConfigService. never accesses the JSON file directly.
 """
 from __future__ import annotations
 
@@ -17,11 +18,10 @@ from PySide6.QtWidgets import (
 
 from core.config_service import ConfigService
 
-
 class SettingsDialog(QDialog):
     def __init__(self, config_service: ConfigService, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Pengaturan AudriseFFTool")
+        self.setWindowTitle("AudriseFFTool Settings")
         self._config_service = config_service
         config = config_service.config
 
@@ -34,10 +34,10 @@ class SettingsDialog(QDialog):
         self._parallel_spin.setValue(config.max_parallel_jobs)
 
         form = QFormLayout()
-        form.addRow("Path FFmpeg:", self._wrap_with_browse(self._ffmpeg_edit, is_dir=False))
-        form.addRow("Path FFprobe:", self._wrap_with_browse(self._ffprobe_edit, is_dir=False))
-        form.addRow("Folder output default:", self._wrap_with_browse(self._output_dir_edit, is_dir=True))
-        form.addRow("Job paralel maksimum:", self._parallel_spin)
+        form.addRow("FFmpeg Path:", self._wrap_with_browse(self._ffmpeg_edit, is_dir=False))
+        form.addRow("FFprobe Path:", self._wrap_with_browse(self._ffprobe_edit, is_dir=False))
+        form.addRow("Default ouput folder:", self._wrap_with_browse(self._output_dir_edit, is_dir=True))
+        form.addRow("Maximum parallel jobs:", self._parallel_spin)
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -59,9 +59,9 @@ class SettingsDialog(QDialog):
 
         def on_browse():
             if is_dir:
-                path = QFileDialog.getExistingDirectory(self, "Pilih folder", edit.text())
+                path = QFileDialog.getExistingDirectory(self, "Select folder", edit.text())
             else:
-                path, _ = QFileDialog.getOpenFileName(self, "Pilih file", edit.text())
+                path, _ = QFileDialog.getOpenFileName(self, "Select file", edit.text())
             if path:
                 edit.setText(path)
 

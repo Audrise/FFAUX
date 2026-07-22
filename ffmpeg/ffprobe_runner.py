@@ -1,11 +1,12 @@
-"""Wrapper subprocess murni untuk ffprobe (baca info & metadata file audio)."""
+"""
+# A pure subprocess wrapper for ffprobe (reads audio file info & metadata).
+"""
 from __future__ import annotations
 
 import json
 import subprocess
 from dataclasses import dataclass
 from typing import Any, Optional
-
 
 @dataclass
 class ProbeResult:
@@ -67,7 +68,6 @@ class ProbeResult:
                 return True
         return False
 
-
 class FFprobeRunner:
     def __init__(self, ffprobe_path: str = "ffprobe"):
         self.ffprobe_path = ffprobe_path
@@ -99,6 +99,6 @@ class FFprobeRunner:
         try:
             raw = json.loads(completed.stdout)
         except json.JSONDecodeError as exc:
-            return ProbeResult(success=False, raw={}, error_message=f"Output ffprobe tidak valid: {exc}")
+            return ProbeResult(success=False, raw={}, error_message=f"Invalid ffprobe output: {exc}")
 
         return ProbeResult(success=True, raw=raw)

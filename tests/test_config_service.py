@@ -1,6 +1,5 @@
 from core.config_service import AppConfig, ConfigService
 
-
 def test_load_creates_default_when_missing(tmp_path):
     config_path = tmp_path / "config.json"
     service = ConfigService(config_path)
@@ -9,7 +8,6 @@ def test_load_creates_default_when_missing(tmp_path):
 
     assert isinstance(config, AppConfig)
     assert config_path.exists()
-
 
 def test_set_and_save_persists(tmp_path):
     config_path = tmp_path / "config.json"
@@ -22,7 +20,6 @@ def test_set_and_save_persists(tmp_path):
     service2 = ConfigService(config_path)
     loaded = service2.load()
     assert loaded.max_parallel_jobs == 4
-
 
 def test_set_unknown_key_raises(tmp_path):
     service = ConfigService(tmp_path / "config.json")

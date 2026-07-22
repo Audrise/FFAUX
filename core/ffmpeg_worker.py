@@ -1,12 +1,13 @@
-"""Worker yang menjalankan satu Job FFmpeg di thread terpisah.
+"""
+# A worker that executes a single FFmpeg job in a separate thread.
 
-Ini SATU-SATUNYA tempat (bersama job_manager.py) di dalam core/ yang boleh
-mengimpor PySide6. Semua logika berat (build command, jalankan subprocess,
-parsing progress) tetap didelegasikan ke modul pure-Python di ffmpeg/ dan
-core/, worker ini hanya "menjembatani" callback -> sinyal Qt.
+This is the ONLY place (along with job_manager.py) within core/ allowed
+to import PySide6. All heavy logic (building commands, running subprocesses,
+parsing progress) remains delegated to pure-Python modules in ffmpeg/ and
+core/; this worker merely bridges callbacks to Qt signals.
 
-Pola yang dipakai: QRunnable + QObject terpisah untuk sinyal, karena
-QRunnable sendiri bukan QObject dan tidak bisa emit sinyal langsung.
+Pattern used: QRunnable + a separate QObject for signals, because
+QRunnable itself is not a QObject and cannot emit signals directly.
 """
 from __future__ import annotations
 
@@ -19,25 +20,21 @@ from ffmpeg.command_builder import build as build_command
 from ffmpeg.ffmpeg_runner import FFmpegRunner
 from ffmpeg.progress_parser import ProgressParser
 
-
 class WorkerSignals(QObject):
-    """Sinyal yang dipancarkan oleh FFmpegWorker.
-
-    Semua payload menyertakan job_id supaya penerima (JobManager) tahu
-    sinyal ini milik job yang mana ketika banyak worker berjalan paralel.
     """
-
+    All payloads include a `job_id` so that the recipient (JobManager) knows
+    which job the signal belongs to when multiple workers are running in parallel.
+    """
     started = Signal(str)                    # job_id
     progress = Signal(str, float)             # job_id, percent (0-100)
     log = Signal(str, str)                    # job_id, line
     finished = Signal(str, bool, str)         # job_id, success, message
 
-
 class FFmpegWorker(QRunnable):
-    """Menjalankan satu Job di dalam QThreadPool.
-
-    cancel_event dibagi dengan JobManager sehingga job bisa dibatalkan
-    dari GUI thread meski worker berjalan di thread lain.
+    """
+    Runs a Job within a QThreadPool.
+    The cancel_event is shared with the JobManager so that the job can be cancelled
+    from the GUI thread, even though the worker is running in another thread.
     """
 
     def __init__(
@@ -89,11 +86,11 @@ class FFmpegWorker(QRunnable):
         if result.cancelled:
             job.status = JobStatus.CANCELLED
             job.audio_file.status = job.audio_file.status  # tidak diubah paksa
-            self._finish(success=False, message="Dibatalkan oleh pengguna", cancelled=True)
+            self._finish(success=False, message="Cancelled by the user", cancelled=True)
         elif result.success:
-            self._finish(success=True, message="Selesai")
+            self._finish(success=True, message="Success")
         else:
-            self._finish(success=False, message=result.error_message or "FFmpeg gagal")
+            self._finish(success=False, message=result.error_message or "FFmpeg Failed!")
 
     def _finish(self, success: bool, message: str, cancelled: bool = False) -> None:
         job = self.job

@@ -1,36 +1,36 @@
-"""Dialog untuk mengedit metadata & cover art satu ATAU BANYAK AudioFile
-sekaligus (multi-select).
+"""
+# Dialog for editing metadata & cover art for one OR MULTIPLE AudioFiles simultaneously (multi-select).
 
-Dialog ini merangkai MetadataEditor + CoverArtViewer + kontrol template,
-lalu mengembalikan hasil edit ke pemanggil lewat method get_result().
-Dialog TIDAK menjalankan FFmpeg langsung -- MainWindow yang akan
-membuat Job (APPLY_METADATA / SET_COVER) dari hasilnya dan mengirim
-ke JobManager, konsisten dengan aturan "GUI selalu lewat JobManager".
+This dialog integrates the MetadataEditor, CoverArtViewer, and template controls,
+then returns the edited results to the caller via the get_result() method.
+The dialog does NOT execute FFmpeg directly; instead, the MainWindow creates
+a Job (APPLY_METADATA / SET_COVER) based on the results and sends it to the
+JobManager, adhering to the rule that "GUI actions always go through the JobManager."
 
-Saat lebih dari satu file dipilih:
-- Field metadata bersifat dinamis mengikuti gabungan tag semua file
-  terpilih. Field yang nilainya SAMA di semua file bisa diedit dan,
-  kalau diubah, hasilnya berlaku untuk SEMUA file terpilih. Field yang
-  nilainya BERBEDA ditampilkan read-only (gabungan nilai dipisah " - ")
-  dan kalau disimpan tanpa diubah, tiap file tetap memakai nilai
-  aslinya masing-masing -- lihat core/metadata_field_merger.py. Ini
-  berlaku APAPUN penyebab bedanya (mis. album berbeda antar track) --
-  field lain yang kebetulan SAMA tetap bisa diedit seperti biasa.
-- Cover art yang ditampilkan/diedit adalah milik file PERTAMA pada
-  urutan terpilih (mis. kalau album berbeda-beda, cover yang tampil
-  adalah cover art dari file di indeks pertama).
-- Tombol "+ Tambah Metadata" nambah baris kosong baru (nama tag +
-  nilai bebas); tombol "Hapus Metadata Terpilih" hapus field yang
-  terakhir diklik/fokus -- field bawaan yang dihapus beneran dibuang
-  dari file lewat -metadata key= (lihat command_builder.py), bukan
-  cuma hilang dari tampilan.
+When multiple files are selected:
+- Metadata fields dynamically reflect the combined tags of all selected files.
+  Fields with identical values ​​across all files are editable; if modified, the
+  change applies to ALL selected files. Fields with differing values ​​are
+  displayed as read-only (values ​​concatenated with " - "); if saved without
+  modification, each file retains its original value—see core/metadata_field_merger.py.
+  This applies regardless of the reason for the discrepancy (e.g., different
+  albums across tracks); other fields that happen to be identical remain
+  editable as usual.
+- The cover art displayed/edited belongs to the FIRST file in the selection
+  sequence (e.g., if albums differ, the displayed cover is the one from the
+  file at the first index).
+- The "+ Add Metadata" button adds a new empty row (tag name + custom value);
+- the "Delete Selected Metadata" button removes the field that was last
+  clicked or focused. Deleted default fields are actually removed from the
+  file via `-metadata key=` (see command_builder.py), rather than just
+  disappearing from the display.
 
-Pengecualian kecil: ekstraksi cover art untuk PREVIEW dijalankan
-sinkron (blocking sesaat) via MetadataService, karena ini operasi
-satu file yang biasanya <1 detik dan hanya untuk pratinjau, bukan
-bagian dari batch job. Trade-off ini didokumentasikan di sini secara
-sengaja -- jika suatu saat file besar membuat ini terasa lambat,
-gampang diubah jadi async dengan memindahkannya ke JobManager biasa.
+Minor exception: cover art extraction for PREVIEW runs synchronously
+(causing a brief block) via MetadataService, as it is a single-file operation
+typically taking <1 second and intended solely for previewing, not as part
+of a batch job. This trade-off is documented here intentionally; should
+large files cause noticeable slowness, it can easily be converted to
+asynchronous execution by moving it to the standard JobManager.
 """
 from __future__ import annotations
 
@@ -57,7 +57,6 @@ from core.template_service import TemplateService
 from gui.widgets.cover_art_viewer import CoverArtViewer
 from gui.widgets.metadata_editor import MetadataEditor
 
-
 class MetadataEditorDialog(QDialog):
     def __init__(
         self,
@@ -68,27 +67,25 @@ class MetadataEditorDialog(QDialog):
     ):
         super().__init__(parent)
 
-        # Kompatibel dengan pemanggil lama yang mengirim satu AudioFile.
         self._audio_files: list[AudioFile] = (
             [audio_files] if isinstance(audio_files, AudioFile) else list(audio_files)
         )
         self._primary_file = self._audio_files[0]
 
         if len(self._audio_files) > 1:
-            self.setWindowTitle(f"Edit Metadata - {len(self._audio_files)} file terpilih")
+            self.setWindowTitle(f"Edit Metadata - {len(self._audio_files)} Selected Files")
         else:
             self.setWindowTitle(f"Edit Metadata - {self._primary_file.filename}")
         self.resize(760, 480)
 
         self._metadata_service = metadata_service
         self._template_service = template_service
-        self._cover_changed = False  # True jika user mengubah/menghapus cover
+        self._cover_changed = False  # True if user changing/deleting the cover
 
         self._metadata_editor = MetadataEditor()
         self._metadata_editor.load_for_files(self._audio_files)
 
-        # Cover art yang ditampilkan & bisa diedit selalu milik file
-        # pertama pada urutan terpilih, walaupun banyak file dipilih.
+        # The displayed and editable cover art always belongs to the first file in the selected sequence
         self._cover_viewer = CoverArtViewer()
         if self._primary_file.metadata.cover_art_path == "<embedded>":
             self._extract_and_show_cover()
@@ -115,15 +112,15 @@ class MetadataEditorDialog(QDialog):
         layout.addWidget(buttons)
 
     # ------------------------------------------------------------------
-    # Template: pilih + preview isi + terapkan/simpan
+    # Template: select + preview content + apply/save
     # ------------------------------------------------------------------
     def _build_template_row(self) -> QHBoxLayout:
         self._template_combo = QComboBox()
         self._template_combo.addItems(self._template_service.list_templates())
 
         preview_btn = QPushButton("Preview Metadata")
-        apply_btn = QPushButton("Terapkan Template")
-        save_btn = QPushButton("Simpan sebagai Template...")
+        apply_btn = QPushButton("Apply Template")
+        save_btn = QPushButton("Save Template as...")
         preview_btn.clicked.connect(self._on_preview_metadata_clicked)
         apply_btn.clicked.connect(self._on_apply_template_clicked)
         save_btn.clicked.connect(self._on_save_template_clicked)
@@ -137,25 +134,25 @@ class MetadataEditorDialog(QDialog):
         return row
 
     def _on_preview_metadata_clicked(self) -> None:
-        """Buka window baru yang menampilkan isi template yang SEDANG
-        dipilih di combo box "Template" -- menggantikan panel preview
-        lama yang tampil otomatis inline di bawah baris Template.
+        """Open a new window displaying the content of the template currently
+        selected in the "Template" combo box—replacing the old preview
+        panel that appeared automatically inline below the Template row.
         """
         name = self._template_combo.currentText()
         if not name:
-            QMessageBox.information(self, "Pilih Template", "Pilih template di dropdown terlebih dahulu.")
+            QMessageBox.information(self, "Select Template", "Select a template in the dropdown first.")
             return
         try:
             template_metadata = self._template_service.load_template(name)
         except FileNotFoundError as exc:
-            QMessageBox.warning(self, "Template tidak ditemukan", str(exc))
+            QMessageBox.warning(self, "Template not found!", str(exc))
             return
 
         data = template_metadata.to_dict()
         if data:
             preview_text = "\n".join(f"{key} - {value}" for key, value in data.items())
         else:
-            preview_text = "(template ini kosong)"
+            preview_text = "(This template is empty.)"
 
         preview_window = QDialog(self)
         preview_window.setWindowTitle(f"Preview Metadata - {name}")
@@ -183,12 +180,12 @@ class MetadataEditorDialog(QDialog):
         try:
             template_metadata = self._template_service.load_template(name)
         except FileNotFoundError as exc:
-            QMessageBox.warning(self, "Template tidak ditemukan", str(exc))
+            QMessageBox.warning(self, "Template not found", str(exc))
             return
         self._metadata_editor.apply_template(template_metadata)
 
     def _on_save_template_clicked(self) -> None:
-        name, ok = QInputDialog.getText(self, "Simpan Template", "Nama template:")
+        name, ok = QInputDialog.getText(self, "Save Template", "Template name:")
         if not ok or not name.strip():
             return
         self._template_service.save_template(name.strip(), self._metadata_editor.get_metadata())
@@ -196,11 +193,11 @@ class MetadataEditorDialog(QDialog):
         self._template_combo.addItems(self._template_service.list_templates())
 
     # ------------------------------------------------------------------
-    # Tambah / Hapus field metadata
+    # Add / Delete metadata field
     # ------------------------------------------------------------------
     def _build_field_buttons_row(self) -> QHBoxLayout:
-        add_btn = QPushButton("Tambah Metadata")
-        delete_btn = QPushButton("Hapus Metadata Terpilih")
+        add_btn = QPushButton("Add Metadata")
+        delete_btn = QPushButton("Delete Selected Metadata")
         add_btn.clicked.connect(self._metadata_editor.add_empty_field)
         delete_btn.clicked.connect(self._on_delete_field_clicked)
 
@@ -214,8 +211,8 @@ class MetadataEditorDialog(QDialog):
         if not self._metadata_editor.delete_selected_field():
             QMessageBox.information(
                 self,
-                "Pilih field",
-                "Klik dulu field metadata yang ingin dihapus (fokus ke kolomnya), lalu tekan tombol ini lagi.",
+                "Select field",
+                "First, click the metadata field you want to delete (focus on the column), then press this button again.",
             )
 
     # ------------------------------------------------------------------
@@ -223,13 +220,13 @@ class MetadataEditorDialog(QDialog):
     # ------------------------------------------------------------------
     def _on_extract_cover_clicked(self) -> None:
         if not self._extract_and_show_cover():
-            QMessageBox.information(self, "Tidak ada cover", "File ini tidak memiliki cover art tertanam.")
+            QMessageBox.information(self, "No cover", "This file doesn't have embedded cover art.")
 
     def _extract_and_show_cover(self) -> bool:
-        """Ekstrak cover art tertanam (milik file pertama terpilih) lalu
-        tampilkan di viewer. Return False kalau file memang tidak punya
-        cover (dipakai baik oleh auto-extract saat dialog dibuka maupun
-        tombol "Ekstrak dari File").
+        """Extract the embedded cover art (from the first selected file) and
+        display it in the viewer. Return False if the file does not have
+        cover art (used by both auto-extraction upon opening the dialog
+        and the "Extract from File" button).
         """
         temp_dir = Path(tempfile.gettempdir()) / "audrisefftool_covers"
         path = self._metadata_service.extract_cover_art_sync(self._primary_file, str(temp_dir))
@@ -243,20 +240,21 @@ class MetadataEditorDialog(QDialog):
 
     # ------------------------------------------------------------------
     def get_result(self) -> tuple[Metadata, str | None, bool, set[str]]:
-        """Kembalikan (metadata_baru, cover_path_baru_atau_None, cover_berubah,
+        """Returns (new_metadata, new_cover_path_or_None, cover_changed,
         deleted_keys).
 
-        `metadata_baru` hanya berisi field yang bisa diedit (nilainya sama
-        di semua file terpilih, atau field baru yang diketik user). Field
-        yang berbeda antar track (read-only) sengaja tidak disertakan --
-        pemanggil (MainWindow) men-merge metadata_baru ke metadata masing2
-        file, sehingga field yang tidak disertakan otomatis mempertahankan
-        nilai asli tiap file.
+        `new_metadata` contains only editable fields (values ​​shared
+        across all selected files, or new fields entered by the user).
+        Fields that differ between tracks (read-only) are intentionally
+        omitted—the caller (MainWindow) merges `new_metadata` into each
+        file's metadata, so omitted fields automatically retain their
+        original values.
 
-        `deleted_keys` berisi key tag yang eksplisit dihapus user lewat
-        tombol Hapus Metadata Terpilih -- pemanggil perlu mengirim ini
-        sebagai job.params["deleted_metadata_keys"] supaya tag itu BENAR
-        dihapus dari file output (bukan cuma hilang dari tampilan form).
+        `deleted_keys` contains tag keys explicitly removed by the user
+        via the "Delete Selected Metadata" button; the caller must pass
+        this as `job.params["deleted_metadata_keys"]` to ensure the tags
+        are TRULY removed from the output files (rather than just
+        disappearing from the form display).
         """
         return (
             self._metadata_editor.get_metadata(),

@@ -1,7 +1,8 @@
-"""Manajemen template metadata: simpan skema tag yang sering dipakai berulang.
+"""
+# Metadata template management: save frequently used tag schemes.
 
-Template disimpan sebagai file JSON individual di assets/templates/,
-sehingga mudah di-share antar pengguna (tinggal copy file).
+Templates are stored as individual JSON files in `assets/templates/`,
+making them easy to share between users (simply copy the file).
 """
 from __future__ import annotations
 
@@ -11,7 +12,6 @@ from pathlib import Path
 from core.models.metadata import Metadata
 
 TEMPLATE_SCHEMA_VERSION = 1
-
 
 class TemplateService:
     def __init__(self, templates_dir: str | Path):
@@ -34,7 +34,7 @@ class TemplateService:
     def load_template(self, name: str) -> Metadata:
         path = self._path_for(name)
         if not path.exists():
-            raise FileNotFoundError(f"Template '{name}' tidak ditemukan")
+            raise FileNotFoundError(f"Template '{name}' not found!")
         data = json.loads(path.read_text(encoding="utf-8"))
         return Metadata.from_dict(data.get("metadata", {}))
 
@@ -46,5 +46,5 @@ class TemplateService:
     def _path_for(self, name: str) -> Path:
         safe_name = "".join(c for c in name if c.isalnum() or c in " _-").strip()
         if not safe_name:
-            raise ValueError("Nama template tidak valid")
+            raise ValueError("Invalid Template Name!")
         return self.templates_dir / f"{safe_name}.json"

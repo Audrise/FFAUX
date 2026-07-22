@@ -1,10 +1,12 @@
-"""JobManager: satu-satunya pintu masuk GUI untuk menjalankan batch job.
+"""
+# JobManager: the sole GUI entry point for running batch jobs.
 
-GUI TIDAK PERNAH memanggil subprocess/FFmpeg secara langsung -> selalu
-lewat JobManager.enqueue(). Ini yang membuat backend sepenuhnya bisa diuji
-tanpa GUI, dan membuat GUI tidak perlu tahu apa pun soal command FFmpeg.
+The GUI NEVER calls subprocesses or FFmpeg directly—it always goes
+through JobManager.enqueue(). This allows the backend to be fully tested
+independently of the GUI and ensures the GUI does not need to know
+anything about FFmpeg commands.
 
-Sinyal yang dipancarkan (lihat juga tabel kontrak sinyal di desain):
+Signals emitted (see also the signal contract table in the design):
     jobAdded(job_id)
     jobStarted(job_id)
     jobProgress(job_id, percent)
@@ -18,10 +20,9 @@ import threading
 
 from PySide6.QtCore import QObject, QThreadPool, Signal
 
+from core.models.job import Job
 from core.ffmpeg_worker import FFmpegWorker
-from core.models.job import Job, JobStatus
 from ffmpeg.ffmpeg_runner import FFmpegRunner
-
 
 class JobManager(QObject):
     jobAdded = Signal(str)
@@ -89,5 +90,5 @@ class JobManager(QObject):
         return self._jobs.get(job_id)
 
     def wait_for_done(self, timeout_ms: int = -1) -> bool:
-        """Blokir sampai semua job selesai. Berguna untuk testing/skrip CLI."""
+        # Block until all jobs are complete; for testing/CLI scripts.
         return self._pool.waitForDone(timeout_ms)

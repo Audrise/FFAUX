@@ -1,7 +1,8 @@
 """
-MainWindow HANYA bertugas: merakit widget, meneruskan aksi user ke backend
-(core/*), dan memperbarui widget berdasarkan sinyal dari JobManager.
-Tidak ada logika FFmpeg/parsing/metadata yang ditulis di file ini.
+# MainWindow is solely responsible for:
+assembling widgets, forwarding user actions to the backend
+(core/*), and updating widgets based on signals from JobManager.
+No FFmpeg, parsing, or metadata logic is implemented in this file.
 """
 from __future__ import annotations
 
@@ -18,7 +19,7 @@ from core.models.conversion_settings import ConversionSettings
 from core.models.job import Job, OperationType
 from core.models.metadata import Metadata
 from core.template_service import TemplateService
-from ffmpeg.ffprobe_runner import FFprobeRunner
+# from ffmpeg.ffprobe_runner import FFprobeRunner
 from gui.dialogs.conversion_settings_dialog import ConversionSettingsDialog
 from gui.dialogs.metadata_editor_dialog import MetadataEditorDialog
 from gui.dialogs.settings_dialog import SettingsDialog
@@ -29,7 +30,6 @@ from utils.file_utils import collect_audio_files
 from utils.logger import get_logger
 
 logger = get_logger("gui.main_window")
-
 
 class MainWindow(QMainWindow):
     def __init__(
@@ -56,9 +56,6 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._connect_signals()
 
-    # ------------------------------------------------------------------
-    # UI construction
-    # ------------------------------------------------------------------
     def _build_menu_bar(self) -> None:
         menu_bar = self.menuBar()
 
@@ -67,19 +64,19 @@ class MainWindow(QMainWindow):
         # =========================
         file_menu = menu_bar.addMenu("&File")
 
-        self._open_action = QAction("Tambah File...", self)
+        self._open_action = QAction("Add File...", self)
         self._open_action.setShortcut(QKeySequence.StandardKey.Open)
         self._open_action.triggered.connect(self._on_add_files_clicked)
         file_menu.addAction(self._open_action)
 
-        self._delete_action = QAction("Hapus File", self)
+        self._delete_action = QAction("Delete File", self)
         self._delete_action.setShortcut("Ctrl+W")
         self._delete_action.triggered.connect(self._on_delete_selected_file)
         file_menu.addAction(self._delete_action)
 
         file_menu.addSeparator()
 
-        self._conversion_settings_action = QAction("Pengaturan Konversi...", self)
+        self._conversion_settings_action = QAction("Convert Settings...", self)
         self._conversion_settings_action.setShortcut("Ctrl+Shift+P")
         self._conversion_settings_action.triggered.connect(self._on_conversion_settings_clicked)
         file_menu.addAction(self._conversion_settings_action)
@@ -89,7 +86,7 @@ class MainWindow(QMainWindow):
         self._process_action.triggered.connect(self._on_process_clicked)
         file_menu.addAction(self._process_action)
 
-        self._cancel_action = QAction("Batalkan Semua   ", self)
+        self._cancel_action = QAction("Cancel All", self)
         self._cancel_action.setShortcut("Ctrl+Shift+C")
         self._cancel_action.setEnabled(False)
         self._cancel_action.triggered.connect(self._on_cancel_clicked)
@@ -97,38 +94,36 @@ class MainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
-        exit_action = QAction("Keluar", self)
+        exit_action = QAction("Exit", self)
         exit_action.setShortcut(QKeySequence.StandardKey.Quit)
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
-
 
         # =========================
         # Edit
         # =========================
         edit_menu = menu_bar.addMenu("&Edit")
 
-        self._edit_metadata_action = QAction("Edit Metadata Terpilih...", self)
+        self._edit_metadata_action = QAction("Edit Selected Metadata...", self)
         self._edit_metadata_action.setShortcut("Ctrl+E")
         self._edit_metadata_action.triggered.connect(
             self._on_edit_metadata_clicked
         )
         edit_menu.addAction(self._edit_metadata_action)
 
-        self._settings_action = QAction("Pengaturan...", self)
+        self._settings_action = QAction("Settings...", self)
         self._settings_action.setShortcut("Ctrl+,")
         self._settings_action.triggered.connect(
             self._on_settings_clicked
         )
         edit_menu.addAction(self._settings_action)
 
-
         # =========================
         # View
         # =========================
         view_menu = menu_bar.addMenu("&View")
 
-        self._toggle_log_action = QAction("Tampilkan Log Output", self)
+        self._toggle_log_action = QAction("Show Output Log", self)
         self._toggle_log_action.setCheckable(True)
         self._toggle_log_action.setChecked(False)
         self._toggle_log_action.triggered.connect(
@@ -136,13 +131,12 @@ class MainWindow(QMainWindow):
         )
         view_menu.addAction(self._toggle_log_action)
 
-
         # =========================
         # Help
         # =========================
         help_menu = menu_bar.addMenu("&Help")
 
-        about_action = QAction("Tentang AudriseFFTool", self)
+        about_action = QAction("About AudriseFFTool", self)
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
 
@@ -198,14 +192,14 @@ class MainWindow(QMainWindow):
         has_selection = bool(self._track_table.selected_row_ids())
 
         menu = QMenu(self)
-        menu.addAction("Tambah File...", self._on_add_files_clicked)
+        menu.addAction("Add File...", self._on_add_files_clicked)
 
-        edit_metadata_action = menu.addAction("Edit Metadata Terpilih...", self._on_edit_metadata_clicked)
-        convert_action = menu.addAction("Convert Audio Terpilih...", self._on_process_clicked)
-        delete_action = menu.addAction("Hapus", self._on_delete_selected_file)
+        edit_metadata_action = menu.addAction("Edit Selected Metadata...", self._on_edit_metadata_clicked)
+        convert_action = menu.addAction("Convert Selected Audio...", self._on_process_clicked)
+        delete_action = menu.addAction("Delete", self._on_delete_selected_file)
         menu.addAction(self._toggle_log_action)
         menu.addSeparator()
-        menu.addAction("Keluar", self.close)
+        menu.addAction("Exit", self.close)
 
         for action in (edit_metadata_action, convert_action, delete_action):
             action.setEnabled(has_selection)
@@ -217,7 +211,7 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     def _on_add_files_clicked(self) -> None:
         paths, _ = QFileDialog.getOpenFileNames(
-            self, "Pilih audio", "", "Audio Files (*.mp3 *.wav *.flac *.m4a *.aac *.ogg *.wma *.opus)"
+            self, "Select audio", "", "Audio Files (*.mp3 *.wav *.flac *.m4a *.aac *.ogg *.wma *.opus)"
         )
         if paths:
             self._on_files_added(collect_audio_files(paths))
@@ -228,31 +222,32 @@ class MainWindow(QMainWindow):
             self._metadata_service.read_metadata(audio_file)
             self._audio_files[audio_file.id] = audio_file
             self._track_table.add_file(audio_file)
-        logger.info("Menambahkan %d file ke batch", len(paths))
+        logger.info("Adding %d files to the batch", len(paths))
 
     def _on_conversion_settings_clicked(self) -> None:
-        """Pre-set nilai default ConversionSettings lewat menu File.
+        """Pre-populate the default ConversionSettings from the File menu.
 
-        Ini OPSIONAL, cuma buat prefill -- dialog yang sama tetap akan
-        SELALU muncul lagi tiap kali Convert ditekan (lihat
-        _on_process_clicked), jadi ini bukan cara untuk "skip" dialog.
+        This is OPTIONAL and only used to prefill the dialog. The same dialog
+        will ALWAYS be shown again every time the Convert button is clicked
+        (see _on_process_clicked), so this is NOT a way to skip the dialog.
         """
+
         dialog = ConversionSettingsDialog(self._conversion_settings, self)
         if dialog.exec():
             self._conversion_settings = dialog.get_settings()
             logger.info(
-                "Pengaturan konversi default diperbarui: format=%s, sample_rate=%s Hz",
+                "Updated default convert settings: format=%s, sample_rate=%s Hz",
                 self._conversion_settings.output_format.value,
                 self._conversion_settings.sample_rate_hz,
             )
 
     def _on_process_clicked(self) -> None:
         if not self._audio_files:
-            QMessageBox.information(self, "Kosong", "Tambahkan audio terlebih dahulu.")
+            QMessageBox.information(self, "Empty", "Please add audio files first.")
             return
 
-        # Jika ada baris yang dipilih, proses hanya yang terpilih (mendukung
-        # multi-select). Jika tidak ada seleksi, proses seluruh batch.
+        # If rows are selected, process only the selected ones (supports
+        # multi-select). If there is no selection, process the entire batch.
         selected_ids = self._track_table.selected_row_ids()
         target_ids = selected_ids if selected_ids else list(self._audio_files.keys())
         pending_ids = [
@@ -269,7 +264,7 @@ class MainWindow(QMainWindow):
             return
 
         settings = dialog.get_settings()
-        self._conversion_settings = settings  # jadi default prefill berikutnya
+        self._conversion_settings = settings  # The next prefill as default
 
         config = self._config_service.config
         output_dir = settings.custom_output_dir or config.output_directory
@@ -306,30 +301,25 @@ class MainWindow(QMainWindow):
         audio_file_ids = self._track_table.selected_row_ids()
 
         if not audio_file_ids:
-            QMessageBox.information(self, "Pilih File", "Pilih file yang ingin dihapus terlebih dahulu.")
+            QMessageBox.information(self, "Select Files", "Please select files to remove first.")
             return
 
         removed_ids = self._track_table.remove_selected_rows()
         for audio_file_id in removed_ids:
             audio_file = self._audio_files.pop(audio_file_id, None)
             if audio_file:
-                logger.info("Menghapus track: %s", audio_file.filename)
+                logger.info("Deleting track: %s", audio_file.filename)
 
     def _on_edit_metadata_clicked(self) -> None:
         audio_file_ids = self._track_table.selected_row_ids()
         if not audio_file_ids:
-            QMessageBox.information(self, "Pilih file", "Pilih file di daftar terlebih dahulu.")
+            QMessageBox.information(self, "Select Files", "Please select files from the list first.")
             return
 
         audio_files = [self._audio_files[fid] for fid in audio_file_ids if fid in self._audio_files]
         if not audio_files:
             return
 
-        # Satu dialog untuk SEMUA file terpilih sekaligus (bukan lagi
-        # berurutan satu per satu). Field yang nilainya sama di semua file
-        # bisa diedit dan berlaku untuk semua file terpilih; field yang
-        # beda antar track ditampilkan digabung & read-only, lihat
-        # core/metadata_field_merger.py serta docstring MetadataEditorDialog.
         self._edit_files_metadata(audio_files)
 
     def _edit_files_metadata(self, audio_files: list[AudioFile]) -> None:
@@ -342,17 +332,19 @@ class MainWindow(QMainWindow):
         config = self._config_service.config
 
         for audio_file in audio_files:
-            # merge() hanya menimpa field yang non-None di new_metadata --
-            # field yang berbeda antar track (read-only, tidak disertakan
-            # dialog.get_result()) otomatis mempertahankan nilai asli
-            # masing-masing file.
+            """merge() only overwrites fields that are non-None in new_metadata --
+            fields that differ between tracks (read-only fields not included in
+            dialog.get_result()) automatically keep their original values
+            for each file."""
+
             audio_file.metadata = audio_file.metadata.merge(new_metadata)
 
-            # Field yang dihapus user (tombol Hapus Metadata Terpilih) --
-            # dibuang juga dari objek in-memory supaya konsisten kalau
-            # dialog dibuka lagi, SELAIN dikirim eksplisit ke Job di bawah
-            # (job.params["deleted_metadata_keys"]) supaya ffmpeg beneran
-            # meng-clear tag itu di file output lewat "-metadata key=".
+            """Fields removed by the user (via the Remove Selected Metadata button) --
+            are also removed from the in-memory object to keep it consistent if
+            the dialog is opened again, IN ADDITION to being explicitly passed to
+            the Job below (job.params["deleted_metadata_keys"]) so ffmpeg actually
+            clears those tags in the output file using "-metadata key="."""
+
             for key in deleted_keys:
                 if key in Metadata.__dataclass_fields__:
                     setattr(audio_file.metadata, key, None)
@@ -371,21 +363,11 @@ class MainWindow(QMainWindow):
             self._job_manager.enqueue(metadata_job)
 
             if cover_changed and cover_path:
-                # BUGFIX: sebelumnya di sini cuma ada logger.info() tanpa
-                # benar-benar membuat job SET_COVER -- makanya cover baru
-                # yang dipilih user tidak pernah kepasang ke file output.
-                # Sekarang job SET_COVER benar-benar dibuat & di-enqueue.
-                #
-                # Catatan: job ini jalan di atas file SUMBER asli (bukan
-                # output _tagged dari job metadata di atas), karena
-                # JobManager belum mendukung chaining job (output job A
-                # jadi input job B) -- lihat extensibility point yang
-                # sudah dicatat di README. Jadi kalau field metadata DAN
-                # cover sama-sama diubah, hasilnya jadi 2 file terpisah
-                # (_tagged dan _cover), bukan 1 file gabungan. Ini
-                # trade-off yang sengaja diterima dulu demi cover art
-                # benar-benar bisa dipasang (yang sebelumnya malah sama
-                # sekali tidak jalan).
+                """BUGFIX: Previously, this only had a logger.info() call without
+                actually creating a SET_COVER job -- causing the newly selected cover
+                to never be applied to the output file.
+                Now the SET_COVER job is properly created and enqueued."""
+
                 cover_output_path = self._metadata_service.default_output_path(
                     audio_file, config.output_directory, "_cover"
                 )
@@ -397,7 +379,7 @@ class MainWindow(QMainWindow):
                 )
                 self._job_manager.enqueue(cover_job)
 
-            logger.info("Menerapkan metadata untuk %s", audio_file.filename)
+            logger.info("Applying metadata to %s", audio_file.filename)
 
         job_count = len(audio_files) + (len(audio_files) if cover_changed and cover_path else 0)
         self._progress_panel.reset(total=job_count)
@@ -409,13 +391,14 @@ class MainWindow(QMainWindow):
             self._job_manager.set_max_parallel_jobs(self._config_service.get("max_parallel_jobs"))
 
     # ------------------------------------------------------------------
-    # Reaksi terhadap sinyal JobManager
+    # Reactions to JobManager signals
     # ------------------------------------------------------------------
     def _on_job_started(self, job_id: str) -> None:
-        # job_id di sini adalah Job.id; kita perlu audio_file.id untuk update baris.
-        # Karena satu job = satu audio_file pada MVP ini, keduanya kita samakan
-        # lewat lookup balik di JobManager bila perlu. Untuk kesederhanaan,
-        # TrackTable di-update lewat audio_file.id yang disimpan di job.audio_file.
+        """job_id here is the Job.id; we need audio_file.id to update the row.
+        Since one job = one audio_file in this MVP, we map them back through
+        JobManager lookup if needed. For simplicity, TrackTable is updated
+        using the audio_file.id stored in job.audio_file."""
+
         job = self._job_manager.get_job(job_id)
         if job:
             self._track_table.update_status(job.audio_file.id, FileStatus.RUNNING)
@@ -440,7 +423,7 @@ class MainWindow(QMainWindow):
     def _on_batch_finished(self) -> None:
         self._process_action.setEnabled(True)
         self._cancel_action.setEnabled(False)
-        logger.info("Batch selesai")
+        logger.info("Batch finished")
 
     def _on_about(self) -> None:
         QMessageBox.about(

@@ -12,16 +12,13 @@ _SAMPLE_RAW = {
     ],
 }
 
-
 def test_sample_rate_hz_parsed_from_audio_stream():
     result = ProbeResult(success=True, raw=_SAMPLE_RAW)
     assert result.sample_rate_hz == 44100
 
-
 def test_sample_rate_hz_none_when_no_audio_stream():
     result = ProbeResult(success=True, raw={"format": {}, "streams": []})
     assert result.sample_rate_hz is None
-
 
 def test_bit_rate_kbps_and_codec_and_size():
     result = ProbeResult(success=True, raw=_SAMPLE_RAW)
