@@ -9,7 +9,7 @@
 
 <div align=center>
     <a href="https://www.python.org/">
-        <img src="https://img.shields.io/badge/Python-FFD43B?style=for-the-badge&logo=python&logoColor=blue"/>
+        <img src="https://img.shields.io/badge/Python 3.10+-FFD43B?style=for-the-badge&logo=python&logoColor=blue"/>
     </a>
     <a href="https://github.com/Audrise/FFTool">
       <img src="https://img.shields.io/badge/FFTool 1.o-FFD43B?style=for-the-badge&logo=python&logoColor=blue"/>
@@ -21,9 +21,10 @@
     <a href="https://docs.pytest.org/en/stable/">
     <img src="https://img.shields.io/badge/PyTest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white"/>
     </a>
-    <br>
     <img src="https://img.shields.io/badge/GPL--3.0-blue?style=for-the-badge"/>
-    <img src="https://img.shields.io/badge/windows%20terminal-4D4D4D?style=for-the-badge&logo=windows11&%20terminal&logoColor=white"/>
+    <br>
+    <img src="https://img.shields.io/badge/windows%20GUI-blue?style=for-the-badge&logo=windows11&%20terminal&logoColor=white"/>
+    <img src="https://img.shields.io/badge/windows%20terminal-blue?style=for-the-badge&logo=windows11&%20terminal&logoColor=white"/>
     <br>
     <img src="https://img.shields.io/github/stars/Audrise/FFTool?style=social"/>
     <img src="https://img.shields.io/github/forks/Audrise/FFTool?style=social"/>
