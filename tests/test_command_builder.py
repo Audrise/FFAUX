@@ -21,14 +21,14 @@ def test_build_requires_output_path():
     job = Job(audio_file=audio_file, operation=OperationType.CONVERT, params={})
     try:
         build(job)
-        assert False, "Seharusnya raise ValueError"
+        assert False, "It should raise a ValueError."
     except ValueError:
         pass
 
 def test_build_apply_metadata():
     audio_file = AudioFile(path="input.mp3")
-    audio_file.metadata.title = "Judul Lagu"
-    audio_file.metadata.artist = "Artis"
+    audio_file.metadata.title = "Song Title"
+    audio_file.metadata.artist = "Artist"
     job = Job(
         audio_file=audio_file,
         operation=OperationType.APPLY_METADATA,
@@ -36,13 +36,13 @@ def test_build_apply_metadata():
     )
     args = build(job)
     assert "-metadata" in args
-    assert "title=Judul Lagu" in args
-    assert "artist=Artis" in args
+    assert "title=Song Title" in args
+    assert "artist=Artist" in args
 
 def test_build_apply_metadata_with_deleted_keys():
     audio_file = AudioFile(path="input.mp3")
-    audio_file.metadata.title = "Judul Lagu"
-    audio_file.metadata.artist = "Artis"
+    audio_file.metadata.title = "Song Title"
+    audio_file.metadata.artist = "Artist"
     job = Job(
         audio_file=audio_file,
         operation=OperationType.APPLY_METADATA,
@@ -53,16 +53,16 @@ def test_build_apply_metadata_with_deleted_keys():
 
     assert "comment=" in args
     assert "isrc=" in args
-    assert "title=Judul Lagu" in args
+    assert "title=Song Title" in args
 
 def test_build_apply_metadata_deleted_key_overrides_existing_value():
-    """Kalau key yang dihapus KEBETULAN masih ada nilainya di
-    audio_file.metadata (mis. belum sempat di-clear di memori), baris
-    penghapusan (-metadata key=) harus tetap MENANG karena ditaruh
-    belakangan -- FFmpeg pakai definisi -metadata terakhir untuk key sama.
+    """If the deleted key happens to still have a value in
+    audio_file.metadata (e.g., it hasn't been cleared from memory yet), the
+    deletion line (-metadata key=) must still WIN because it is placed
+    later—FFmpeg uses the last -metadata definition for the same key.
     """
     audio_file = AudioFile(path="input.mp3")
-    audio_file.metadata.comment = "Komentar lama"
+    audio_file.metadata.comment = "Old Comment"
     job = Job(
         audio_file=audio_file,
         operation=OperationType.APPLY_METADATA,
@@ -72,5 +72,42 @@ def test_build_apply_metadata_deleted_key_overrides_existing_value():
     args = build(job)
 
     comment_indices = [i for i, a in enumerate(args) if a.startswith("comment=")]
-    assert comment_indices, "harus ada argumen comment="
+    assert comment_indices, "A comment argument is required="
+    assert args[comment_indices[-1]] == "comment="
+
+def test_build_set_cover_writes_current_metadata_explicitly():
+    """Regression test: SET_COVER used to rely on `-map_metadata 0`, which
+    only copies whatever tags are already on disk in the source file. If a
+    user changed metadata AND the cover in the same action, the SET_COVER
+    job's output never contained the newly edited tag values. It must now
+    write the current in-memory metadata explicitly, just like
+    APPLY_METADATA does.
+    """
+    audio_file = AudioFile(path="input.flac")
+    audio_file.metadata.title = "New Title"
+    audio_file.metadata.artist = "New Artist"
+    job = Job(
+        audio_file=audio_file,
+        operation=OperationType.SET_COVER,
+        params={"cover_path": "cover.jpg"},
+        output_path="output.flac",
+    )
+    args = build(job)
+    assert "-metadata" in args
+    assert "title=New Title" in args
+    assert "artist=New Artist" in args
+    assert "-map_metadata" not in args
+
+def test_build_set_cover_applies_deleted_keys_too():
+    audio_file = AudioFile(path="input.flac")
+    audio_file.metadata.comment = "Old comment"
+    job = Job(
+        audio_file=audio_file,
+        operation=OperationType.SET_COVER,
+        params={"cover_path": "cover.jpg", "deleted_metadata_keys": ["comment"]},
+        output_path="output.flac",
+    )
+    args = build(job)
+    comment_indices = [i for i, a in enumerate(args) if a.startswith("comment=")]
+    assert comment_indices, "A comment argument is required.="
     assert args[comment_indices[-1]] == "comment="

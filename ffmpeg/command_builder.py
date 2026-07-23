@@ -58,8 +58,17 @@ def _build_convert(job: Job) -> list[str]:
     args += [job.output_path]
     return args
 
-def _build_apply_metadata(job: Job) -> list[str]:
-    args = ["-y", "-i", job.audio_file.path, "-c", "copy"]
+def _metadata_args(job: Job) -> list[str]:
+    """Build the `-metadata key=value` args from the CURRENT in-memory
+    Metadata object (job.audio_file.metadata), plus `-metadata key=`
+    (empty) for any keys removed via "Remove Metadata".
+
+    Shared by _build_apply_metadata and _build_set_cover so that a job
+    which also changes the cover art embeds the SAME up-to-date tag
+    values, instead of relying on `-map_metadata 0` (which would only
+    copy whatever tags are already on disk in the source file).
+    """
+    args: list[str] = []
     metadata = job.audio_file.metadata.to_dict()
     for key, value in metadata.items():
         if key == "cover_art_path":
@@ -76,6 +85,12 @@ def _build_apply_metadata(job: Job) -> list[str]:
     for key in job.params.get("deleted_metadata_keys", []):
         args += ["-metadata", f"{key}="]
 
+    return args
+
+
+def _build_apply_metadata(job: Job) -> list[str]:
+    args = ["-y", "-i", job.audio_file.path, "-c", "copy"]
+    args += _metadata_args(job)
     args += [job.output_path]
     return args
 
@@ -89,8 +104,18 @@ def _build_extract_cover(job: Job) -> list[str]:
     ]
 
 def _build_set_cover(job: Job) -> list[str]:
+    """BUGFIX: previously this only used `-map_metadata 0`, which copies
+    tags from whatever is currently on disk in the source file. When a
+    user changed BOTH metadata fields AND the cover art in the same
+    "Edit Metadata" action, this job ran independently from the
+    APPLY_METADATA job (same source input, not chained), so its output
+    never contained the newly edited tag values -- only the old ones.
+    Now it writes the current in-memory metadata explicitly (same
+    helper as APPLY_METADATA), so a single SET_COVER job produces one
+    output file with both the updated tags AND the new cover.
+    """
     cover_path = job.params["cover_path"]
-    return [
+    args = [
         "-y",
         "-i", job.audio_file.path,
         "-i", cover_path,
@@ -98,10 +123,13 @@ def _build_set_cover(job: Job) -> list[str]:
         "-map", "1",
         "-c:a", "copy",
         "-c:v:0", "mjpeg",
-        "-map_metadata", "0",
+    ]
+    args += _metadata_args(job)
+    args += [
         "-disposition:v:0", "attached_pic",
         job.output_path,
     ]
+    return args
 
 def _build_normalize(job: Job) -> list[str]:
     target_lufs = job.params.get("target_lufs", -14)

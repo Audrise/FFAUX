@@ -133,7 +133,17 @@ def main() -> int:
         template_service=template_service,
     )
 
-    window.show()
+    if config.window_maximized:
+        window.showMaximized() # default: True
+
+    else:
+        if config.window_width > 0 and config.window_height > 0:
+            window.resize(config.window_width, config.window_height)
+
+        if config.window_x >= 0 and config.window_y >= 0:
+            window.move(config.window_x, config.window_y)
+
+        window.show()
 
     if splash:
         splash.close()

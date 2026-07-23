@@ -56,6 +56,21 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._connect_signals()
 
+    def closeEvent(self, event) -> None:
+        """Remember the window's size/position/maximized state so the next
+        launch can restore it (see main.py), instead of always resetting to
+        the default maximized view.
+        """
+        config = self._config_service.config
+        config.window_maximized = self.isMaximized()
+        if not self.isMaximized():
+            config.window_width = self.width()
+            config.window_height = self.height()
+            config.window_x = self.x()
+            config.window_y = self.y()
+        self._config_service.save()
+        super().closeEvent(event)
+
     def _build_menu_bar(self) -> None:
         menu_bar = self.menuBar()
 
@@ -106,16 +121,12 @@ class MainWindow(QMainWindow):
 
         self._edit_metadata_action = QAction("Edit Selected Metadata...", self)
         self._edit_metadata_action.setShortcut("Ctrl+E")
-        self._edit_metadata_action.triggered.connect(
-            self._on_edit_metadata_clicked
-        )
+        self._edit_metadata_action.triggered.connect(self._on_edit_metadata_clicked)
         edit_menu.addAction(self._edit_metadata_action)
 
         self._settings_action = QAction("Settings...", self)
         self._settings_action.setShortcut("Ctrl+,")
-        self._settings_action.triggered.connect(
-            self._on_settings_clicked
-        )
+        self._settings_action.triggered.connect(self._on_settings_clicked)
         edit_menu.addAction(self._settings_action)
 
         # =========================
@@ -127,10 +138,15 @@ class MainWindow(QMainWindow):
         self._toggle_log_action.setShortcut("Ctrl+/")
         self._toggle_log_action.setCheckable(True)
         self._toggle_log_action.setChecked(False)
-        self._toggle_log_action.triggered.connect(
-            self._on_toggle_log
-        )
+        self._toggle_log_action.triggered.connect(self._on_toggle_log)
         view_menu.addAction(self._toggle_log_action)
+
+        self._toggle_progress_panel_action = QAction("Show Progress Bar", self)
+        self._toggle_progress_panel_action.setShortcut("Ctrl+.")
+        self._toggle_progress_panel_action.setCheckable(True)
+        self._toggle_progress_panel_action.setChecked(False)
+        self._toggle_progress_panel_action.triggered.connect(self._on_toggle_progress_panel)
+        view_menu.addAction(self._toggle_progress_panel_action)
 
         # =========================
         # Help
@@ -166,6 +182,7 @@ class MainWindow(QMainWindow):
 
         self._progress_panel = ProgressPanel()
         root_layout.addWidget(self._progress_panel)
+        self._progress_panel.hide()
 
     def _connect_signals(self) -> None:
         self._track_table.cellDoubleClicked.connect(lambda *_: self._on_edit_metadata_clicked())
@@ -207,18 +224,19 @@ class MainWindow(QMainWindow):
         edit_metadata_action.setShortcut("Ctrl+E")
 
         convert_action = menu.addAction(
-            "Convert Selected Audio...", 
+            "Convert Selected Audio...",
             self._on_process_clicked
         )
         convert_action.setShortcut("Ctrl+R")
 
         delete_action = menu.addAction(
-            "Delete", 
+            "Delete",
             self._on_delete_selected_file
         )
         delete_action.setShortcut("Ctrl+W")
 
         menu.addAction(self._toggle_log_action)
+        menu.addAction(self._toggle_progress_panel_action)
         menu.addSeparator()
 
         exit_action = menu.addAction(
@@ -324,7 +342,6 @@ class MainWindow(QMainWindow):
 
     def _on_delete_selected_file(self) -> None:
         audio_file_ids = self._track_table.selected_row_ids()
-
         if not audio_file_ids:
             QMessageBox.information(self, "Select Files", "Please select files to remove first.")
             return
@@ -363,39 +380,58 @@ class MainWindow(QMainWindow):
             for key in deleted_keys:
                 if key in Metadata.__dataclass_fields__:
                     setattr(audio_file.metadata, key, None)
+
                 else:
                     audio_file.metadata.extra.pop(key, None)
 
-            if has_metadata_changes:
+            """BUGFIX: Previously, when BOTH metadata fields and the cover art were
+            changed in the same "Edit Metadata" action, this created TWO separate
+            jobs (APPLY_METADATA and SET_COVER) that both read from the SAME
+            original audio_file.path independently (not chained to each other's
+            output). Neither job's output ever ended up with both changes:
+            APPLY_METADATA's output kept the old cover, and SET_COVER's output
+            kept the old tag values (it only copied whatever was already on disk
+            via -map_metadata). This produced two incomplete, divergent files
+            (e.g. "..._tagged.flac" and "..._cover.flac") instead of one.
+
+            Fix: when the cover also changed, skip the separate APPLY_METADATA
+            job entirely and only enqueue SET_COVER -- its command now writes
+            the current in-memory metadata explicitly (see
+            ffmpeg/command_builder.py::_build_set_cover), so a single job/output
+            file ends up with both the updated tags and the new cover."""
+
+            if cover_changed and cover_path:
+                cover_output_path = self._metadata_service.default_output_path(
+                    audio_file, config.output_directory, "_changed_cover_art"
+                )
+
+                cover_job = Job(
+                    audio_file=audio_file,
+                    operation=OperationType.SET_COVER,
+                    params={
+                        "cover_path": cover_path,
+                        "deleted_metadata_keys": list(deleted_keys),
+                    },
+                    output_path=cover_output_path,
+                )
+
+                self._job_manager.enqueue(cover_job)
+                job_count += 1
+
+            elif has_metadata_changes:
                 output_path = self._metadata_service.default_output_path(
                     audio_file, config.output_directory, "_tagged"
                 )
+
                 metadata_job = Job(
                     audio_file=audio_file,
                     operation=OperationType.APPLY_METADATA,
                     params={"deleted_metadata_keys": list(deleted_keys)} if deleted_keys else {},
                     output_path=output_path,
                 )
+
                 self._job_manager.enqueue(metadata_job)
                 job_count += 1
-
-            if cover_changed and cover_path:
-                """BUGFIX: Previously, this only had a logger.info() call without
-                actually creating a SET_COVER job -- causing the newly selected cover
-                to never be applied to the output file.
-                Now the SET_COVER job is properly created and enqueued."""
-
-                cover_output_path = self._metadata_service.default_output_path(
-                    audio_file, config.output_directory, "_cover"
-                )
-                cover_job = Job(
-                    audio_file=audio_file,
-                    operation=OperationType.SET_COVER,
-                    params={"cover_path": cover_path},
-                    output_path=cover_output_path,
-                )
-                self._job_manager.enqueue(cover_job)
-                job_count = 1
 
             logger.info("Applying metadata to %s", audio_file.filename)
 
@@ -437,6 +473,9 @@ class MainWindow(QMainWindow):
 
     def _on_toggle_log(self, checked: bool) -> None:
         self._log_viewer.setVisible(checked)
+
+    def _on_toggle_progress_panel(self, checked: bool) -> None:
+        self._progress_panel.setVisible(checked)
 
     def _on_batch_finished(self) -> None:
         self._process_action.setEnabled(True)
