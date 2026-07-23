@@ -19,7 +19,7 @@ from core.models.conversion_settings import ConversionSettings
 from core.models.job import Job, OperationType
 from core.models.metadata import Metadata
 from core.template_service import TemplateService
-# from ffmpeg.ffprobe_runner import FFprobeRunner
+
 from gui.dialogs.conversion_settings_dialog import ConversionSettingsDialog
 from gui.dialogs.metadata_editor_dialog import MetadataEditorDialog
 from gui.dialogs.settings_dialog import SettingsDialog
@@ -81,7 +81,7 @@ class MainWindow(QMainWindow):
         self._conversion_settings_action.triggered.connect(self._on_conversion_settings_clicked)
         file_menu.addAction(self._conversion_settings_action)
 
-        self._process_action = QAction("Convert", self)
+        self._process_action = QAction("Convert Selected Audio...", self)
         self._process_action.setShortcut("Ctrl+R")
         self._process_action.triggered.connect(self._on_process_clicked)
         file_menu.addAction(self._process_action)
@@ -95,7 +95,7 @@ class MainWindow(QMainWindow):
         file_menu.addSeparator()
 
         exit_action = QAction("Exit", self)
-        exit_action.setShortcut(QKeySequence.StandardKey.Quit)
+        exit_action.setShortcut("Ctrl+Q")
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
@@ -124,6 +124,7 @@ class MainWindow(QMainWindow):
         view_menu = menu_bar.addMenu("&View")
 
         self._toggle_log_action = QAction("Show Output Log", self)
+        self._toggle_log_action.setShortcut("Ctrl+/")
         self._toggle_log_action.setCheckable(True)
         self._toggle_log_action.setChecked(False)
         self._toggle_log_action.triggered.connect(
@@ -137,6 +138,7 @@ class MainWindow(QMainWindow):
         help_menu = menu_bar.addMenu("&Help")
 
         about_action = QAction("About AudriseFFTool", self)
+        about_action.setShortcut("Ctrl+H")
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
 
@@ -192,14 +194,37 @@ class MainWindow(QMainWindow):
         has_selection = bool(self._track_table.selected_row_ids())
 
         menu = QMenu(self)
-        menu.addAction("Add File...", self._on_add_files_clicked)
 
-        edit_metadata_action = menu.addAction("Edit Selected Metadata...", self._on_edit_metadata_clicked)
-        convert_action = menu.addAction("Convert Selected Audio...", self._on_process_clicked)
-        delete_action = menu.addAction("Delete", self._on_delete_selected_file)
+        add_file_action = menu.addAction(
+            "Add File...",
+            self._on_add_files_clicked)
+        add_file_action.setShortcut("Ctrl+O")
+
+        edit_metadata_action = menu.addAction(
+            "Edit Metadata...",
+            self._on_edit_metadata_clicked
+        )
+        edit_metadata_action.setShortcut("Ctrl+E")
+
+        convert_action = menu.addAction(
+            "Convert Selected Audio...", 
+            self._on_process_clicked
+        )
+        convert_action.setShortcut("Ctrl+R")
+
+        delete_action = menu.addAction(
+            "Delete", 
+            self._on_delete_selected_file
+        )
+        delete_action.setShortcut("Ctrl+W")
+
         menu.addAction(self._toggle_log_action)
         menu.addSeparator()
-        menu.addAction("Exit", self.close)
+
+        exit_action = menu.addAction(
+            "Exit", self.close
+        )
+        exit_action.setShortcut("Ctrl+Q")
 
         for action in (edit_metadata_action, convert_action, delete_action):
             action.setEnabled(has_selection)
@@ -323,27 +348,17 @@ class MainWindow(QMainWindow):
         self._edit_files_metadata(audio_files)
 
     def _edit_files_metadata(self, audio_files: list[AudioFile]) -> None:
-        """Buka dialog edit metadata untuk satu atau banyak file sekaligus."""
         dialog = MetadataEditorDialog(audio_files, self._metadata_service, self._template_service, self)
         if not dialog.exec():
             return
 
-        new_metadata, cover_path, cover_changed, deleted_keys = dialog.get_result()
+        new_metadata, cover_path, cover_changed, deleted_keys, metadata_changed = dialog.get_result()
         config = self._config_service.config
+        has_metadata_changes = metadata_changed or bool(deleted_keys)
+        job_count = 0
 
         for audio_file in audio_files:
-            """merge() only overwrites fields that are non-None in new_metadata --
-            fields that differ between tracks (read-only fields not included in
-            dialog.get_result()) automatically keep their original values
-            for each file."""
-
             audio_file.metadata = audio_file.metadata.merge(new_metadata)
-
-            """Fields removed by the user (via the Remove Selected Metadata button) --
-            are also removed from the in-memory object to keep it consistent if
-            the dialog is opened again, IN ADDITION to being explicitly passed to
-            the Job below (job.params["deleted_metadata_keys"]) so ffmpeg actually
-            clears those tags in the output file using "-metadata key="."""
 
             for key in deleted_keys:
                 if key in Metadata.__dataclass_fields__:
@@ -351,16 +366,18 @@ class MainWindow(QMainWindow):
                 else:
                     audio_file.metadata.extra.pop(key, None)
 
-            output_path = self._metadata_service.default_output_path(
-                audio_file, config.output_directory, "_tagged"
-            )
-            metadata_job = Job(
-                audio_file=audio_file,
-                operation=OperationType.APPLY_METADATA,
-                params={"deleted_metadata_keys": list(deleted_keys)} if deleted_keys else {},
-                output_path=output_path,
-            )
-            self._job_manager.enqueue(metadata_job)
+            if has_metadata_changes:
+                output_path = self._metadata_service.default_output_path(
+                    audio_file, config.output_directory, "_tagged"
+                )
+                metadata_job = Job(
+                    audio_file=audio_file,
+                    operation=OperationType.APPLY_METADATA,
+                    params={"deleted_metadata_keys": list(deleted_keys)} if deleted_keys else {},
+                    output_path=output_path,
+                )
+                self._job_manager.enqueue(metadata_job)
+                job_count += 1
 
             if cover_changed and cover_path:
                 """BUGFIX: Previously, this only had a logger.info() call without
@@ -378,11 +395,12 @@ class MainWindow(QMainWindow):
                     output_path=cover_output_path,
                 )
                 self._job_manager.enqueue(cover_job)
+                job_count = 1
 
             logger.info("Applying metadata to %s", audio_file.filename)
 
-        job_count = len(audio_files) + (len(audio_files) if cover_changed and cover_path else 0)
-        self._progress_panel.reset(total=job_count)
+        if job_count:
+            self._progress_panel.reset(total=job_count)
 
     def _on_settings_clicked(self) -> None:
         dialog = SettingsDialog(self._config_service, self)
@@ -441,6 +459,9 @@ class MainWindow(QMainWindow):
             <p>
                 GitHub:
                 <a href="https://github.com/Audrise" target="_blank">Audrise</a>
+                <br>
+                Repository:
+                <a href="https://github.com/Audrise/FFTool" target="_blank">Visit</a>
             </p>
 
             <p>

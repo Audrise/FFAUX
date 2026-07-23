@@ -95,11 +95,11 @@ def _build_set_cover(job: Job) -> list[str]:
         "-i", job.audio_file.path,
         "-i", cover_path,
         "-map", "0:a",
-        "-map", "1:v",
-        "-c", "copy",
-        "-id3v2_version", "3",
-        "-metadata:s:v", "title=Album cover",
-        "-metadata:s:v", "comment=Cover (front)",
+        "-map", "1",
+        "-c:a", "copy",
+        "-c:v:0", "mjpeg",
+        "-map_metadata", "0",
+        "-disposition:v:0", "attached_pic",
         job.output_path,
     ]
 

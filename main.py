@@ -122,7 +122,7 @@ def main() -> int:
     if icon_path.exists():
         app.setWindowIcon(QIcon(str(icon_path)))
 
-    qss_path = APP_ROOT / "assets" / "styles" / "dark.qss"
+    qss_path = APP_ROOT / "assets" / "styles" / "main.qss"
     if qss_path.exists():
         app.setStyleSheet(qss_path.read_text(encoding="utf-8"))
 

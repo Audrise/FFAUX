@@ -92,6 +92,7 @@ class MetadataEditor(QWidget):
         # Rebuild the form based on dynamic fields from the selected file.
         self._clear_form()
         self._field_views = build_field_views(audio_files)
+        self._original_values: dict[str, str] = {}
 
         for view in self._field_views:
             edit = _FocusTrackingLineEdit(self._on_field_focused)
@@ -105,8 +106,20 @@ class MetadataEditor(QWidget):
 
             else:
                 self._edits[view.key] = edit
+                self._original_values[view.key] = view.value
+
             self._edit_to_key[edit] = view.key
             self._form.addRow(f"{view.label}:", edit)
+
+    def has_changes(self) -> bool:
+        for key, edit in self._edits.items():
+            if edit.text().strip() != self._original_values.get(key, ""):
+                return True
+
+        for key_edit, value_edit in self._new_rows:
+            if key_edit.text().strip() and value_edit.text().strip():
+                return True
+        return bool(self._deleted_keys)
 
     def add_empty_field(self) -> None:
         """Add a new empty row below the last field: one field for the

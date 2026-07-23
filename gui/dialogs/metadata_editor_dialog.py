@@ -239,7 +239,7 @@ class MetadataEditorDialog(QDialog):
         self._cover_changed = True
 
     # ------------------------------------------------------------------
-    def get_result(self) -> tuple[Metadata, str | None, bool, set[str]]:
+    def get_result(self) -> tuple[Metadata, str | None, bool, set[str], bool]:
         """Returns (new_metadata, new_cover_path_or_None, cover_changed,
         deleted_keys).
 
@@ -261,4 +261,5 @@ class MetadataEditorDialog(QDialog):
             self._cover_viewer.current_path(),
             self._cover_changed,
             self._metadata_editor.get_deleted_keys(),
+            self._metadata_editor.has_changes(),
         )
