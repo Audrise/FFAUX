@@ -23,15 +23,13 @@ class AppConfig:
     default_bitrate: str = "192k"
     last_template: str = ""
     theme: str = "system"
-    # Window geometry, remembered across sessions (see MainWindow.closeEvent
-    # and main.py). window_maximized=True by default so a first-time run
-    # still opens maximized like before; width/height/x/y are only used
-    # when the user last closed the app in a non-maximized (restored) state.
     window_maximized: bool = True
     window_width: int = 1200
     window_height: int = 600
     window_x: int = -1
     window_y: int = -1
+    enable_discord_presence: bool = True
+    discord_client_id: str = ""
 
 class ConfigService:
     def __init__(self, config_path: str | Path):

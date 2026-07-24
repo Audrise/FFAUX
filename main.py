@@ -15,6 +15,7 @@ from PySide6.QtGui import QIcon, QPixmap, QColor
 from PySide6.QtCore import Qt
 
 from core.config_service import ConfigService
+from core.discord_presence_service import DiscordPresenceService
 from core.job_manager import JobManager
 from core.metadata_service import MetadataService
 from core.template_service import TemplateService
@@ -118,6 +119,13 @@ def main() -> int:
         max_parallel_jobs=config.max_parallel_jobs,
     )
 
+    # Discord Rich Presence is entirely optional
+    # it's a safe no-op if pypresence isn't installed, Discord isn't running, or no
+    # discord_client_id is configured yet (see: core/discord_presence_service.py for details).
+    discord_presence = DiscordPresenceService(client_id=config.discord_client_id)
+    if config.enable_discord_presence:
+        discord_presence.start()
+
     icon_path = APP_ROOT / "assets" / "icons" / "logo.ico"
     if icon_path.exists():
         app.setWindowIcon(QIcon(str(icon_path)))
@@ -131,10 +139,14 @@ def main() -> int:
         job_manager=job_manager,
         metadata_service=metadata_service,
         template_service=template_service,
+        discord_presence_service=discord_presence,
     )
 
+    # Restore the window size/position the user last left it at (see
+    # MainWindow.closeEvent). Falls back to maximized on first run, since
+    # config.window_maximized defaults to True.
     if config.window_maximized:
-        window.showMaximized() # default: True
+        window.showMaximized()
 
     else:
         if config.window_width > 0 and config.window_height > 0:

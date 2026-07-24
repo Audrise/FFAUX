@@ -10,6 +10,7 @@ from PySide6.QtWidgets import QFileDialog, QMainWindow, QMenu, QMessageBox, QSpl
 from PySide6.QtGui import QShortcut, QKeySequence, QAction
 from PySide6.QtCore import Qt
 
+from core.discord_presence_service import DiscordPresenceService, PresenceState
 from core.config_service import ConfigService
 from core.filename_parser import FilenameParser
 from core.job_manager import JobManager
@@ -38,6 +39,7 @@ class MainWindow(QMainWindow):
         job_manager: JobManager,
         metadata_service: MetadataService,
         template_service: TemplateService,
+        discord_presence_service: DiscordPresenceService | None = None,
         parent=None,
     ):
         super().__init__(parent)
@@ -49,12 +51,14 @@ class MainWindow(QMainWindow):
         self._metadata_service = metadata_service
         self._template_service = template_service
         self._filename_parser = FilenameParser()
+        self._discord_presence = discord_presence_service or DiscordPresenceService(client_id="")
 
         self._audio_files: dict[str, AudioFile] = {}
         self._conversion_settings = ConversionSettings()
 
         self._build_ui()
         self._connect_signals()
+        self._discord_presence.update(PresenceState(state="Managing audio files", large_image="app_logo"))
 
     def closeEvent(self, event) -> None:
         """Remember the window's size/position/maximized state so the next
@@ -63,12 +67,15 @@ class MainWindow(QMainWindow):
         """
         config = self._config_service.config
         config.window_maximized = self.isMaximized()
+
         if not self.isMaximized():
             config.window_width = self.width()
             config.window_height = self.height()
             config.window_x = self.x()
             config.window_y = self.y()
+
         self._config_service.save()
+        self._discord_presence.stop()
         super().closeEvent(event)
 
     def _build_menu_bar(self) -> None:
@@ -335,6 +342,13 @@ class MainWindow(QMainWindow):
         self._progress_panel.reset(total=len(jobs))
         self._process_action.setEnabled(False)
         self._cancel_action.setEnabled(True)
+        self._discord_presence.update(
+            PresenceState(
+                details="Converting audio...",
+                state=f"{len(jobs)} file(s)",
+                large_image="app_logo",
+            )
+        )
         self._job_manager.enqueue_many(jobs)
 
     def _on_cancel_clicked(self) -> None:
@@ -480,6 +494,9 @@ class MainWindow(QMainWindow):
     def _on_batch_finished(self) -> None:
         self._process_action.setEnabled(True)
         self._cancel_action.setEnabled(False)
+        self._discord_presence.update(
+            PresenceState(state="Managing audio files", large_image="app_logo")
+        )
         logger.info("Batch finished")
 
     def _on_about(self) -> None:
