@@ -75,9 +75,8 @@ class CoverArtViewer(QWidget):
             self._image_label.setPixmap(scaled)
 
             file_size = format_file_size(Path(path).stat().st_size)
-            self._info_label.setText(
-                f"{source_pixmap.width()} x {source_pixmap.height()} px  -  {file_size}" # Label text
-            )
+            self._info_label.setText(f"{source_pixmap.width()} x {source_pixmap.height()} px  -  {file_size}")
+
         else:
             self._image_label.setText("No cover art")
             self._image_label.setPixmap(QPixmap())

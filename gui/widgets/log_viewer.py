@@ -10,7 +10,7 @@ class LogViewer(QPlainTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setReadOnly(True)
-        self.setMaximumBlockCount(5000)  # cegah memory membengkak pada batch besar
+        self.setMaximumBlockCount(5000)  # prevent memory bloat with large batches
         self.setStyleSheet("font-family: Consolas, monospace; font-size: 11px;")
 
     def append_line(self, job_id: str, line: str) -> None:

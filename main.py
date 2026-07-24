@@ -121,7 +121,6 @@ def main() -> int:
 
     # Discord Rich Presence is entirely optional
     # it's a safe no-op if pypresence isn't installed, Discord isn't running, or no
-    # discord_client_id is configured yet (see: core/discord_presence_service.py for details).
     discord_presence = DiscordPresenceService(client_id=config.discord_client_id)
     if config.enable_discord_presence:
         discord_presence.start()

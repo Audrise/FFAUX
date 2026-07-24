@@ -11,15 +11,6 @@ of fields. When multiple files are selected and a field has differing values
 across them, the field is displayed as read-only, showing a combination of
 all those distinct values ​​(separated by " - "); it is ignored during the
 save operation if left unchanged, thereby preserving each track's original value.
-
-Two additional capabilities:
-- Add a new metadata field (custom tag + value entered by the user) via
-  add_empty_field().
-- Delete a field (whether a built-in file field or a new, unsaved field) via
-  delete_selected_field()—the field currently in focus (clicked or tabbed
-  into) is the one deleted. Deleted built-in fields are marked so that,
-  upon saving, the tag is actually removed from the file (rather than
-  simply being cleared in the form)—see get_deleted_keys().
 """
 from __future__ import annotations
 

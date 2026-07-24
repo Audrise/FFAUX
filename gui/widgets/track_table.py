@@ -119,7 +119,7 @@ class TrackTable(QTableWidget):
             _COL_TITLE: meta.title,
             _COL_ARTIST: meta.artist,
             _COL_ALBUM: meta.album or "",
-            _COL_YEAR: meta.year or "unknown",
+            _COL_YEAR: meta.year or "",
             _COL_DURATION: format_duration(audio_file.duration_seconds),
             _COL_SAMPLE_RATE: format_sample_rate(audio_file.sample_rate_hz),
             _COL_BITRATE: f"{audio_file.bitrate_kbps} kbps" if audio_file.bitrate_kbps else "-",

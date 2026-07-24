@@ -1,5 +1,5 @@
 """
-# Optional Discord Rich Presence integration for AudriseFFTool.
+# Discord Rich Presence integration
 
 Wraps the `pypresence` library so the rest of the app never has to deal
 with Discord IPC directly, and NEVER blocks the Qt GUI thread while
@@ -21,18 +21,12 @@ Design notes:
 Setup required before this does anything visible:
 1. Create an application at https://discord.com/developers/applications
    (a plain "Application", not a bot) to get a client_id.
-2. Put that client_id in config.discord_client_id (Settings dialog --
-   see gui/dialogs/settings_dialog.py) and make sure
+2. Put that client_id in config.discord_client_id (Settings dialog see:
+   gui/dialogs/settings_dialog.py) and make sure
    config.enable_discord_presence is True.
 3. Optionally upload large/small image assets in the Developer Portal
    under "Rich Presence > Art Assets" and reference their key names via
    PresenceState.large_image / small_image.
-
-TODO (not implemented yet -- documented so it isn't mistaken for an
-oversight): automatic reconnect if Discord is launched AFTER
-AudriseFFTool. Currently start() only tries to connect once; if it
-fails, the service just stays disconnected until the app is restarted
-or the user toggles the setting off and on again.
 """
 from __future__ import annotations
 
@@ -48,6 +42,7 @@ logger = get_logger("core.discord_presence_service")
 try:
     from pypresence import Presence
     _PYPRESENCE_AVAILABLE = True
+
 except ImportError:  # pypresence is an OPTIONAL dependency
     Presence = None  # type: ignore[assignment]
     _PYPRESENCE_AVAILABLE = False
@@ -134,7 +129,6 @@ class DiscordPresenceService:
         self._thread.join(timeout=2)
         self._thread = None
 
-    # ------------------------------------------------------------------
     def _run(self) -> None:
         """Worker thread body: connect once, then process queued updates
         one at a time. Every pypresence call happens here, off the GUI
