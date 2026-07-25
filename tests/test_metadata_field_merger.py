@@ -10,14 +10,14 @@ def _file(path: str, **metadata_kwargs) -> AudioFile:
 def test_single_file_shows_all_its_tags_including_extra():
     af = _file(
         "a.mp3",
-        title="Judul A",
+        title="Title A",
         artist="Artis A",
         extra={"isrc": "US123", "publisher": "Label X"},
     )
     views = build_field_views([af])
     by_key = {v.key: v for v in views}
 
-    assert by_key["title"].value == "Judul A"
+    assert by_key["title"].value == "Title A"
     assert by_key["title"].editable is True
     assert "isrc" in by_key
     assert by_key["isrc"].value == "US123"
@@ -25,7 +25,7 @@ def test_single_file_shows_all_its_tags_including_extra():
     assert "publisher" in by_key
 
 def test_only_fields_present_are_shown_not_fixed_list():
-    af = _file("a.mp3", title="Judul A")
+    af = _file("a.mp3", title="Title A")
     views = build_field_views([af])
     keys = {v.key for v in views}
     # album/artist not filled in at all -> no need to display
@@ -45,9 +45,9 @@ def test_same_value_across_selected_tracks_is_editable():
 
 def test_differing_values_are_joined_and_read_only():
     tracks = [
-        _file("a.mp3", album="Album 1", title="Lagu A"),
-        _file("b.mp3", album="Album 1", title="Lagu B"),
-        _file("c.mp3", album="Album 2", title="Lagu C"),
+        _file("a.mp3", album="Album 1", title="Song A"),
+        _file("b.mp3", album="Album 1", title="Song B"),
+        _file("c.mp3", album="Album 2", title="Song C"),
     ]
     views = build_field_views(tracks)
     by_key = {v.key: v for v in views}
@@ -56,13 +56,13 @@ def test_differing_values_are_joined_and_read_only():
     assert by_key["album"].value == "Album 1 - Album 2"
 
     assert by_key["title"].editable is False
-    assert by_key["title"].value == "Lagu A - Lagu B - Lagu C"
+    assert by_key["title"].value == "Song A - Song B - Song C"
 
 def test_known_fields_come_before_extra_fields_in_fixed_order():
     af = _file(
         "a.mp3",
         genre="Pop",
-        title="Judul",
+        title="Title",
         extra={"isrc": "US123"},
     )
     views = build_field_views([af])

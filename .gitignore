@@ -6,6 +6,7 @@ config/app.log
 assets/templates/*.json
 bin/*.dll
 bin/*.exe
+improve/
 .venv/
 audio/
 build/

@@ -27,6 +27,6 @@ def test_set_unknown_key_raises(tmp_path):
 
     try:
         service.set("not_a_real_key", 123)
-        assert False, "Seharusnya raise KeyError"
+        assert False, "Should be raise KeyError"
     except KeyError:
         pass

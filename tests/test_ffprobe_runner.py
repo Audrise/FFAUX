@@ -5,7 +5,7 @@ _SAMPLE_RAW = {
         "duration": "180.5",
         "bit_rate": "192000",
         "size": "4321000",
-        "tags": {"title": "Judul", "artist": "Artis"},
+        "tags": {"title": "Title", "artist": "Artist"},
     },
     "streams": [
         {"codec_type": "audio", "codec_name": "flac", "sample_rate": "44100"},

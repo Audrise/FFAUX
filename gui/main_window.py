@@ -221,7 +221,8 @@ class MainWindow(QMainWindow):
 
         add_file_action = menu.addAction(
             "Add File...",
-            self._on_add_files_clicked)
+            self._on_add_files_clicked
+        )
         add_file_action.setShortcut("Ctrl+O")
 
         edit_metadata_action = menu.addAction(

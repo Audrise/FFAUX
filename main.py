@@ -24,7 +24,26 @@ from ffmpeg.ffprobe_runner import FFprobeRunner
 from gui.main_window import MainWindow
 from utils.logger import setup_logging
 
-APP_ROOT = Path(__file__).resolve().parent
+APP_NAME = "AudriseFFTool"
+
+def _resource_root() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys._MEIPASS)  # type: ignore[attr-defined]
+    return Path(__file__).resolve().parent
+
+def _app_root() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+RESOURCE_ROOT = _resource_root()
+APP_ROOT = _app_root()
+
+def _resolve_tool_path(path_str: str) -> str:
+    path = Path(path_str)
+    if path.is_absolute():
+        return str(path)
+    return str(APP_ROOT / path)
 
 def main() -> int:
     setup_logging(log_file=APP_ROOT / "config" / "app.log")
@@ -33,7 +52,7 @@ def main() -> int:
     app.setApplicationName("AudriseFFTool")
 
     splash = None
-    splash_path = APP_ROOT / "assets" / "icons" / "logo.png"
+    splash_path = RESOURCE_ROOT / "assets" / "icons" / "logo.png"
 
     if splash_path.exists():
         pixmap = QPixmap(str(splash_path))
@@ -108,28 +127,26 @@ def main() -> int:
     config_service = ConfigService(APP_ROOT / "config" / "app_config.json")
     config = config_service.load()
 
-    ffprobe_runner = FFprobeRunner(ffprobe_path=config.ffprobe_path)
-    ffmpeg_runner = FFmpegRunner(ffmpeg_path=config.ffmpeg_path)
+    ffprobe_runner = FFprobeRunner(ffprobe_path=_resolve_tool_path(config.ffprobe_path))
+    ffmpeg_runner = FFmpegRunner(ffmpeg_path=_resolve_tool_path(config.ffmpeg_path))
 
     metadata_service = MetadataService(ffprobe_runner, ffmpeg_runner)
     template_service = TemplateService(APP_ROOT / "assets" / "templates")
 
     job_manager = JobManager(
-        ffmpeg_path=config.ffmpeg_path,
+        ffmpeg_path=_resolve_tool_path(config.ffmpeg_path),
         max_parallel_jobs=config.max_parallel_jobs,
     )
 
-    # Discord Rich Presence is entirely optional
-    # it's a safe no-op if pypresence isn't installed, Discord isn't running, or no
     discord_presence = DiscordPresenceService(client_id=config.discord_client_id)
     if config.enable_discord_presence:
         discord_presence.start()
 
-    icon_path = APP_ROOT / "assets" / "icons" / "logo.ico"
+    icon_path = RESOURCE_ROOT / "assets" / "icons" / "logo.ico"
     if icon_path.exists():
         app.setWindowIcon(QIcon(str(icon_path)))
 
-    qss_path = APP_ROOT / "assets" / "styles" / "main.qss"
+    qss_path = RESOURCE_ROOT / "assets" / "styles" / "main.qss"
     if qss_path.exists():
         app.setStyleSheet(qss_path.read_text(encoding="utf-8"))
 

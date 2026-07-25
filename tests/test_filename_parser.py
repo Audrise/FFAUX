@@ -2,11 +2,11 @@ from core.filename_parser import FilenameParser
 
 def test_parse_simple_pattern():
     parser = FilenameParser()
-    metadata = parser.parse("Coldplay - Yellow.mp3", "{artist} - {title}")
+    metadata = parser.parse("Guns N' Roses - Rocket Queen.mp3", "{artist} - {title}")
 
     assert metadata is not None
-    assert metadata.artist == "Coldplay"
-    assert metadata.title == "Yellow"
+    assert metadata.artist == "Guns N' Roses"
+    assert metadata.title == "Rocket Queen"
 
 def test_parse_pattern_no_match_returns_none():
     parser = FilenameParser()
@@ -16,11 +16,11 @@ def test_parse_pattern_no_match_returns_none():
 def test_parse_pattern_with_track_number():
     parser = FilenameParser()
     metadata = parser.parse(
-        "03. Coldplay - Parachutes - Yellow.mp3",
+        "03. Guns N' Roses - Paradise City - Rocket Queen.mp3",
         "{track_number}. {artist} - {album} - {title}",
     )
     assert metadata is not None
     assert metadata.track_number == "03"
-    assert metadata.artist == "Coldplay"
-    assert metadata.album == "Parachutes"
-    assert metadata.title == "Yellow"
+    assert metadata.artist == "Guns N' Roses"
+    assert metadata.album == "Paradise City"
+    assert metadata.title == "Rocket Queen"
