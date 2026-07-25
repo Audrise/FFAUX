@@ -31,6 +31,21 @@ _HEADERS = [
     "Bitrate", "File size", "Codec", "Status", "Progress",
 ]
 
+_DEFAULT_WIDTHS = {
+    _COL_TRACK: 70,
+    _COL_TITLE: 220,
+    _COL_ARTIST: 120,
+    _COL_ALBUM: 420,
+    _COL_YEAR: 90,
+    _COL_DURATION: 90,
+    _COL_SAMPLE_RATE: 90,
+    _COL_BITRATE: 90,
+    _COL_SIZE: 90,
+    _COL_CODEC: 90,
+    _COL_STATUS: 90,
+    _COL_PROGRESS: 115,
+}
+
 _ID_ROLE = Qt.ItemDataRole.UserRole
 
 class TrackTable(QTableWidget):
@@ -68,21 +83,28 @@ class TrackTable(QTableWidget):
         self.setAcceptDrops(True)
         self._row_by_id: dict[str, int] = {}
 
-        _DEFAULT_WIDTHS = {
-            _COL_TRACK: 70,
-            _COL_TITLE: 220,
-            _COL_ARTIST: 120,
-            _COL_ALBUM: 420,
-            _COL_YEAR: 90,
-            _COL_DURATION: 90,
-            _COL_SAMPLE_RATE: 90,
-            _COL_BITRATE: 90,
-            _COL_SIZE: 90,
-            _COL_CODEC: 90,
-            _COL_STATUS: 90,
-            _COL_PROGRESS: 115,
-        }
+        for col in range(len(_HEADERS)):
+            header.setSectionResizeMode(col, QHeaderView.ResizeMode.Interactive)
+            header.resizeSection(col, _DEFAULT_WIDTHS.get(col, 100))
+        self.reset_column_widths()
 
+    # ------------------------------------------------------------------
+    # Persist column widths (see MainWindow.closeEvent).
+    # ------------------------------------------------------------------
+    def column_widths(self) -> list[int]:
+        header = self.horizontalHeader()
+        return [header.sectionSize(col) for col in range(self.columnCount())]
+
+    def apply_column_widths(self, widths: list[int]) -> None:
+        header = self.horizontalHeader()
+        for col, width in enumerate(widths):
+            if col >= self.columnCount():
+                break
+            if width > 0:
+                header.resizeSection(col, width)
+
+    def reset_column_widths(self) -> None:
+        header = self.horizontalHeader()
         for col in range(len(_HEADERS)):
             header.setSectionResizeMode(col, QHeaderView.ResizeMode.Interactive)
             header.resizeSection(col, _DEFAULT_WIDTHS.get(col, 100))

@@ -32,3 +32,60 @@ def test_extract_cover_art_success(tmp_path):
     assert result is not None
     assert result.endswith("_cover.jpg")
     ffmpeg_runner.run.assert_called_once()
+
+def test_read_metadata_preserves_original_casing_for_extra_tags():
+    """Regression test: extra/custom tag KEYS (e.g. ISRC, REPLAYGAIN_TRACK_GAIN)
+    must keep their ORIGINAL casing from the file, not be forced to lowercase.
+    """
+    probe_result = MagicMock()
+    probe_result.success = True
+    probe_result.duration_seconds = 100.0
+    probe_result.bit_rate_kbps = 320
+    probe_result.sample_rate_hz = 44100
+    probe_result.audio_codec_name = "flac"
+    probe_result.size_bytes = 12345
+    probe_result.tags = {
+        "TITLE": "Patience (Live)",
+        "ARTIST": "Guns N' Roses",
+        "ISRC": "US123456789",
+        "REPLAYGAIN_TRACK_GAIN": "-6.5 dB",
+    }
+    probe_result.has_cover_art = False
+
+    ffprobe = MagicMock()
+    ffprobe.probe.return_value = probe_result
+    service = MetadataService(ffprobe_runner=ffprobe)
+    audio_file = AudioFile(path="song.flac")
+
+    service.read_metadata(audio_file)
+
+    assert audio_file.metadata.title == "Patience (Live)"
+    assert audio_file.metadata.artist == "Guns N' Roses"
+    assert audio_file.metadata.extra == {
+        "ISRC": "US123456789",
+        "REPLAYGAIN_TRACK_GAIN": "-6.5 dB",
+    }
+
+def test_read_metadata_mixed_case_known_field_still_recognized():
+    """A known field reported with unusual/mixed casing (e.g. "Album_Artist")
+    must still be recognized via the case-insensitive lookup, not dropped or
+    duplicated into .extra."""
+    probe_result = MagicMock()
+    probe_result.success = True
+    probe_result.duration_seconds = 100.0
+    probe_result.bit_rate_kbps = 320
+    probe_result.sample_rate_hz = 44100
+    probe_result.audio_codec_name = "mp3"
+    probe_result.size_bytes = 12345
+    probe_result.tags = {"Album_Artist": "Various Artists"}
+    probe_result.has_cover_art = False
+
+    ffprobe = MagicMock()
+    ffprobe.probe.return_value = probe_result
+    service = MetadataService(ffprobe_runner=ffprobe)
+    audio_file = AudioFile(path="song.mp3")
+
+    service.read_metadata(audio_file)
+
+    assert audio_file.metadata.album_artist == "Various Artists"
+    assert audio_file.metadata.extra == {}

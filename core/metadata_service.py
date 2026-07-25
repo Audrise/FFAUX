@@ -55,7 +55,9 @@ class MetadataService:
         audio_file.codec = result.audio_codec_name
         audio_file.file_size_bytes = result.size_bytes
 
-        tags = {k.lower(): v for k, v in result.tags.items()}
+        raw_tags = result.tags
+        tags = {k.lower(): v for k, v in raw_tags.items()}
+
         data = {
             "title": tags.get("title"),
             "artist": tags.get("artist"),
@@ -69,9 +71,10 @@ class MetadataService:
             "composer": tags.get("composer"),
         }
 
-        # Metadata.from_dict will place it in Metadata.extra because it is not a dataclass field name.
-        for key, value in tags.items():
-            if key in _CONSUMED_TAG_KEYS:
+        # Iterate the ORIGINAL-CASE tags here (not the lowercased `tags` dict
+        # above) so extra/custom tag keys keep their original casing.
+        for key, value in raw_tags.items():
+            if key.lower() in _CONSUMED_TAG_KEYS:
                 continue
             data[key] = value
 

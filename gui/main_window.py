@@ -58,6 +58,11 @@ class MainWindow(QMainWindow):
 
         self._build_ui()
         self._connect_signals()
+
+        saved_widths = self._config_service.config.track_table_column_widths
+        if saved_widths:
+            self._track_table.apply_column_widths(saved_widths)
+
         self._discord_presence.update(PresenceState(state="Managing audio files", large_image="app_logo"))
 
     def closeEvent(self, event) -> None:
@@ -74,6 +79,7 @@ class MainWindow(QMainWindow):
             config.window_x = self.x()
             config.window_y = self.y()
 
+        config.track_table_column_widths = self._track_table.column_widths()
         self._config_service.save()
         self._discord_presence.stop()
         super().closeEvent(event)
@@ -154,6 +160,12 @@ class MainWindow(QMainWindow):
         self._toggle_progress_panel_action.setChecked(False)
         self._toggle_progress_panel_action.triggered.connect(self._on_toggle_progress_panel)
         view_menu.addAction(self._toggle_progress_panel_action)
+
+        view_menu.addSeparator()
+        self._reset_columns_action = QAction("Reset Column Widths", self)
+        self._reset_columns_action.setShortcut("Ctrl+>")
+        self._reset_columns_action.triggered.connect(self._on_reset_column_widths_clicked)
+        view_menu.addAction(self._reset_columns_action)
 
         # =========================
         # Help
@@ -245,6 +257,7 @@ class MainWindow(QMainWindow):
 
         menu.addAction(self._toggle_log_action)
         menu.addAction(self._toggle_progress_panel_action)
+        menu.addAction(self._reset_columns_action)
         menu.addSeparator()
 
         exit_action = menu.addAction(
@@ -491,6 +504,9 @@ class MainWindow(QMainWindow):
 
     def _on_toggle_progress_panel(self, checked: bool) -> None:
         self._progress_panel.setVisible(checked)
+
+    def _on_reset_column_widths_clicked(self) -> None:
+        self._track_table.reset_column_widths()
 
     def _on_batch_finished(self) -> None:
         self._process_action.setEnabled(True)

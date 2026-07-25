@@ -6,7 +6,7 @@ via a dataclass to ensure key typos do not go undetected.
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +30,7 @@ class AppConfig:
     window_y: int = -1
     enable_discord_presence: bool = True
     discord_client_id: str = ""
+    track_table_column_widths: list[int] = field(default_factory=list)
 
 class ConfigService:
     def __init__(self, config_path: str | Path):

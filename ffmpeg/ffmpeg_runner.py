@@ -64,6 +64,8 @@ class FFmpegRunner:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 universal_newlines=True,
+                encoding="utf-8",
+                errors="replace",
                 bufsize=1,
                 creationflags=_windows_no_console_flag(),
             )
