@@ -22,13 +22,6 @@ from ffmpeg.command_builder import build as build_command
 from ffmpeg.ffmpeg_runner import FFmpegRunner
 from ffmpeg.ffprobe_runner import FFprobeRunner
 
-"""ffprobe tags (lowercase) that already have dedicated fields in Metadata and
-are therefore NOT duplicated into Metadata.extra during reading. All other
-tags found in the file (e.g., isrc, publisher, encoder, lyrics-eng, etc.)
-are automatically added to Metadata.extra via Metadata.from_dict, so that
-"Edit Metadata" can display all tags actually present in the file,
-rather than just a list of fixed fields.
-"""
 _CONSUMED_TAG_KEYS = {
     "title", "artist", "album", "album_artist", "genre",
     "date", "year", "track", "disc", "comment", "composer",
@@ -86,9 +79,7 @@ class MetadataService:
         return audio_file
 
     @staticmethod
-    def default_output_path(
-        audio_file: AudioFile, output_dir: str, suffix: str, extension: Optional[str] = None
-    ) -> str:
+    def default_output_path(audio_file: AudioFile, output_dir: str, suffix: str, extension: Optional[str] = None) -> str:
         """
         Determine the default output path: <output_dir or source folder>/<stem><suffix><ext>.
 
@@ -105,8 +96,6 @@ class MetadataService:
 
     def extract_cover_art_sync(self, audio_file: AudioFile, output_dir: str) -> Optional[str]:
         """
-        Extracts embedded cover art to an image file for PREVIEW purposes.
-
         Runs synchronously (blocking) — see trade-off notes in
         gui/dialogs/metadata_editor_dialog.py. Returns None if
         the file has no cover art or ffmpeg_runner is not set.
