@@ -3,30 +3,12 @@
 
 Wraps the `pypresence` library so the rest of the app never has to deal
 with Discord IPC directly, and NEVER blocks the Qt GUI thread while
-doing so -- all work (connecting, updating, clearing, closing) happens
+doing so all work (connecting, updating, clearing, closing) happens
 on a single dedicated background thread via a simple work queue.
 
 Design notes:
-- `pypresence.Presence.connect()` talks to a local Discord IPC pipe on
-  the same machine (not the internet). Depending on the platform this
-  call can take a noticeable moment -- or hang -- if Discord isn't
-  running / hasn't fully started yet, so it must never be called
-  directly from the GUI thread.
-- Everything here fails SILENTLY (logged, not raised): if Discord
-  isn't running, `pypresence` isn't installed, or no client_id is
-  configured, this service just quietly does nothing. Discord Rich
-  Presence is a "nice to have" and must never be able to crash or
-  freeze AudriseFFTool.
-
-Setup required before this does anything visible:
-1. Create an application at https://discord.com/developers/applications
+- Create an application at https://discord.com/developers/applications
    (a plain "Application", not a bot) to get a client_id.
-2. Put that client_id in config.discord_client_id (Settings dialog see:
-   gui/dialogs/settings_dialog.py) and make sure
-   config.enable_discord_presence is True.
-3. Optionally upload large/small image assets in the Developer Portal
-   under "Rich Presence > Art Assets" and reference their key names via
-   PresenceState.large_image / small_image.
 """
 from __future__ import annotations
 
@@ -65,19 +47,12 @@ class PresenceState:
 _STOP = object()  # sentinel put on the queue to end the worker thread
 
 class DiscordPresenceService:
-    """Optional Discord Rich Presence updater.
-
-    Usage:
-        service = DiscordPresenceService(client_id=config.discord_client_id)
-        service.start()
-        service.update(PresenceState(details="Converting audio...", state="3 files"))
-        ...
-        service.stop()
-
-    Every public method is non-blocking and safe to call even when
-    Discord isn't running, `pypresence` isn't installed, or no
-    client_id is configured -- it simply won't do anything in that
-    case (see `is_available`).
+    """Example Usage
+    service = DiscordPresenceService(client_id=config.discord_client_id)
+    service.start()
+    service.update(PresenceState(details="Converting audio...", state="3 files"))
+    ...
+    service.stop()
     """
 
     def __init__(self, client_id: str):
@@ -88,12 +63,7 @@ class DiscordPresenceService:
 
     @property
     def is_available(self) -> bool:
-        """True if pypresence is installed AND a client_id is configured.
-
-        This does NOT mean a connection to Discord has actually
-        succeeded -- see `is_connected` for that. Use this to decide
-        whether it's even worth calling start().
-        """
+        # True if pypresence is installed AND a client_id is configured.
         return _PYPRESENCE_AVAILABLE and bool(self._client_id)
 
     @property
@@ -132,7 +102,7 @@ class DiscordPresenceService:
     def _run(self) -> None:
         """Worker thread body: connect once, then process queued updates
         one at a time. Every pypresence call happens here, off the GUI
-        thread -- any failure just logs and leaves the service
+        thread. any failure just logs and leaves the service
         disconnected instead of raising into the caller.
         """
         rpc = Presence(self._client_id)
