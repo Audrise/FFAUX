@@ -66,6 +66,9 @@ class MainWindow(QMainWindow):
 
         self._discord_presence.update(PresenceState(state="Managing audio files", large_image="app_logo"))
 
+    def _update_file_dependent_actions(self) -> None:
+        self._process_action.setEnabled(bool(self._audio_files))
+
     def closeEvent(self, event) -> None:
         """Remember the window's size/position/maximized state so the next
         launch can restore it (see main.py), instead of always resetting to
@@ -109,12 +112,12 @@ class MainWindow(QMainWindow):
 
         self._process_action = QAction("Convert Selected Audio...", self)
         self._process_action.setShortcut("Ctrl+R")
+        self._process_action.setEnabled(False)
         self._process_action.triggered.connect(self._on_process_clicked)
         file_menu.addAction(self._process_action)
 
         self._cancel_action = QAction("Cancel All", self)
         self._cancel_action.setShortcut("Ctrl+Shift+C")
-        self._cancel_action.setEnabled(False)
         self._cancel_action.triggered.connect(self._on_cancel_clicked)
         file_menu.addAction(self._cancel_action)
 
@@ -274,6 +277,7 @@ class MainWindow(QMainWindow):
             self._track_table.add_file(audio_file)
 
         logger.info("Adding %d files to the batch", len(paths))
+        self._update_file_dependent_actions()
 
     def _on_conversion_settings_clicked(self) -> None:
         """This is OPTIONAL and only used to prefill the dialog. The same dialog
@@ -364,6 +368,7 @@ class MainWindow(QMainWindow):
             audio_file = self._audio_files.pop(audio_file_id, None)
             if audio_file:
                 logger.info("Deleting track: %s", audio_file.filename)
+            self._update_file_dependent_actions()
 
     def _on_edit_metadata_clicked(self) -> None:
         audio_file_ids = self._track_table.selected_row_ids()
