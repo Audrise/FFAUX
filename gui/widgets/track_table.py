@@ -1,7 +1,8 @@
 """
-# This table also serves as a drop area: audio files/folders can be directly
-dragged and dropped onto the table (replacing the separate DropArea widget
-that existed previously). It supports multi-selection for Edit/Convert/Delete actions.
+# This table also serves as a drop area:
+
+audio files/folders can be directly dragged and dropped onto the table.
+It supports multi-selection for Edit/Convert/Delete actions.
 """
 from __future__ import annotations
 
@@ -51,7 +52,7 @@ _ID_ROLE = Qt.ItemDataRole.UserRole
 class TrackTable(QTableWidget):
     """Table storing audio_file_id as data in each row
     (via Qt.ItemDataRole.UserRole in the Title column), rather than in a dict
-    static position -- so the index doesn't become "stale" after a row is deleted
+    static position. so the index doesn't become "stale" after a row is deleted
     or reordered. `_row_by_id` is rebuilt from this data whenever
     the row structure changes.
     """
@@ -88,9 +89,7 @@ class TrackTable(QTableWidget):
             header.resizeSection(col, _DEFAULT_WIDTHS.get(col, 100))
         self.reset_column_widths()
 
-    # ------------------------------------------------------------------
     # Persist column widths (see MainWindow.closeEvent).
-    # ------------------------------------------------------------------
     def column_widths(self) -> list[int]:
         header = self.horizontalHeader()
         return [header.sectionSize(col) for col in range(self.columnCount())]
@@ -109,9 +108,7 @@ class TrackTable(QTableWidget):
             header.setSectionResizeMode(col, QHeaderView.ResizeMode.Interactive)
             header.resizeSection(col, _DEFAULT_WIDTHS.get(col, 100))
 
-    # ------------------------------------------------------------------
     # Drag and drop directly within the table.
-    # ------------------------------------------------------------------
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
@@ -127,9 +124,7 @@ class TrackTable(QTableWidget):
             self.filesDropped.emit(audio_files)
         event.acceptProposedAction()
 
-    # ------------------------------------------------------------------
     # Fill & read row data
-    # ------------------------------------------------------------------
     def add_file(self, audio_file: AudioFile) -> None:
         row = self.rowCount()
         self.insertRow(row)
@@ -210,13 +205,9 @@ class TrackTable(QTableWidget):
         self.setRowCount(0)
         self._row_by_id.clear()
 
-    # ------------------------------------------------------------------
     # Selection
-    # ------------------------------------------------------------------
     def selected_row_id(self) -> str | None:
-        """Return the ID of the first selected row (compatible with
-        legacy callers that only require a single file).
-        """
+        # Return the ID of the first selected row (compatible with legacy callers that only require a single file).
         ids = self.selected_row_ids()
         return ids[0] if ids else None
 
