@@ -1,5 +1,6 @@
 """
 # Application configuration dialog.
+
 Reads/writes via ConfigService. never accesses the JSON file directly.
 """
 from __future__ import annotations
