@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-APP_LOGGER_NAME = "audrise"
+APP_LOGGER_NAME = "FFTool"
 
 def setup_logging(log_file: str | Path | None = None, level: int = logging.INFO) -> logging.Logger:
     logger = logging.getLogger(APP_LOGGER_NAME)
@@ -19,9 +19,7 @@ def setup_logging(log_file: str | Path | None = None, level: int = logging.INFO)
     if logger.handlers:
         return logger  # already set up; avoid duplicate handlers
 
-    formatter = logging.Formatter(
-        "%(asctime)s [%(levelname)s] %(name)s: %(message)s", datefmt="%H:%M:%S"
-    )
+    formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] %(name)s: %(message)s", datefmt="%H:%M:%S")
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
