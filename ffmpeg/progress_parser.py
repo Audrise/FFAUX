@@ -10,9 +10,6 @@ FFmpeg is run with the `-progress pipe:1` flag, causing it to write
     progress=continue
     ...
     progress=end
-
-This module handles only parsing and calculation—with no I/O—making it
-easy to test using static text line data.
 """
 from __future__ import annotations
 
@@ -26,14 +23,7 @@ class ProgressState:
     is_done: bool = False
 
 class ProgressParser:
-    """Stateful parser: accumulates `key=value` lines into a `ProgressState`.
-
-    FFmpeg writes multiple lines per progress "frame," concluding with a
-    `progress=continue` or `progress=end` line. Call `feed_line()` for
-    each line; the parser returns a new `ProgressState` whenever a
-    block is complete (i.e., upon encountering a `progress=...` line).
-    """
-
+    # Stateful parser: accumulates `key=value` lines into a `ProgressState`.
     def __init__(self, total_duration_seconds: Optional[float] = None):
         self.total_duration_seconds = total_duration_seconds
         self._pending: dict[str, str] = {}
