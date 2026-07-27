@@ -1,5 +1,6 @@
 """
 # Data model for audio metadata.
+
 This module is pure Python (no Qt dependencies),
 so it can be tested directly with pytest without needing a QApplication.
 """
@@ -10,12 +11,7 @@ from typing import Optional
 
 @dataclass
 class Metadata:
-    """
-    A field with a value of `None` means "unknown" or "unchanged,"
-    not an empty string. This is important so that the "apply template" operation
-    does not inadvertently overwrite existing tags with empty values.
-    """
-
+    # A field with a value of `None` means "unknown" or "unchanged," not an empty string.
     title: Optional[str] = None
     artist: Optional[str] = None
     album: Optional[str] = None
