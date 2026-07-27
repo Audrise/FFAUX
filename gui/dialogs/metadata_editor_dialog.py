@@ -6,31 +6,6 @@ then returns the edited results to the caller via the get_result() method.
 The dialog does NOT execute FFmpeg directly; instead, the MainWindow creates
 a Job (APPLY_METADATA / SET_COVER) based on the results and sends it to the
 JobManager, adhering to the rule that "GUI actions always go through the JobManager."
-
-When multiple files are selected:
-- Metadata fields dynamically reflect the combined tags of all selected files.
-  Fields with identical values ​​across all files are editable; if modified, the
-  change applies to ALL selected files. Fields with differing values ​​are
-  displayed as read-only (values ​​concatenated with " - "); if saved without
-  modification, each file retains its original value—see core/metadata_field_merger.py.
-  This applies regardless of the reason for the discrepancy (e.g., different
-  albums across tracks); other fields that happen to be identical remain
-  editable as usual.
-- The cover art displayed/edited belongs to the FIRST file in the selection
-  sequence (e.g., if albums differ, the displayed cover is the one from the
-  file at the first index).
-- The "+ Add Metadata" button adds a new empty row (tag name + custom value);
-- the "Delete Selected Metadata" button removes the field that was last
-  clicked or focused. Deleted default fields are actually removed from the
-  file via `-metadata key=` (see command_builder.py), rather than just
-  disappearing from the display.
-
-Minor exception: cover art extraction for PREVIEW runs synchronously
-(causing a brief block) via MetadataService, as it is a single-file operation
-typically taking <1 second and intended solely for previewing, not as part
-of a batch job. This trade-off is documented here intentionally; should
-large files cause noticeable slowness, it can easily be converted to
-asynchronous execution by moving it to the standard JobManager.
 """
 from __future__ import annotations
 
@@ -111,9 +86,7 @@ class MetadataEditorDialog(QDialog):
         layout.addLayout(field_buttons_row)
         layout.addWidget(buttons)
 
-    # ------------------------------------------------------------------
     # Template: select + preview content + apply/save
-    # ------------------------------------------------------------------
     def _build_template_row(self) -> QHBoxLayout:
         self._template_combo = QComboBox()
         self._template_combo.addItems(self._template_service.list_templates())
@@ -192,9 +165,7 @@ class MetadataEditorDialog(QDialog):
         self._template_combo.clear()
         self._template_combo.addItems(self._template_service.list_templates())
 
-    # ------------------------------------------------------------------
     # Add / Delete metadata field
-    # ------------------------------------------------------------------
     def _build_field_buttons_row(self) -> QHBoxLayout:
         add_btn = QPushButton("Add Metadata")
         delete_btn = QPushButton("Delete Selected Metadata")
@@ -215,9 +186,7 @@ class MetadataEditorDialog(QDialog):
                 "First, click the metadata field you want to delete (focus on the column), then press this button again.",
             )
 
-    # ------------------------------------------------------------------
     # Cover art
-    # ------------------------------------------------------------------
     def _on_extract_cover_clicked(self) -> None:
         if not self._extract_and_show_cover():
             QMessageBox.information(self, "No cover", "This file doesn't have embedded cover art.")
@@ -238,24 +207,8 @@ class MetadataEditorDialog(QDialog):
     def _on_cover_path_changed(self, path) -> None:
         self._cover_changed = True
 
-    # ------------------------------------------------------------------
     def get_result(self) -> tuple[Metadata, str | None, bool, set[str], bool]:
-        """Returns (new_metadata, new_cover_path_or_None, cover_changed,
-        deleted_keys).
-
-        `new_metadata` contains only editable fields (values ​​shared
-        across all selected files, or new fields entered by the user).
-        Fields that differ between tracks (read-only) are intentionally
-        omitted—the caller (MainWindow) merges `new_metadata` into each
-        file's metadata, so omitted fields automatically retain their
-        original values.
-
-        `deleted_keys` contains tag keys explicitly removed by the user
-        via the "Delete Selected Metadata" button; the caller must pass
-        this as `job.params["deleted_metadata_keys"]` to ensure the tags
-        are TRULY removed from the output files (rather than just
-        disappearing from the form display).
-        """
+        # Returns (new_metadata, new_cover_path_or_None, cover_changed, deleted_keys).
         return (
             self._metadata_editor.get_metadata(),
             self._cover_viewer.current_path(),
