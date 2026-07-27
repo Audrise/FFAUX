@@ -1,8 +1,5 @@
 """
 # Audio conversion settings dialog
-Must appear whenever the user triggers the Convert action (via Ctrl+R, the menu, or right-click), appearing ONCE to cover
-all selected tracks (not once per track, regardless of the number of tracks).
-Refer to MainWindow._on_process_clicked for the invocation flow.
 
 Analogous to MetadataEditorDialog but for technical conversion parameters:
 output format, sample rate, bit depth, bitrate, SOXR resampler + precision
@@ -48,7 +45,7 @@ class ConversionSettingsDialog(QDialog):
         self.setWindowTitle("Convert Settings")
         self.resize(440, 320)
 
-        # --- Format output ---
+        # Format output
         self._format_combo = QComboBox()
         for fmt in OutputFormat:
             self._format_combo.addItem(_FORMAT_LABELS[fmt], userData=fmt)
@@ -62,38 +59,29 @@ class ConversionSettingsDialog(QDialog):
                 STANDARD_SAMPLE_RATES.index(current_settings.sample_rate_hz)
             )
 
-        # --- Bit depth (lossless: FLAC/WAV/ALAC) ---
+        # Bit depth (lossless: FLAC/WAV/ALAC)
         self._bit_depth_combo = QComboBox()
         for depth in (16, 24, 32):
             self._bit_depth_combo.addItem(f"{depth}-bit", userData=depth)
         self._bit_depth_combo.setCurrentIndex((16, 24, 32).index(current_settings.bit_depth))
 
-        # --- Bitrate in kbps (ONLY for formats other than FLAC/WAV -- bitrate
-        # for FLAC is variable/dependent on the compression level, not
-        # static like MP3/AAC/OGG/Opus). ---
+        # Bitrate in kbps (ONLY for formats other than FLAC/WAV)
         self._bitrate_spin = QSpinBox()
         self._bitrate_spin.setRange(32, 320)
         self._bitrate_spin.setSuffix(" kbps")
         self._bitrate_spin.setValue(current_settings.bitrate_kbps)
 
-        # --- SOXR: Relevant ONLY for FLAC & WAV, and for both
-        # it is ALWAYS enabled (not optional) -- see SOXR_FORMATS in the model.
-        # This line is completely hidden for other formats, not just
-        # disabled. ---
-
-        # self._soxr_info_label = QLabel("SOXR (mandatory for FLAC/WAV)")
-        # self._soxr_info_label.setStyleSheet("color: palette(mid);")
-
+        # SOXR: Relevant ONLY for FLAC & WAV
         self._soxr_precision_spin = QSpinBox()
         self._soxr_precision_spin.setRange(1, 33)
         self._soxr_precision_spin.setValue(current_settings.soxr_precision)
 
-        # --- FLAC compression level (HANYA FLAC, WAV tidak punya opsi ini) ---
+        # FLAC compression level (FLAC only; WAV does not have this option)
         self._flac_compression_spin = QSpinBox()
         self._flac_compression_spin.setRange(0, 12)
         self._flac_compression_spin.setValue(current_settings.flac_compression_level)
 
-        # --- Custom output folder (opsional) ---
+        # Custom output folder (Optional)
         self._output_dir_edit = QLineEdit(current_settings.custom_output_dir)
         self._output_dir_edit.setPlaceholderText("Leave blank to use the default folder.")
         browse_btn = QPushButton("...")
@@ -149,11 +137,7 @@ class ConversionSettingsDialog(QDialog):
 
         self._set_row_visible(self._bit_depth_combo, is_lossless)
         self._set_row_visible(self._bitrate_spin, not is_lossless)
-
-        # SOXR (+ precision) is only displayed for FLAC/WAV—it is not a selectable option for other formats at all.
-        # self._soxr_info_label.setVisible(is_soxr_format)
         self._set_row_visible(self._soxr_precision_spin, is_soxr_format)
-
         self._set_row_visible(self._flac_compression_spin, is_flac)
 
     def _on_browse_output_dir(self) -> None:
