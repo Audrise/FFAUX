@@ -1,5 +1,6 @@
 """
 # Application configuration management (binary path, output preferences, etc.).
+
 Stored as JSON in config/app_config.json. The schema undergoes lightweight validation
 via a dataclass to ensure key typos do not go undetected.
 """
