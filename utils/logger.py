@@ -19,7 +19,7 @@ def setup_logging(log_file: str | Path | None = None, level: int = logging.INFO)
     if logger.handlers:
         return logger  # already set up; avoid duplicate handlers
 
-    formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] %(name)s: %(message)s", datefmt="%H:%M:%S")
+    formatter = logging.Formatter("[%(levelname)s] [%(asctime)s] %(name)s: %(message)s", datefmt="%H:%M:%S")
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
