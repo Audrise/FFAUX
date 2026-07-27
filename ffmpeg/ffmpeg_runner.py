@@ -5,10 +5,6 @@ This module is intentionally designed to have no dependency on Qt whatsoever,
 relying only on Python's built-in `subprocess` module. This allows it to be
 tested using `unittest.mock.patch("subprocess.Popen")` without requiring a
 `QApplication`.
-
-Progress and log information is communicated to the caller via standard
-callbacks (not Qt signals); the caller (specifically `FFmpegWorker` in the
-Qt layer) is responsible for translating these callbacks into signal emissions.
 """
 from __future__ import annotations
 
@@ -28,7 +24,6 @@ class RunResult:
 
 class FFmpegRunner:
     # Run a single FFmpeg process and stream its output line by line.
-
     def __init__(self, ffmpeg_path: str = "ffmpeg"):
         self.ffmpeg_path = ffmpeg_path
 
@@ -47,8 +42,7 @@ class FFmpegRunner:
             args: CLI arguments resulting from command_builder.build().
             on_line: Callback invoked for each line of stdout/stderr.
             cancel_event: If set, the process will be terminated.
-            extra_args: Additional global arguments (e.g., ["-progress", "pipe:1",
-                "-nostats"]), inserted before `args`.
+            extra_args: Additional global arguments (e.g., ["-progress", "pipe:1", "-nostats"]), inserted before `args`.
         """
 
         full_args = [self.ffmpeg_path]
@@ -107,7 +101,7 @@ class FFmpegRunner:
 def _last_error_hint(output_lines: list[str], max_lines: int = 5) -> str:
     # Take the last few lines as an error summary to display to the user.
     tail = output_lines[-max_lines:] if output_lines else []
-    return "\n".join(tail) or "FFmpeg gagal tanpa output."
+    return "\n".join(tail) or "FFmpeg failed without output."
 
 def _windows_no_console_flag() -> int:
     # Prevent the black console window from appearing when FFmpeg runs on Windows.
