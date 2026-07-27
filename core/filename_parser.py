@@ -1,5 +1,6 @@
 """
 # Parse metadata from the filename based on a user-defined pattern.
+
 The pattern uses placeholders similar to `str.format`, for example:
     "{artist} - {title}"
     "{track_number}. {artist} - {album} - {title}"
