@@ -27,7 +27,7 @@ class ProgressPanel(QWidget):
         self._done_count = 0
         self._total_count = total
         self._bar.setValue(0)
-        self._label.setText(f"0 / {total} complete")
+        self._label.setText(f"0 / {total} Complete")
 
     def update_job_progress(self, job_id: str, percent: float) -> None:
         self._progress_by_id[job_id] = percent
@@ -35,7 +35,7 @@ class ProgressPanel(QWidget):
 
     def mark_job_done(self) -> None:
         self._done_count += 1
-        self._label.setText(f"{self._done_count} / {self._total_count} complete")
+        self._label.setText(f"{self._done_count} / {self._total_count} Complete")
 
     def _recalculate(self) -> None:
         if not self._progress_by_id:
