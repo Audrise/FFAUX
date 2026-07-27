@@ -1,19 +1,10 @@
 """
 # Audio conversion configuration model
+
 Separated from `core.models.job.Job` to allow editing via a GUI dialog
 as a single unit (`ConversionSettingsDialog`), then converted into the
 `Job.params` dictionary when the batch job is actually created
 (see `to_job_params()`).
-Important rules:
-- SOXR + precision + sample_fmt + "-map 0 -map_metadata 0 -c:v copy"
-  applies ONLY to FLAC and WAV output—these options are not selectable
-  for other formats at all (they are not merely disabled, but are
-  irrelevant/not offered).
-- Bitrate is relevant ONLY for formats other than FLAC/WAV, because FLAC
-  bitrate is variable (VBR-like, depending on `compression_level`)
-  rather than static like MP3/AAC/OGG/Opus.
-- Compression level (0-12) applies only to FLAC (WAV does not have this
-  option in FFmpeg).
 """
 from __future__ import annotations
 
@@ -50,7 +41,6 @@ _SAMPLE_FMT_BY_BIT_DEPTH = {16: "s16", 24: "s32", 32: "s32"}
 
 # Standard sample rate valid in audio engineering. Intentionally limited.
 STANDARD_SAMPLE_RATES = [44100, 48000, 88200, 96000, 176400, 192000]
-
 
 @dataclass
 class ConversionSettings:
