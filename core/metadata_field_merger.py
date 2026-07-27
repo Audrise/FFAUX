@@ -4,23 +4,6 @@
 This module intentionally has no Qt dependencies (using only dataclasses and
 dicts) so that its logic can be tested directly with pytest, consistent with
 core/models/metadata.py.
-
-Field merging rules for multi-selection (see also
-gui/widgets/metadata_editor.py):
-
-- Fields displayed on the form = the union of all tags actually present
-  across the selected files—not a fixed list of fields. If a song has
-  20 tags, all 20 tags are displayed.
-- "Known" fields (title, artist, album, etc.) always appear first in a
-  fixed order to ensure a consistent form layout; extra fields (e.g.,
-  isrc, publisher, encoder) follow in the order they appear.
-- If a field's value is the SAME across all selected files (including
-  when only one file is selected), the field can be edited normally.
-- If values ​​DIFFER between files, the field is displayed as read-only,
-  showing all unique values ​​joined by " - ". Bulk editing is not
-  supported for these read-only fields (an intentional design choice);
-  if saved without modification, the field is ignored for each track,
-  preserving the original value of each individual track.
 """
 from __future__ import annotations
 
@@ -62,7 +45,6 @@ class FieldView:
     label: str
     value: str
     editable: bool  # False if the values ​​differ across selected tracks
-
 
 def build_field_views(audio_files: list[AudioFile]) -> list[FieldView]:
     # Build a FieldView list for one or multiple selected AudioFiles.
