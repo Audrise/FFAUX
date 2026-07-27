@@ -20,10 +20,6 @@ _COVER_SIZE = 180
 _IMAGE_FILTER = "Image (*.jpg *.jpeg *.png *.bmp *.webp)"
 
 class CoverArtViewer(QWidget):
-    """Emit coverPathChanged(str | None) whenever the cover is changed or removed.
-    None means "remove cover art from the output file".
-    """
-
     coverPathChanged = Signal(object)  # str/None
 
     def __init__(self, parent=None):
@@ -46,8 +42,8 @@ class CoverArtViewer(QWidget):
 
         self._load_btn.clicked.connect(self._on_load_clicked)
         self._remove_btn.clicked.connect(self._on_remove_clicked)
-        # _extract_btn is intentionally not connected here; MetadataEditorDialog
-        # handles the connection because it requires access to MetadataService.
+        # _extract_btn is intentionally not connected here.
+        # MetadataEditorDialog handles the connection because it requires access to MetadataService.
 
         btn_row = QHBoxLayout()
         btn_row.addWidget(self._load_btn)
