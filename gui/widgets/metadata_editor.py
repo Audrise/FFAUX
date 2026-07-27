@@ -1,10 +1,6 @@
 """
 # Widget form for editing the metadata of one or multiple AudioFiles simultaneously.
 
-This widget does not save anything to disk or execute FFmpeg; it merely
-reads/writes Metadata objects in memory. The actual saving process
-(via the APPLY_METADATA job) is handled by the MainWindow or the calling dialog.
-
 The displayed fields are DYNAMIC, based on the tags actually present in the
 selected files (see core/metadata_field_merger.py), rather than a fixed list
 of fields. When multiple files are selected and a field has differing values
@@ -21,11 +17,6 @@ from core.models.audio_file import AudioFile
 from core.models.metadata import Metadata
 
 class _FocusTrackingLineEdit(QLineEdit):
-    """
-    A standard QLineEdit, but with an added callback triggered upon gaining focus (when clicked or tabbed into);
-    used to identify which field the user has "selected" for deletion.
-    """
-
     def __init__(self, on_focus, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._on_focus = on_focus
@@ -49,21 +40,10 @@ class MetadataEditor(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(scroll)
 
-        # Only fields with the SAME VALUE across all selected files are included
-        # here (and are editable). Fields that differ between files are displayed
-        # as read-only and intentionally not stored in _edits, so that
-        # get_metadata() automatically ignores them.
         self._edits: dict[str, QLineEdit] = {}
         self._field_views: list[FieldView] = []
 
-        # widget -> key, for ALL built-in file fields (whether editable or
-        # read-only) -- used by delete_selected_field() to determine the key of
-        # the currently selected widget, without having to guess based on the label.
         self._edit_to_key: dict[QLineEdit, str] = {}
-
-        # "Add Metadata" rows that haven't been saved yet: list of (key_edit, value_edit).
-        # The key is freely typed by the user, so a separate widget is required,
-        # rather than a static QLabel like the built-in fields.
         self._new_rows: list[tuple[QLineEdit, QLineEdit]] = []
 
         self._deleted_keys: set[str] = set()
@@ -91,7 +71,7 @@ class MetadataEditor(QWidget):
             if not view.editable:
                 edit.setReadOnly(True)
                 edit.setToolTip(
-                    "Different values ​​between selected tracks — cannot be edited. "
+                    "Different values ​​between selected tracks cannot be edited. "
                     "If saved without modification, each track retains its respective value.."
                 )
 
@@ -119,10 +99,10 @@ class MetadataEditor(QWidget):
         """
 
         key_edit = _FocusTrackingLineEdit(self._on_field_focused)
-        key_edit.setPlaceholderText("Tag baru")
+        key_edit.setPlaceholderText("New Tag")
 
         value_edit = _FocusTrackingLineEdit(self._on_field_focused)
-        value_edit.setPlaceholderText("Nilai")
+        value_edit.setPlaceholderText("Value")
 
         self._new_rows.append((key_edit, value_edit))
         self._form.addRow(key_edit, value_edit)
@@ -132,13 +112,6 @@ class MetadataEditor(QWidget):
         """Remove the field that most recently had focus (was clicked by the user).
         Returns True if a field was successfully removed, or False if no
         field had been selected (i.e., the user hadn't clicked any field).
-
-        - New field (unsaved, created via add_empty_field) -> simply
-          discarded from the form; no special marking required.
-        - Field originating from the file (whether editable or read-only) ->
-          the row is removed from the form AND its key is added to
-          _deleted_keys, ensuring the tag is actually deleted from the
-          file upon saving (rather than just disappearing from the form view).
         """
 
         if self._selected_edit is None:
@@ -181,10 +154,7 @@ class MetadataEditor(QWidget):
     def get_metadata(self) -> Metadata:
         """Return metadata from editable fields (where values ​​are identical
         across all selected files) PLUS new, fully populated fields
-        (with both key and value) added via 'Add Metadata'. Fields that
-        differ between tracks (read-only) are intentionally excluded
-        to avoid overwriting the original values ​​of individual tracks
-        during the merge.
+        (with both key and value) added via 'Add Metadata'.
         """
 
         values = {name: edit.text().strip() or None for name, edit in self._edits.items()}
@@ -203,12 +173,9 @@ class MetadataEditor(QWidget):
         return set(self._deleted_keys)
 
     def apply_template(self, template_metadata: Metadata) -> None:
-        """Apply the template to the current form values ​​(only fields that
-        CAN be edited and are populated in the template will overwrite
-        the form values). Read-only fields (which differ between tracks)
+        """Read-only fields (which differ between tracks)
         are left untouched—this is not yet supported.
         """
-
         template_data = template_metadata.to_dict()
         for key, edit in self._edits.items():
             if key in template_data:
