@@ -12,7 +12,6 @@ from typing import Callable
 
 from core.models.job import Job, OperationType
 
-
 def _build_convert(job: Job) -> list[str]:
     params = job.params
     args = ["-y", "-i", job.audio_file.path]
@@ -86,7 +85,6 @@ def _metadata_args(job: Job) -> list[str]:
         args += ["-metadata", f"{key}="]
 
     return args
-
 
 def _build_apply_metadata(job: Job) -> list[str]:
     args = ["-y", "-i", job.audio_file.path, "-c", "copy"]
