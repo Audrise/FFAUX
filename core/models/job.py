@@ -1,4 +1,6 @@
+"""
 # The data model for a single unit of work (Job) executed by FFmpeg
+"""
 from __future__ import annotations
 
 import uuid
@@ -10,7 +12,6 @@ from core.models.audio_file import AudioFile
 
 class OperationType(str, Enum):
     # Adding a new operation = adding an entry here + one builder function in ffmpeg/command_builder.py
-
     CONVERT = "convert"
     APPLY_METADATA = "apply_metadata"
     EXTRACT_COVER = "extract_cover"
