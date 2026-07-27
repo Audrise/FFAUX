@@ -1,5 +1,6 @@
 """
-# File-related helpers: 
+# File-related helpers:
+
 extension validation, collecting files from drag & drop.
 """
 from __future__ import annotations
