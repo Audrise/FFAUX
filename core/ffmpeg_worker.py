@@ -21,22 +21,12 @@ from ffmpeg.ffmpeg_runner import FFmpegRunner
 from ffmpeg.progress_parser import ProgressParser
 
 class WorkerSignals(QObject):
-    """
-    All payloads include a `job_id` so that the recipient (JobManager) knows
-    which job the signal belongs to when multiple workers are running in parallel.
-    """
     started = Signal(str)                    # job_id
     progress = Signal(str, float)             # job_id, percent (0-100)
     log = Signal(str, str)                    # job_id, line
     finished = Signal(str, bool, str)         # job_id, success, message
 
 class FFmpegWorker(QRunnable):
-    """
-    Runs a Job within a QThreadPool.
-    The cancel_event is shared with the JobManager so that the job can be cancelled
-    from the GUI thread, even though the worker is running in another thread.
-    """
-
     def __init__(
         self,
         job: Job,
