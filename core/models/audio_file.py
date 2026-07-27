@@ -1,4 +1,6 @@
+"""
 # Data model for audio files in a batch.
+"""
 from __future__ import annotations
 
 import uuid
