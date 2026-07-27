@@ -87,6 +87,8 @@ class FFprobeRunner:
                 capture_output=True,
                 text=True,
                 timeout=30,
+                encoding="utf-8",
+                errors="replace",
             )
         except FileNotFoundError as exc:
             return ProbeResult(success=False, raw={}, error_message=str(exc))
@@ -98,7 +100,7 @@ class FFprobeRunner:
 
         try:
             raw = json.loads(completed.stdout)
-        except json.JSONDecodeError as exc:
+        except (json.JSONDecodeError, TypeError) as exc:
             return ProbeResult(success=False, raw={}, error_message=f"Invalid ffprobe output: {exc}")
 
         return ProbeResult(success=True, raw=raw)
