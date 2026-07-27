@@ -1,5 +1,6 @@
 """
 # MainWindow is solely responsible for:
+
 assembling widgets, forwarding user actions to the backend
 (core/*), and updating widgets based on signals from JobManager.
 No FFmpeg, parsing, or metadata logic is implemented in this file.
@@ -87,11 +88,8 @@ class MainWindow(QMainWindow):
     def _build_menu_bar(self) -> None:
         menu_bar = self.menuBar()
 
-        # =========================
         # File
-        # =========================
         file_menu = menu_bar.addMenu("&File")
-
         self._open_action = QAction("Add File...", self)
         self._open_action.setShortcut(QKeySequence.StandardKey.Open)
         self._open_action.triggered.connect(self._on_add_files_clicked)
@@ -127,11 +125,8 @@ class MainWindow(QMainWindow):
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
-        # =========================
         # Edit
-        # =========================
         edit_menu = menu_bar.addMenu("&Edit")
-
         self._edit_metadata_action = QAction("Edit Selected Metadata...", self)
         self._edit_metadata_action.setShortcut("Ctrl+E")
         self._edit_metadata_action.triggered.connect(self._on_edit_metadata_clicked)
@@ -142,11 +137,8 @@ class MainWindow(QMainWindow):
         self._settings_action.triggered.connect(self._on_settings_clicked)
         edit_menu.addAction(self._settings_action)
 
-        # =========================
         # View
-        # =========================
         view_menu = menu_bar.addMenu("&View")
-
         self._toggle_log_action = QAction("Show Output Log", self)
         self._toggle_log_action.setShortcut("Ctrl+/")
         self._toggle_log_action.setCheckable(True)
@@ -167,11 +159,8 @@ class MainWindow(QMainWindow):
         self._reset_columns_action.triggered.connect(self._on_reset_column_widths_clicked)
         view_menu.addAction(self._reset_columns_action)
 
-        # =========================
         # Help
-        # =========================
         help_menu = menu_bar.addMenu("&Help")
-
         about_action = QAction("About AudriseFFTool", self)
         about_action.setShortcut("Ctrl+H")
         about_action.triggered.connect(self._on_about)
@@ -228,7 +217,6 @@ class MainWindow(QMainWindow):
 
     def _on_track_table_context_menu(self, pos) -> None:
         has_selection = bool(self._track_table.selected_row_ids())
-
         menu = QMenu(self)
 
         add_file_action = menu.addAction(
@@ -270,9 +258,7 @@ class MainWindow(QMainWindow):
 
         menu.exec(self._track_table.viewport().mapToGlobal(pos))
 
-    # ------------------------------------------------------------------
-    # Aksi user
-    # ------------------------------------------------------------------
+    # User Action
     def _on_add_files_clicked(self) -> None:
         paths, _ = QFileDialog.getOpenFileNames(
             self, "Select audio", "", "Audio Files (*.mp3 *.wav *.flac *.m4a *.aac *.ogg *.wma *.opus)"
@@ -286,12 +272,11 @@ class MainWindow(QMainWindow):
             self._metadata_service.read_metadata(audio_file)
             self._audio_files[audio_file.id] = audio_file
             self._track_table.add_file(audio_file)
+
         logger.info("Adding %d files to the batch", len(paths))
 
     def _on_conversion_settings_clicked(self) -> None:
-        """Pre-populate the default ConversionSettings from the File menu.
-
-        This is OPTIONAL and only used to prefill the dialog. The same dialog
+        """This is OPTIONAL and only used to prefill the dialog. The same dialog
         will ALWAYS be shown again every time the Convert button is clicked
         (see _on_process_clicked), so this is NOT a way to skip the dialog.
         """
@@ -412,22 +397,6 @@ class MainWindow(QMainWindow):
                 else:
                     audio_file.metadata.extra.pop(key, None)
 
-            """BUGFIX: Previously, when BOTH metadata fields and the cover art were
-            changed in the same "Edit Metadata" action, this created TWO separate
-            jobs (APPLY_METADATA and SET_COVER) that both read from the SAME
-            original audio_file.path independently (not chained to each other's
-            output). Neither job's output ever ended up with both changes:
-            APPLY_METADATA's output kept the old cover, and SET_COVER's output
-            kept the old tag values (it only copied whatever was already on disk
-            via -map_metadata). This produced two incomplete, divergent files
-            (e.g. "..._tagged.flac" and "..._cover.flac") instead of one.
-
-            Fix: when the cover also changed, skip the separate APPLY_METADATA
-            job entirely and only enqueue SET_COVER -- its command now writes
-            the current in-memory metadata explicitly (see
-            ffmpeg/command_builder.py::_build_set_cover), so a single job/output
-            file ends up with both the updated tags and the new cover."""
-
             if cover_changed and cover_path:
                 cover_output_path = self._metadata_service.default_output_path(
                     audio_file, config.output_directory, "_changed_cover_art"
@@ -472,9 +441,7 @@ class MainWindow(QMainWindow):
             self._job_manager.set_ffmpeg_path(self._config_service.get("ffmpeg_path"))
             self._job_manager.set_max_parallel_jobs(self._config_service.get("max_parallel_jobs"))
 
-    # ------------------------------------------------------------------
     # Reactions to JobManager signals
-    # ------------------------------------------------------------------
     def _on_job_started(self, job_id: str) -> None:
         """job_id here is the Job.id; we need audio_file.id to update the row.
         Since one job = one audio_file in this MVP, we map them back through
