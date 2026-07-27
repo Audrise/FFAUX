@@ -1,18 +1,10 @@
 """
-# JobManager: the sole GUI entry point for running batch jobs.
+# The sole GUI entry point for running batch jobs.
 
 The GUI NEVER calls subprocesses or FFmpeg directly—it always goes
 through JobManager.enqueue(). This allows the backend to be fully tested
 independently of the GUI and ensures the GUI does not need to know
 anything about FFmpeg commands.
-
-Signals emitted (see also the signal contract table in the design):
-    jobAdded(job_id)
-    jobStarted(job_id)
-    jobProgress(job_id, percent)
-    jobLog(job_id, line)
-    jobFinished(job_id, success, message)
-    batchFinished()
 """
 from __future__ import annotations
 
