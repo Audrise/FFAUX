@@ -1,7 +1,6 @@
-from unittest.mock import MagicMock
-
 from core.metadata_service import MetadataService
 from core.models.audio_file import AudioFile
+from unittest.mock import MagicMock
 
 def test_extract_cover_art_returns_none_without_ffmpeg_runner():
     service = MetadataService(ffprobe_runner=MagicMock())
