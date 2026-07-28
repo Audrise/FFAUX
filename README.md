@@ -142,7 +142,7 @@ within the application's settings dialog.
 
 5. Install FFmpeg:
 
-   - Download a [FFmpeg](https://www.ffmpeg.org/download.html) build (e.g. from gyan.dev or BtbN for Windows).
+   - Download a [FFmpeg](https://ffmpeg.org/download.html) build (e.g. from gyan.dev or BtbN for Windows).
    - Place `ffmpeg` and `ffprobe` (or `ffmpeg.exe` / `ffprobe.exe` on
      Windows) in the `bin/` directory, or ensure they are accessible
      via the system PATH.
