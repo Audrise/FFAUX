@@ -8,7 +8,7 @@
 <br>
 
 <div align=center>
-    <a href="https://www.python.org/">
+    <a href="https://www.python.org/downloads/">
         <img src="https://img.shields.io/badge/Python 3.10+-FFD43B?style=for-the-badge&logo=python&logoColor=blue"/>
     </a>
     <a href="https://github.com/Audrise/FFTool">
@@ -142,7 +142,7 @@ within the application's settings dialog.
 
 5. Install FFmpeg:
 
-   - Download a FFmpeg build (e.g. from gyan.dev or BtbN for Windows).
+   - Download a [FFmpeg](https://www.ffmpeg.org/download.html) build (e.g. from gyan.dev or BtbN for Windows).
    - Place `ffmpeg` and `ffprobe` (or `ffmpeg.exe` / `ffprobe.exe` on
      Windows) in the `bin/` directory, or ensure they are accessible
      via the system PATH.
