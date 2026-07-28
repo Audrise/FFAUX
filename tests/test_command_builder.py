@@ -1,5 +1,5 @@
-from core.models.audio_file import AudioFile
 from core.models.job import Job, OperationType
+from core.models.audio_file import AudioFile
 from ffmpeg.command_builder import build
 
 def test_build_convert_basic():
