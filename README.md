@@ -34,7 +34,7 @@
 
 <h1 align="center">DISCLAIMER!</h1>
  
-**AudriseFFTool** is developed strictly for **personal use**, **audio organization**, and **educational purposes**. This tool is designed to help you **view, edit, and manage audio metadata and cover art** in a **safe, local environment** — it does not download, stream, or acquire audio content from any source.
+**AudriseFFTool** is developed strictly for **personal use**, **audio organization**, and **educational purposes**. This tool is designed to help you **view, edit, and manage audio metadata and cover art** in a **safe, local environment**. it doesn't download, stream, or acquire audio content from any source.
  
 Any **unauthorized distribution, redistribution, or commercial use** of audio files you do not own or do not have explicit rights to modify may be considered **illegal** under applicable copyright law. The author(s) of this project are **not responsible** for any misuse of this software or for any copyright infringement resulting from files processed with it.
  
