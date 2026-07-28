@@ -21,7 +21,9 @@
     <a href="https://docs.pytest.org/en/stable/">
     <img src="https://img.shields.io/badge/PyTest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white"/>
     </a>
+    <a href="https://github.com/Audrise/FFTool?tab=GPL-3.0-1-ov-file">
     <img src="https://img.shields.io/badge/GPL--3.0-blue?style=for-the-badge"/>
+    </a>
     <br>
     <img src="https://img.shields.io/badge/windows%20GUI-blue?style=for-the-badge&logo=windows11&%20terminal&logoColor=white"/>
     <img src="https://img.shields.io/badge/windows%20terminal-blue?style=for-the-badge&logo=windows11&%20terminal&logoColor=white"/>
