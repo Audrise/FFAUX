@@ -5,9 +5,9 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from enum import Enum
-from pathlib import Path
 from typing import Optional
+from pathlib import Path
+from enum import Enum
 
 from core.models.metadata import Metadata
 
