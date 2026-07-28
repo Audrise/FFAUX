@@ -1,6 +1,6 @@
-from core.models.audio_file import AudioFile
 from core.models.conversion_settings import ConversionSettings, OutputFormat
 from core.models.job import Job, OperationType
+from core.models.audio_file import AudioFile
 from ffmpeg.command_builder import build
 
 def test_flac_settings_always_include_soxr_and_preserve_streams():
