@@ -1,5 +1,4 @@
 from unittest.mock import MagicMock, patch
-
 from ffmpeg.ffmpeg_runner import FFmpegRunner
 
 def _mock_process(lines: list[str], return_code: int = 0):
