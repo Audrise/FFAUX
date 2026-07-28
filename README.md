@@ -41,7 +41,6 @@ Any **unauthorized distribution, redistribution, or commercial use** of audio fi
 By using AudriseFFTool, you agree that you are solely responsible for ensuring you have the necessary rights or permissions for any audio file you edit, convert, or tag. Use this software responsibly.
  
 ## Description
- 
 AudriseFFTool is a desktop application for converting and tagging audio
 files using FFmpeg and FFprobe. It provides a graphical, playlist-style
 interface built with PySide6, allowing users to queue multiple audio
@@ -51,7 +50,6 @@ the command line directly.
 FFmpeg and FFprobe are invoked as external processes rather than being
 reimplemented, so the application relies on a working FFmpeg
 installation to perform any conversion or probing task.
-
 
 ## Table of Contents
 * **[Description](#description)**
@@ -64,7 +62,6 @@ installation to perform any conversion or probing task.
 * **[Changelog](#changelog)**
 
 ## Features
-
 - Batch audio conversion via FFmpeg, with configurable:
   - Output format
   - Sample rate
@@ -73,26 +70,41 @@ installation to perform any conversion or probing task.
   - Resampling engine (SOXR)
   - Compression level
   - Custom output folder
-- Playlist-style track table supporting drag-and-drop and multi-select.
-- Aggregate progress panel for batch conversion jobs.
-- Real-time FFmpeg log viewer.
+- Playlist-style track table supporting drag-and-drop and multi-select,
+  with resizable columns. Column widths are remembered across sessions,
+  and can be reset back to their defaults from View -> Reset Column
+  Widths.
+- Aggregate progress panel for batch conversion jobs, toggleable from
+  the View menu.
+- Real-time FFmpeg log viewer, toggleable from the View menu.
 - Metadata editor supporting both single-file and multi-file (batch)
   editing:
   - Dynamic fields based on the tags actually present in the selected
-    file(s).
+    file(s), including non-standard tags (e.g. ISRC, publisher) --
+    not just a fixed list of common fields.
   - Combined, read-only display for fields that differ across multiple
-    selected tracks.
-  - Metadata templates that can be saved, applied, and previewed.
+    selected tracks, so saving without editing them never overwrites
+    each track's original value.
+  - Metadata templates that can be saved, applied, and previewed in a
+    separate window before applying.
 - Cover art viewer for previewing, replacing, and removing embedded
   cover art.
 - Configurable FFmpeg/FFprobe executable paths via a settings dialog.
+- The "Convert Selected Audio" action is automatically disabled
+  whenever the track list is empty.
+- Window size, position, and maximized state are remembered across
+  sessions.
+- Optional Discord Rich Presence integration, showing the app's
+  current status (idle / converting) on Discord. Safe to leave
+  disabled, and fails silently if Discord isn't installed or running.
 
 ## Requirements
-
 - Python 3.10 or newer
 - pip
 - PySide6
 - FFmpeg and FFprobe executables
+- pypresence (optional -- only required for Discord Rich Presence; the
+  application runs normally without it)
 
 FFmpeg is not bundled with the application and must be installed
 separately. It must either be available on the system PATH, or placed
@@ -100,7 +112,6 @@ in the `bin/` directory of the project, or configured manually from
 within the application's settings dialog.
 
 ## Installation
-
 1. Clone the repository:
 
    ```bash
@@ -136,10 +147,7 @@ within the application's settings dialog.
    - Alternatively, configure their paths later from within the
      application.
 
-
-
 ## Quick Start
-
 1. Launch the application:
 
    ```bash
@@ -160,9 +168,7 @@ within the application's settings dialog.
    in the selected file(s). Apply a saved template, edit fields
    directly, or preview a template's contents before applying it.
 
-
 ## Structure
-
 ```
 AudriseFFTool/
 ├── main.py                  # Application entry point
@@ -175,6 +181,7 @@ AudriseFFTool/
 ├── config/                  # Application configuration
 ├── core/                     # Backend logic (no GUI dependencies)
 │   ├── config_service.py
+│   ├── discord_presence_service.py
 │   ├── ffmpeg_worker.py
 │   ├── filename_parser.py
 │   ├── job_manager.py
@@ -206,7 +213,6 @@ AudriseFFTool/
 ```
 
 ## Troubleshooting
-
 **The application cannot find FFmpeg or FFprobe.**
 Verify that `ffmpeg` and `ffprobe` are either on the system PATH,
 placed inside the `bin/` directory, or configured with the correct
@@ -224,6 +230,37 @@ file may not contain that tag. If multiple files are selected and a
 field shows a combined, read-only value, this means the selected
 files have differing values for that field.
 
+**A tag name that used to be mixed/upper-case (e.g. `ISRC`,
+`REPLAYGAIN_TRACK_GAIN`) shows up in lowercase after editing
+metadata.**
+This was a known issue where non-standard tag names were
+force-lowercased when read from the file, and has since been fixed.
+Files that were already re-saved while the issue was present will keep
+their lowercased tag names; re-tag them manually if you need the
+original casing back.
+
+**The application crashed with a `UnicodeDecodeError` (e.g. `'charmap'
+codec can't decode byte...`) while adding files or converting.**
+This was caused by FFmpeg/FFprobe output being decoded using Windows'
+default codepage instead of UTF-8, and has since been fixed. If you
+still run into it, please note the exact file and error message when
+reporting it.
+
+**Window size, position, or track table column widths don't persist
+between sessions.**
+These are saved to `config/app_config.json` when the application
+window is closed normally. Make sure the `config/` folder is writable
+(this can be an issue for a packaged `.exe` installed to a
+restricted/read-only location). Column widths can be reset to their
+defaults anytime from View -> Reset Column Widths.
+
+**Discord Rich Presence doesn't show up.**
+This feature is optional and requires all of the following: the
+`pypresence` package installed, a valid Discord `client_id`
+configured, and the Discord desktop app (not the browser version)
+running locally. If any of these are missing, the application
+continues normally without showing a presence status.
+
 **The application window does not start / crashes on launch.**
 Confirm that the virtual environment is activated and that all
 dependencies from `requirements.txt` were installed successfully.
@@ -231,7 +268,6 @@ dependencies from `requirements.txt` were installed successfully.
 ## Changelog
 
 ### v1.0 - **Initial Release**
-
 
 <h1></h1>
 <h4 align="center">©AUDRISE</h4>
