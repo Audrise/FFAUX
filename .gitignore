@@ -7,9 +7,13 @@ assets/templates/*.json
 bin/*.dll
 bin/*.exe
 improve/
+FFTool-Compiled/
 .venv/
 audio/
 build/
 dist/
 *.spec
 *.flac
+*.iss
+*.spec
+*.bat

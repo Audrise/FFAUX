@@ -197,7 +197,7 @@ class MetadataEditorDialog(QDialog):
         cover art (used by both auto-extraction upon opening the dialog
         and the "Extract from File" button).
         """
-        temp_dir = Path(tempfile.gettempdir()) / "audrisefftool_covers"
+        temp_dir = Path(tempfile.gettempdir()) / "fftool_covers"
         path = self._metadata_service.extract_cover_art_sync(self._primary_file, str(temp_dir))
         if path:
             self._cover_viewer.load_image(path)

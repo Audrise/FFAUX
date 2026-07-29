@@ -24,7 +24,7 @@ from ffmpeg.ffprobe_runner import FFprobeRunner
 from gui.main_window import MainWindow
 from utils.logger import setup_logging
 
-APP_NAME = "AudriseFFTool"
+APP_NAME = "FFTool"
 
 def _resource_root() -> Path:
     if getattr(sys, "frozen", False):
@@ -49,7 +49,7 @@ def main() -> int:
     setup_logging(log_file=APP_ROOT / "config" / "app.log")
 
     app = QApplication(sys.argv)
-    app.setApplicationName("AudriseFFTool")
+    app.setApplicationName("FFTool")
 
     splash = None
     splash_path = RESOURCE_ROOT / "assets" / "icons" / "logo.png"
@@ -99,7 +99,7 @@ def main() -> int:
                 )
             )
 
-            title = QLabel("AudriseFFTool")
+            title = QLabel("FFTool")
             title.setAlignment(Qt.AlignCenter)
             title.setStyleSheet("""
                 color: white;

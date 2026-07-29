@@ -22,7 +22,7 @@ from core.config_service import ConfigService
 class SettingsDialog(QDialog):
     def __init__(self, config_service: ConfigService, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("AudriseFFTool Settings")
+        self.setWindowTitle("FFTool Settings")
         self._config_service = config_service
         config = config_service.config
 

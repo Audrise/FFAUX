@@ -44,7 +44,7 @@ class MainWindow(QMainWindow):
         parent=None,
     ):
         super().__init__(parent)
-        self.setWindowTitle("AudriseFFTool")
+        self.setWindowTitle("FFTool")
         self.resize(1200, 600)
 
         self._config_service = config_service
@@ -164,7 +164,7 @@ class MainWindow(QMainWindow):
 
         # Help
         help_menu = menu_bar.addMenu("&Help")
-        about_action = QAction("About AudriseFFTool", self)
+        about_action = QAction("About FFTool", self)
         about_action.setShortcut("Ctrl+H")
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
@@ -493,7 +493,7 @@ class MainWindow(QMainWindow):
             self,
             "About",
             """
-            <h3>AudriseFFTool</h3>
+            <h3>FFTool</h3>
 
             <p>
                 A graphical user interface for audio processing built with
@@ -502,7 +502,7 @@ class MainWindow(QMainWindow):
             </p>
 
             <p>
-                GitHub:
+                Developed By:
                 <a href="https://github.com/Audrise" target="_blank">Audrise</a>
                 <br>
                 Repository:
