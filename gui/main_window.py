@@ -98,6 +98,11 @@ class MainWindow(QMainWindow):
         self._open_action.triggered.connect(self._on_add_files_clicked)
         file_menu.addAction(self._open_action)
 
+        self._add_folder_action = QAction("Add Folder...", self)
+        self._add_folder_action.setShortcut("Ctrl+Shift+O")
+        self._add_folder_action.triggered.connect(self._on_add_folder_clicked)
+        file_menu.addAction(self._add_folder_action)
+
         self._delete_action = QAction("Delete File", self)
         self._delete_action.setShortcut("Ctrl+W")
         self._delete_action.triggered.connect(self._on_delete_selected_file)
@@ -164,7 +169,7 @@ class MainWindow(QMainWindow):
 
         # Help
         help_menu = menu_bar.addMenu("&Help")
-        about_action = QAction("About FFTool", self)
+        about_action = QAction("About", self)
         about_action.setShortcut("Ctrl+H")
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
@@ -228,6 +233,12 @@ class MainWindow(QMainWindow):
         )
         add_file_action.setShortcut("Ctrl+O")
 
+        add_folder_action = menu.addAction(
+            "Add Folder...",
+            self._on_add_folder_clicked
+        )
+        add_folder_action.setShortcut("Ctrl+Shift+O")
+
         edit_metadata_action = menu.addAction(
             "Edit Metadata...",
             self._on_edit_metadata_clicked
@@ -268,6 +279,20 @@ class MainWindow(QMainWindow):
         )
         if paths:
             self._on_files_added(collect_audio_files(paths))
+
+    def _on_add_folder_clicked(self) -> None:
+        folder = QFileDialog.getExistingDirectory(self, "Select folder")
+        if not folder:
+            return
+
+        found = collect_audio_files([folder])
+        if not found:
+            QMessageBox.information(
+                self, "No Audio Files", "No supported audio files were found in that folder."
+            )
+            return
+
+        self._on_files_added(found)
 
     def _on_files_added(self, paths: list[str]) -> None:
         for path in paths:
@@ -491,9 +516,9 @@ class MainWindow(QMainWindow):
     def _on_about(self) -> None:
         QMessageBox.about(
             self,
-            "About",
+            "About FFTool",
             """
-            <h3>FFTool</h3>
+            <h3>FFTool Version 1.0</h3>
 
             <p>
                 A graphical user interface for audio processing built with
