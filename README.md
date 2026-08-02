@@ -272,4 +272,4 @@ dependencies from `requirements.txt` were installed successfully.
 ### v1.0 - **Initial Release**
 
 <h1></h1>
-<h4 align="center">©AUDRISE</h4>
+<h4 align="center">©2026 AUDRISE</h4>
