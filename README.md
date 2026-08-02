@@ -178,7 +178,7 @@ FFTool/
 ├── bin/                     # Optional location for ffmpeg/ffprobe executables
 ├── assets/
 │   ├── icons/                # Application icons
-│   ├── styles/                # Qt stylesheets (e.g. dark theme)
+│   ├── styles/                # Qt stylesheets (QSS)
 │   └── templates/             # Saved metadata templates
 ├── config/                  # Application configuration
 ├── core/                     # Backend logic (no GUI dependencies)
