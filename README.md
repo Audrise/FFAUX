@@ -36,14 +36,14 @@
 
 <h1 align="center">DISCLAIMER!</h1>
  
-**AudriseFFTool** is developed strictly for **personal use**, **audio organization**, and **educational purposes**. This tool is designed to help you **view, edit, and manage audio metadata and cover art** in a **safe, local environment**. it doesn't download, stream, or acquire audio content from any source.
+**FFTool** is developed strictly for **personal use**, **audio organization**, and **educational purposes**. This tool is designed to help you **view, edit, and manage audio metadata and cover art** in a **safe, local environment**. it doesn't download, stream, or acquire audio content from any source.
  
 Any **unauthorized distribution, redistribution, or commercial use** of audio files you do not own or do not have explicit rights to modify may be considered **illegal** under applicable copyright law. The author(s) of this project are **not responsible** for any misuse of this software or for any copyright infringement resulting from files processed with it.
  
-By using AudriseFFTool, you agree that you are solely responsible for ensuring you have the necessary rights or permissions for any audio file you edit, convert, or tag. Use this software responsibly.
+By using FFTool, you agree that you are solely responsible for ensuring you have the necessary rights or permissions for any audio file you edit, convert, or tag. Use this software responsibly.
  
 ## Description
-AudriseFFTool is a desktop application for converting and tagging audio
+FFTool is a desktop application for converting and tagging audio
 files using FFmpeg and FFprobe. It provides a graphical, playlist-style
 interface built with PySide6, allowing users to queue multiple audio
 files, configure conversion settings, and edit metadata without using
@@ -142,7 +142,7 @@ within the application's settings dialog.
 
 5. Install FFmpeg:
 
-   - Download a [FFmpeg](https://ffmpeg.org/download.html) build (e.g. from gyan.dev or BtbN for Windows).
+   - [Download a FFmpeg build](https://ffmpeg.org/download.html) (e.g. from gyan.dev or BtbN for Windows).
    - Place `ffmpeg` and `ffprobe` (or `ffmpeg.exe` / `ffprobe.exe` on
      Windows) in the `bin/` directory, or ensure they are accessible
      via the system PATH.
@@ -172,7 +172,7 @@ within the application's settings dialog.
 
 ## Structure
 ```
-AudriseFFTool/
+FFTool/
 ├── main.py                  # Application entry point
 ├── requirements.txt         # Python dependencies
 ├── bin/                     # Optional location for ffmpeg/ffprobe executables
