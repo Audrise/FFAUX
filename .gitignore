@@ -19,7 +19,7 @@ bin/*.dll
 bin/*.exe
 
 # Misc / working folders
-improve/
+notes/
 audio/
 
 # Build & installer scripts
