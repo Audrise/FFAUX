@@ -3,7 +3,7 @@
 </h1>
 
 <div align=center>
-    <strong>Python 3-based FFmpeg wrapper that uses PySide6 for the GUI</strong>
+    <strong>Python 3 based FFmpeg wrapper that uses PySide6 for the GUI</strong>
 </div>
 <br>
 
@@ -36,22 +36,17 @@
 
 <h1 align="center">DISCLAIMER!</h1>
  
-**FFTool** is developed strictly for **personal use**, **audio organization**, and **educational purposes**. This tool is designed to help you **view, edit, and manage audio metadata and cover art** in a **safe, local environment**. it doesn't download, stream, or acquire audio content from any source.
- 
-Any **unauthorized distribution, redistribution, or commercial use** of audio files you do not own or do not have explicit rights to modify may be considered **illegal** under applicable copyright law. The author(s) of this project are **not responsible** for any misuse of this software or for any copyright infringement resulting from files processed with it.
- 
-By using FFTool, you agree that you are solely responsible for ensuring you have the necessary rights or permissions for any audio file you edit, convert, or tag. Use this software responsibly.
+**FFTool** is developed strictly for **personal use**, **audio organization**, and **educational purposes**. 
+This tool is designed to help you **view, edit, and manage audio metadata and cover art** in a safe, local environment. 
+**it doesn't download, stream, or acquire audio content from any source.**
  
 ## Description
-FFTool is a desktop application for converting and tagging audio
-files using FFmpeg and FFprobe. It provides a graphical, playlist-style
-interface built with PySide6, allowing users to queue multiple audio
-files, configure conversion settings, and edit metadata without using
-the command line directly.
+FFTool is a desktop application I developed to address my own workflow requirements for managing digital audio. 
+It leverages FFmpeg and FFprobe to convert and tag audio files, and provides a graphical, playlist-style interface built with PySide6. 
+The application enables users to queue multiple audio files, configure conversion settings, and edit metadata without relying on the command line.
  
-FFmpeg and FFprobe are invoked as external processes rather than being
-reimplemented, so the application relies on a working FFmpeg
-installation to perform any conversion or probing task.
+FFTool invokes FFmpeg and FFprobe as external processes rather than reimplementing their functionality. 
+As a result, the application requires a working FFmpeg installation to perform audio conversion and media probing.
 
 ## Table of Contents
 * **[Description](#description)**
@@ -142,7 +137,7 @@ within the application's settings dialog.
 
 5. Install FFmpeg:
 
-   - [Download a FFmpeg build](https://ffmpeg.org/download.html) (e.g. from gyan.dev or BtbN for Windows).
+   - [Download a FFmpeg build](https://ffmpeg.org/download.html) *(e.g. from gyan.dev or BtbN for Windows).*
    - Place `ffmpeg` and `ffprobe` (or `ffmpeg.exe` / `ffprobe.exe` on
      Windows) in the `bin/` directory, or ensure they are accessible
      via the system PATH.
