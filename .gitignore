@@ -1,19 +1,33 @@
+# Python
 __pycache__/
 *.pyc
 .pytest_cache/
+.venv/
+
+# Build & packaging output
+build/
+dist/
+FFTool-Compiled/
+
+# App runtime / local config
 config/app_config.json
 config/app.log
+
+# Local-only assets
 assets/templates/*.json
 bin/*.dll
 bin/*.exe
+
+# Misc / working folders
 improve/
-FFTool-Compiled/
-.venv/
 audio/
-build/
-dist/
+
+# Build & installer scripts
 *.spec
-*.flac
 *.iss
-*.spec
 *.bat
+
+# Audio test
+*.flac
+*.wav
+*.mp3
