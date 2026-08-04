@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
-from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QProgressBar, QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QMenu, QProgressBar, QTableWidget, QTableWidgetItem
 
 from core.models.audio_file import AudioFile, FileStatus
 from utils.file_utils import collect_audio_files, format_duration, format_file_size, format_sample_rate
@@ -23,16 +23,22 @@ _STATUS_LABELS = {
 }
 
 (
-    _COL_TRACK, _COL_TITLE, _COL_ARTIST, _COL_ALBUM, _COL_YEAR, _COL_DURATION, _COL_SAMPLE_RATE,
-    _COL_BITRATE, _COL_SIZE, _COL_CODEC, _COL_STATUS, _COL_PROGRESS,
-) = range(12)
+    _COL_FILE_NAME, _COL_TRACK, _COL_TITLE, _COL_ARTIST, _COL_ALBUM, _COL_YEAR, _COL_DURATION, _COL_SAMPLE_RATE,
+    _COL_BITRATE, _COL_SIZE, _COL_CODEC, _COL_RATING, _COL_STATUS, _COL_PROGRESS,
+) = range(14)
 
 _HEADERS = [
-    "Track No", "Title", "Artist", "Album", "Year", "Duration", "Sample Rate",
-    "Bitrate", "File size", "Codec", "Status", "Progress",
+    "File Name", "Track No", "Title", "Artist", "Album", "Year", "Duration", "Sample Rate",
+    "Bitrate", "File size", "Codec", "Rating", "Status", "Progress",
 ]
 
+_DEFAULT_HIDDEN_COLUMNS = {
+    _COL_FILE_NAME,
+    _COL_RATING,
+}
+
 _DEFAULT_WIDTHS = {
+    _COL_FILE_NAME: 240,
     _COL_TRACK: 70,
     _COL_TITLE: 220,
     _COL_ARTIST: 120,
@@ -43,6 +49,7 @@ _DEFAULT_WIDTHS = {
     _COL_BITRATE: 90,
     _COL_SIZE: 90,
     _COL_CODEC: 90,
+    _COL_RATING: 90,
     _COL_STATUS: 90,
     _COL_PROGRESS: 115,
 }
@@ -68,6 +75,9 @@ class TrackTable(QTableWidget):
         header = self.horizontalHeader()
         header.setHighlightSections(False)
         header.setFixedHeight(24)
+        header.setSectionsMovable(True)
+        header.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        header.customContextMenuRequested.connect(self._on_header_context_menu)
 
         self.verticalHeader().setVisible(False)
         self.setTextElideMode(Qt.TextElideMode.ElideRight)
@@ -89,6 +99,9 @@ class TrackTable(QTableWidget):
             header.resizeSection(col, _DEFAULT_WIDTHS.get(col, 100))
         self.reset_column_widths()
 
+        for col in _DEFAULT_HIDDEN_COLUMNS:
+            header.setSectionHidden(col, True)
+
     # Persist column widths (see MainWindow.closeEvent).
     def column_widths(self) -> list[int]:
         header = self.horizontalHeader()
@@ -107,6 +120,58 @@ class TrackTable(QTableWidget):
         for col in range(len(_HEADERS)):
             header.setSectionResizeMode(col, QHeaderView.ResizeMode.Interactive)
             header.resizeSection(col, _DEFAULT_WIDTHS.get(col, 100))
+
+    # Column visibility (right-click on the header -> "Columns" submenu).
+    def _on_header_context_menu(self, pos) -> None:
+        header = self.horizontalHeader()
+        menu = QMenu(self)
+        columns_menu = menu.addMenu("Columns")
+
+        for col, label in enumerate(_HEADERS):
+            action = columns_menu.addAction(label)
+            action.setCheckable(True)
+            action.setChecked(not header.isSectionHidden(col))
+            action.toggled.connect(lambda checked, c=col: self._set_column_visible(c, checked))
+
+        menu.exec(header.mapToGlobal(pos))
+
+    def _set_column_visible(self, col: int, visible: bool) -> None:
+        header = self.horizontalHeader()
+        header.setSectionHidden(col, not visible)
+
+        if visible:
+            # A hidden section still keeps its old visual slot -- move it to
+            # the far right instead of popping back into its previous spot.
+            last_visual = header.count() - 1
+            current_visual = header.visualIndex(col)
+            if current_visual != last_visual:
+                header.moveSection(current_visual, last_visual)
+
+    # Persist column order (see MainWindow.closeEvent). Order is a list of
+    # logical column indices, left to right, as currently arranged by drag.
+    def column_order(self) -> list[int]:
+        header = self.horizontalHeader()
+        return [header.logicalIndex(visual) for visual in range(header.count())]
+
+    def apply_column_order(self, order: list[int]) -> None:
+        header = self.horizontalHeader()
+        for target_visual, logical in enumerate(order):
+            if not (0 <= logical < self.columnCount()):
+                continue
+            current_visual = header.visualIndex(logical)
+            if current_visual != target_visual:
+                header.moveSection(current_visual, target_visual)
+
+    # Persist hidden columns (see MainWindow.closeEvent).
+    def hidden_columns(self) -> list[int]:
+        header = self.horizontalHeader()
+        return [col for col in range(self.columnCount()) if header.isSectionHidden(col)]
+
+    def apply_hidden_columns(self, hidden_columns: list[int]) -> None:
+        header = self.horizontalHeader()
+        hidden_set = set(hidden_columns)
+        for col in range(self.columnCount()):
+            header.setSectionHidden(col, col in hidden_set)
 
     # Drag and drop directly within the table.
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
@@ -132,9 +197,10 @@ class TrackTable(QTableWidget):
         meta = audio_file.metadata
 
         values = {
+            _COL_FILE_NAME: audio_file.filename,
             _COL_TRACK: meta.track_number or "",
-            _COL_TITLE: meta.title,
-            _COL_ARTIST: meta.artist,
+            _COL_TITLE: meta.title or audio_file.filename,
+            _COL_ARTIST: meta.artist or "",
             _COL_ALBUM: meta.album or "",
             _COL_YEAR: meta.year or "",
             _COL_DURATION: format_duration(audio_file.duration_seconds),
@@ -142,6 +208,7 @@ class TrackTable(QTableWidget):
             _COL_BITRATE: f"{audio_file.bitrate_kbps} kbps" if audio_file.bitrate_kbps else "-",
             _COL_SIZE: format_file_size(audio_file.file_size_bytes),
             _COL_CODEC: audio_file.codec or "-",
+            _COL_RATING: meta.rating or "",
             _COL_STATUS: _STATUS_LABELS[audio_file.status],
         }
         for col, text in values.items():
