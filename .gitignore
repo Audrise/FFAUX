@@ -7,7 +7,7 @@ __pycache__/
 # Build & packaging output
 build/
 dist/
-FFTool-Compiled/
+FFTool-Wizard/
 
 # App runtime / local config
 config/app_config.json
