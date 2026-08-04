@@ -24,7 +24,7 @@ from ffmpeg.ffprobe_runner import FFprobeRunner
 
 _CONSUMED_TAG_KEYS = {
     "title", "artist", "album", "album_artist", "genre",
-    "date", "year", "track", "disc", "comment", "composer",
+    "date", "year", "track", "disc", "comment", "composer", "rating",
 }
 
 class MetadataService:
@@ -62,6 +62,7 @@ class MetadataService:
             "disc_number": tags.get("disc"),
             "comment": tags.get("comment"),
             "composer": tags.get("composer"),
+            "rating": tags.get("rating"),
         }
 
         # Iterate the ORIGINAL-CASE tags here (not the lowercased `tags` dict
