@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 CONFIG_SCHEMA_VERSION = 1
 
@@ -32,6 +32,9 @@ class AppConfig:
     enable_discord_presence: bool = True
     discord_client_id: str = ""
     track_table_column_widths: list[int] = field(default_factory=list)
+    track_table_hidden_columns: Optional[list[int]] = None
+    track_table_column_order: Optional[list[int]] = None
+    session_paths: list[str] = field(default_factory=list)
 
 class ConfigService:
     def __init__(self, config_path: str | Path):
