@@ -555,11 +555,12 @@ class MainWindow(QMainWindow):
         logger.info("Batch finished")
 
     def _on_about(self) -> None:
-        QMessageBox.about(
-            self,
-            "About",
-            """
-            <h3>FFTool</h3>
+        box = QMessageBox(self)
+        box.setWindowTitle("About")
+        box.setIcon(QMessageBox.Icon.NoIcon)
+        box.setTextFormat(Qt.TextFormat.RichText)
+        box.setText("""
+            <h3>FFTool Version 1.0</h3>
 
             <p>
                 A graphical user interface for audio processing built with
@@ -568,16 +569,17 @@ class MainWindow(QMainWindow):
             </p>
 
             <p>
-                Developed By:
-                <a href="https://github.com/Audrise" target="_blank">Audrise</a>
-                <br>
-                Repository:
-                <a href="https://github.com/Audrise/FFTool" target="_blank">Visit</a>
-            </p>
-
-            <p>
                 <b>Copyright © 2026 Audrise</b><br>
                 Licensed under the GNU General Public License v3.0 (GPL-3.0).
             </p>
+
+            <p>
+                Developed By:
+                <a href="https://github.com/Audrise" target="_blank">Audrise</a>
+
+                Repository:
+                <a href="https://github.com/Audrise/FFTool" target="_blank">Visit</a>
+            </p>
             """,
         )
+        box.exec()
