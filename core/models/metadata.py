@@ -24,6 +24,7 @@ class Metadata:
     comment: Optional[str] = None
     composer: Optional[str] = None
     cover_art_path: Optional[str] = None
+    rating: Optional[str] = None
 
     extra: dict = field(default_factory=dict)
     # Additional tags that do not have specific fields (e.g., ISRC, publisher).
