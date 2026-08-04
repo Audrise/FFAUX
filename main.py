@@ -52,7 +52,7 @@ def main() -> int:
     app.setApplicationName("FFTool")
 
     splash = None
-    splash_path = RESOURCE_ROOT / "assets" / "icons" / "logo.png"
+    splash_path = RESOURCE_ROOT / "assets" / "splash" / "FFTool.png"
 
     if splash_path.exists():
         pixmap = QPixmap(str(splash_path))
@@ -142,7 +142,7 @@ def main() -> int:
     if config.enable_discord_presence:
         discord_presence.start()
 
-    icon_path = RESOURCE_ROOT / "assets" / "icons" / "logo.ico"
+    icon_path = RESOURCE_ROOT / "assets" / "icons" / "FFTool.ico"
     if icon_path.exists():
         app.setWindowIcon(QIcon(str(icon_path)))
 
