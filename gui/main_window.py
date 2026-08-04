@@ -7,6 +7,8 @@ No FFmpeg, parsing, or metadata logic is implemented in this file.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 from PySide6.QtWidgets import QFileDialog, QMainWindow, QMenu, QMessageBox, QSplitter, QVBoxLayout, QWidget
 from PySide6.QtGui import QShortcut, QKeySequence, QAction
 from PySide6.QtCore import Qt
@@ -64,6 +66,18 @@ class MainWindow(QMainWindow):
         if saved_widths:
             self._track_table.apply_column_widths(saved_widths)
 
+        hidden_columns = self._config_service.config.track_table_hidden_columns
+        if hidden_columns:
+            self._track_table.apply_hidden_columns(hidden_columns)
+
+        column_order = self._config_service.config.track_table_column_order
+        if column_order is not None:
+            self._track_table.apply_column_order(column_order)
+
+        session_paths = self._config_service.config.session_paths
+        if session_paths:
+            self._on_files_added(session_paths)
+
         self._discord_presence.update(PresenceState(state="Managing audio files", large_image="app_logo"))
 
     def _update_file_dependent_actions(self) -> None:
@@ -84,6 +98,9 @@ class MainWindow(QMainWindow):
             config.window_y = self.y()
 
         config.track_table_column_widths = self._track_table.column_widths()
+        config.track_table_hidden_columns = self._track_table.hidden_columns()
+        config.track_table_column_order = self._track_table.column_order()
+        config.session_paths = [audio_file.path for audio_file in self._audio_files.values()]
         self._config_service.save()
         self._discord_presence.stop()
         super().closeEvent(event)
@@ -169,7 +186,7 @@ class MainWindow(QMainWindow):
 
         # Help
         help_menu = menu_bar.addMenu("&Help")
-        about_action = QAction("About", self)
+        about_action = QAction("About FFTool", self)
         about_action.setShortcut("Ctrl+H")
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
@@ -257,6 +274,7 @@ class MainWindow(QMainWindow):
         )
         delete_action.setShortcut("Ctrl+W")
 
+        menu.addSeparator()
         menu.addAction(self._toggle_log_action)
         menu.addAction(self._toggle_progress_panel_action)
         menu.addAction(self._reset_columns_action)
@@ -335,6 +353,29 @@ class MainWindow(QMainWindow):
             and self._audio_files[file_id].status != FileStatus.DONE
         ]
         if not pending_ids:
+            return
+
+        missing_files = [
+            self._audio_files[file_id]
+            for file_id in pending_ids
+            if not Path(self._audio_files[file_id].path).is_file()
+        ]
+        if missing_files:
+            for audio_file in missing_files:
+                audio_file.mark_failed("File not found/invalid")
+                self._track_table.update_status(audio_file.id, FileStatus.FAILED)
+
+            names = "\n".join(f"- {audio_file.filename}" for audio_file in missing_files[:10])
+            if len(missing_files) > 10:
+                names += f"\n... and {len(missing_files) - 10} more"
+
+            QMessageBox.warning(
+                self,
+                "File Not Found/Invalid",
+                "Processing cannot continue because the following file(s) "
+                f"no longer exist on this device:\n\n{names}\n\n"
+                "Please remove them from the list or restore the files, then try again.",
+            )
             return
 
         dialog = ConversionSettingsDialog(self._conversion_settings, self)
@@ -516,9 +557,9 @@ class MainWindow(QMainWindow):
     def _on_about(self) -> None:
         QMessageBox.about(
             self,
-            "About FFTool",
+            "About",
             """
-            <h3>FFTool Version 1.0</h3>
+            <h3>FFTool</h3>
 
             <p>
                 A graphical user interface for audio processing built with
