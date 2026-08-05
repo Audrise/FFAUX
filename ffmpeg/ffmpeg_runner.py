@@ -11,6 +11,7 @@ from __future__ import annotations
 import sys
 import subprocess
 import threading
+
 from dataclasses import dataclass, field
 from typing import Callable, Optional
 
@@ -23,7 +24,6 @@ class RunResult:
     cancelled: bool = False
 
 class FFmpegRunner:
-    # Run a single FFmpeg process and stream its output line by line.
     def __init__(self, ffmpeg_path: str = "ffmpeg"):
         self.ffmpeg_path = ffmpeg_path
 
@@ -104,7 +104,5 @@ def _last_error_hint(output_lines: list[str], max_lines: int = 5) -> str:
     return "\n".join(tail) or "FFmpeg failed without output."
 
 def _windows_no_console_flag() -> int:
-    # Prevent the black console window from appearing when FFmpeg runs on Windows.
-    if sys.platform == "win32":
-        return subprocess.CREATE_NO_WINDOW  # type: ignore[attr-defined]
-    return 0
+    # Prevent a black console window from flashing on Windows every time
+    return subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
