@@ -63,7 +63,6 @@ class ConfigService:
         return self._config
 
     def save(self) -> None:
-        self.config_path.parent.mkdir(parents=True, exist_ok=True)
         self.config_path.write_text(
             json.dumps(asdict(self._config), indent=2, ensure_ascii=False),
             encoding="utf-8",
