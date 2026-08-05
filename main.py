@@ -54,12 +54,7 @@ def _missing_required_dirs() -> list[Path]:
 def main() -> int:
     app = QApplication(sys.argv)
     app.setApplicationName("FFTool")
-    print("APP_ROOT =", APP_ROOT)
-    print("Missing =", _missing_required_dirs())
 
-
-    # checking after would mean the log call could
-    # recreate config/ right before we complain that it's missing.
     missing = _missing_required_dirs()
     if missing:
         missing_list = "\n".join(f"  - {p}" for p in missing)
