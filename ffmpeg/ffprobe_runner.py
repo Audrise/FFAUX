@@ -3,8 +3,10 @@
 """
 from __future__ import annotations
 
+import sys
 import json
 import subprocess
+
 from dataclasses import dataclass
 from typing import Any, Optional
 
@@ -89,6 +91,7 @@ class FFprobeRunner:
                 timeout=30,
                 encoding="utf-8",
                 errors="replace",
+                creationflags=_windows_no_console_flag(),
             )
         except FileNotFoundError as exc:
             return ProbeResult(success=False, raw={}, error_message=str(exc))
@@ -104,3 +107,7 @@ class FFprobeRunner:
             return ProbeResult(success=False, raw={}, error_message=f"Invalid ffprobe output: {exc}")
 
         return ProbeResult(success=True, raw=raw)
+
+def _windows_no_console_flag() -> int:
+    # Prevent a black console window from flashing on Windows every time
+    return subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
