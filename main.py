@@ -6,6 +6,7 @@ from pathlib import Path
 
 from PySide6.QtWidgets import (
     QApplication,
+    QMessageBox,
     QWidget,
     QLabel,
     QVBoxLayout,
@@ -45,11 +46,35 @@ def _resolve_tool_path(path_str: str) -> str:
         return str(path)
     return str(APP_ROOT / path)
 
-def main() -> int:
-    setup_logging(log_file=APP_ROOT / "config" / "app.log")
+REQUIRED_DIRS = ("config", "assets/templates")
 
+def _missing_required_dirs() -> list[Path]:
+    return [APP_ROOT / rel for rel in REQUIRED_DIRS if not (APP_ROOT / rel).is_dir()]
+
+def main() -> int:
     app = QApplication(sys.argv)
     app.setApplicationName("FFTool")
+    print("APP_ROOT =", APP_ROOT)
+    print("Missing =", _missing_required_dirs())
+
+
+    # checking after would mean the log call could
+    # recreate config/ right before we complain that it's missing.
+    missing = _missing_required_dirs()
+    if missing:
+        missing_list = "\n".join(f"  - {p}" for p in missing)
+        QMessageBox.critical(
+            None,
+            "FFTool - Incomplete Installation",
+            "FFTool cannot start because required folders are missing:\n\n"
+            f"{missing_list}\n\n"
+            "This usually happens when FFTool.exe is moved out of its "
+            "installation folder. Please reinstall FFTool using the "
+            "official installer instead of moving the .exe by itself.",
+        )
+        return 1
+
+    setup_logging(log_file=APP_ROOT / "config" / "app.log")
 
     splash = None
     splash_path = RESOURCE_ROOT / "assets" / "splash" / "FFTool.png"
