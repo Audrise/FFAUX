@@ -112,7 +112,7 @@ class DiscordPresenceService:
             logger.info("Discord presence connected")
 
         except Exception as exc:
-            logger.info("Discord presence not connected (Discord not running?): %s", exc)
+            logger.info(exc)
             self._connected = False
             self._drain_queue_quietly()
             return
