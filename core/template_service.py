@@ -16,7 +16,6 @@ TEMPLATE_SCHEMA_VERSION = 1
 class TemplateService:
     def __init__(self, templates_dir: str | Path):
         self.templates_dir = Path(templates_dir)
-        self.templates_dir.mkdir(parents=True, exist_ok=True)
 
     def list_templates(self) -> list[str]:
         return sorted(p.stem for p in self.templates_dir.glob("*.json"))
