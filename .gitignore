@@ -15,8 +15,8 @@ config/app.log
 
 # Local-only assets
 assets/templates/*.json
-assets/icons/*.ico
-assets/splash/*.png
+assets/splash/FFTool.png
+assets/icons/FFTool.ico
 bin/*.dll
 bin/*.exe
 
