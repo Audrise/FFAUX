@@ -60,7 +60,7 @@ def main() -> int:
         missing_list = "\n".join(f"  - {p}" for p in missing)
         QMessageBox.critical(
             None,
-            "FFTool - Incomplete Installation",
+            "FFTool - Startup Failed",
             "FFTool cannot start because required folders are missing:\n\n"
             f"{missing_list}\n\n"
             "This usually happens when FFTool.exe is moved out of its "
