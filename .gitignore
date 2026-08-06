@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .venv/
+architecture.py
 
 # Build & packaging output
 build/
