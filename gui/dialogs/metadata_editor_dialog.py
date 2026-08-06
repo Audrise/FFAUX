@@ -156,6 +156,7 @@ class MetadataEditorDialog(QDialog):
             QMessageBox.warning(self, "Template not found", str(exc))
             return
         self._metadata_editor.apply_template(template_metadata)
+        QMessageBox.information(self, "Template Applied", f'Template "{name}" has been applied.')
 
     def _on_save_template_clicked(self) -> None:
         name, ok = QInputDialog.getText(self, "Save Template", "Template name:")
@@ -164,6 +165,7 @@ class MetadataEditorDialog(QDialog):
         self._template_service.save_template(name.strip(), self._metadata_editor.get_metadata())
         self._template_combo.clear()
         self._template_combo.addItems(self._template_service.list_templates())
+        QMessageBox.information(self, "Template Saved", f'Template "{name}" has been saved.')
 
     # Add / Delete metadata field
     def _build_field_buttons_row(self) -> QHBoxLayout:
@@ -178,6 +180,10 @@ class MetadataEditorDialog(QDialog):
         row.addStretch(1)
         return row
 
+    def _on_add_field_clicked(self) -> None:
+        self._metadata_editor.add_empty_field()
+        QMessageBox.information(self, "Metadata Added", "A new empty metadata field has been added.")
+
     def _on_delete_field_clicked(self) -> None:
         if not self._metadata_editor.delete_selected_field():
             QMessageBox.information(
@@ -185,11 +191,15 @@ class MetadataEditorDialog(QDialog):
                 "Select field",
                 "First, click the metadata field you want to delete (focus on the column), then press this button again.",
             )
+        else:
+            QMessageBox.information(self, "Metadata Deleted", "The selected metadata field has been deleted.")
 
     # Cover art
     def _on_extract_cover_clicked(self) -> None:
         if not self._extract_and_show_cover():
             QMessageBox.information(self, "No cover", "This file doesn't have embedded cover art.")
+        else:
+            QMessageBox.information(self, "Cover Extracted", "Cover art has been extracted from the file.")
 
     def _extract_and_show_cover(self) -> bool:
         """Extract the embedded cover art (from the first selected file) and
