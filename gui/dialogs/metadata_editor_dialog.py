@@ -92,14 +92,14 @@ class MetadataEditorDialog(QDialog):
         self._template_combo.addItems(self._template_service.list_templates())
 
         preview_btn = QPushButton("Preview Metadata")
-        apply_btn = QPushButton("Apply Template")
-        save_btn = QPushButton("Save Template as...")
+        apply_btn = QPushButton("Apply Metadata")
+        save_btn = QPushButton("Save Metadata as...")
         preview_btn.clicked.connect(self._on_preview_metadata_clicked)
         apply_btn.clicked.connect(self._on_apply_template_clicked)
         save_btn.clicked.connect(self._on_save_template_clicked)
 
         row = QHBoxLayout()
-        row.addWidget(QLabel("Template:"))
+        row.addWidget(QLabel("Metadata:"))
         row.addWidget(self._template_combo, stretch=1)
         row.addWidget(preview_btn)
         row.addWidget(apply_btn)
@@ -113,19 +113,19 @@ class MetadataEditorDialog(QDialog):
         """
         name = self._template_combo.currentText()
         if not name:
-            QMessageBox.information(self, "Select Template", "Select a template in the dropdown first.")
+            QMessageBox.information(self, "Select Metadata Template", "Select a template in the dropdown first.")
             return
         try:
             template_metadata = self._template_service.load_template(name)
         except FileNotFoundError as exc:
-            QMessageBox.warning(self, "Template not found!", str(exc))
+            QMessageBox.warning(self, "Metadata template not found!", str(exc))
             return
 
         data = template_metadata.to_dict()
         if data:
             preview_text = "\n".join(f"{key} - {value}" for key, value in data.items())
         else:
-            preview_text = "(This template is empty.)"
+            preview_text = "(This metadata template is empty.)"
 
         preview_window = QDialog(self)
         preview_window.setWindowTitle(f"Preview Metadata - {name}")
@@ -156,16 +156,16 @@ class MetadataEditorDialog(QDialog):
             QMessageBox.warning(self, "Template not found", str(exc))
             return
         self._metadata_editor.apply_template(template_metadata)
-        QMessageBox.information(self, "Template Applied", f'Template "{name}" has been applied.')
+        QMessageBox.information(self, "Metadata Applied", f'Template "{name}" has been applied.')
 
     def _on_save_template_clicked(self) -> None:
-        name, ok = QInputDialog.getText(self, "Save Template", "Template name:")
+        name, ok = QInputDialog.getText(self, "Save Metadata", "Template name:")
         if not ok or not name.strip():
             return
         self._template_service.save_template(name.strip(), self._metadata_editor.get_metadata())
         self._template_combo.clear()
         self._template_combo.addItems(self._template_service.list_templates())
-        QMessageBox.information(self, "Template Saved", f'Template "{name}" has been saved.')
+        QMessageBox.information(self, "Metadata Saved", f'Template "{name}" has been saved.')
 
     # Add / Delete metadata field
     def _build_field_buttons_row(self) -> QHBoxLayout:
