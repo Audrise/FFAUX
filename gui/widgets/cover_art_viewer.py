@@ -12,7 +12,7 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QMessageBox
 
 from utils.file_utils import format_file_size
 
@@ -86,7 +86,9 @@ class CoverArtViewer(QWidget):
         if path:
             self.load_image(path)
             self.coverPathChanged.emit(path)
+            QMessageBox.information(self, "Cover Changed", "Cover art has been changed.")
 
     def _on_remove_clicked(self) -> None:
         self.load_image(None)
         self.coverPathChanged.emit(None)
+        QMessageBox.information(self, "Cover Removed", "Cover art has been removed.")
