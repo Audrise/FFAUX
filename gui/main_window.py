@@ -46,7 +46,7 @@ class MainWindow(QMainWindow):
         parent=None,
     ):
         super().__init__(parent)
-        self.setWindowTitle("FFTool")
+        self.setWindowTitle("FFTool Version 1.0")
         self.resize(1200, 600)
 
         self._config_service = config_service
@@ -55,9 +55,10 @@ class MainWindow(QMainWindow):
         self._template_service = template_service
         self._filename_parser = FilenameParser()
         self._discord_presence = discord_presence_service or DiscordPresenceService(client_id="")
-
         self._audio_files: dict[str, AudioFile] = {}
         self._conversion_settings = ConversionSettings()
+        self._batch_convert_total = 0
+        self._batch_convert_success = 0
 
         self._build_ui()
         self._connect_signals()
@@ -411,6 +412,8 @@ class MainWindow(QMainWindow):
         self._progress_panel.reset(total=len(jobs))
         self._process_action.setEnabled(False)
         self._cancel_action.setEnabled(True)
+        self._batch_convert_total = len(jobs)
+        self._batch_convert_success = 0
         self._discord_presence.update(
             PresenceState(
                 details="Converting audio...",
@@ -535,6 +538,8 @@ class MainWindow(QMainWindow):
             status = FileStatus.DONE if success else FileStatus.FAILED
             self._track_table.update_status(job.audio_file.id, status)
             self._track_table.update_progress(job.audio_file.id, 100 if success else job.audio_file.progress)
+            if job.operation == OperationType.CONVERT and success:
+                self._batch_convert_success += 1
         self._progress_panel.mark_job_done()
 
     def _on_toggle_log(self, checked: bool) -> None:
@@ -553,6 +558,15 @@ class MainWindow(QMainWindow):
             PresenceState(state="Managing audio files", large_image="app_logo")
         )
         logger.info("Batch finished")
+
+        if self._batch_convert_total > 0:
+            QMessageBox.information(
+                self,
+                "Conversion Complete",
+                f"{self._batch_convert_success} of {self._batch_convert_total} file(s) successfully converted.",
+            )
+            self._batch_convert_total = 0
+            self._batch_convert_success = 0
 
     def _on_about(self) -> None:
         box = QMessageBox(self)
