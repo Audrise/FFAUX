@@ -15,8 +15,8 @@ config/app.log
 
 # Local-only assets
 assets/templates/*.json
-assets/*.ico
-assets/*.png
+assets/icons/*.ico
+assets/splash/*.png
 bin/*.dll
 bin/*.exe
 
