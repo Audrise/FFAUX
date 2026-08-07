@@ -23,9 +23,9 @@ from core.template_service import TemplateService
 from ffmpeg.ffmpeg_runner import FFmpegRunner
 from ffmpeg.ffprobe_runner import FFprobeRunner
 from gui.main_window import MainWindow
-from utils.logger import setup_logging
+from utils.logger import setup_logging, get_logger
 
-APP_NAME = "FFTool"
+logger = get_logger("main")
 
 def _resource_root() -> Path:
     if getattr(sys, "frozen", False):
@@ -55,6 +55,7 @@ def main() -> int:
     app = QApplication(sys.argv)
     app.setApplicationName("FFTool")
 
+    # Mandatory folder validation
     missing = _missing_required_dirs()
     if missing:
         missing_list = "\n".join(f"  - {p}" for p in missing)
@@ -69,7 +70,49 @@ def main() -> int:
         )
         return 1
 
-    setup_logging(log_file=APP_ROOT / "config" / "app.log")
+    # Load logging
+    try:
+        setup_logging(log_file=APP_ROOT / "config" / "fftool.log")
+    except Exception as e:
+        QMessageBox.critical(
+            None,
+            "FFTool - Startup Failed",
+            f"Failed to initialize logging:\n\n{e}"
+        )
+        return 1
+
+    # Load QT Stylesheet
+    qss_path = RESOURCE_ROOT / "assets" / "styles" / "main.qss"
+    if not qss_path.exists():
+        logger.error(f"Missing stylesheet: {qss_path}")
+
+        QMessageBox.critical(
+            None,
+            "FFTool - Startup Failed",
+            "FFTool cannot start because the required stylesheet is missing:\n\n"
+            f"{qss_path}\n\n"
+            "Please reinstall FFTool using the official installer."
+        )
+        return 1
+
+    app.setStyleSheet(qss_path.read_text(encoding="utf-8"))
+
+    # Load config
+    try:
+        config_service = ConfigService(
+            APP_ROOT / "config" / "fftool_config.json"
+        )
+        config = config_service.load()
+
+    except Exception as e:
+        logger.exception("Failed to load configuration")
+
+        QMessageBox.critical(
+            None,
+            "FFTool - Startup Failed",
+            f"Failed to load configuration:\n\n{e}"
+        )
+        return 1
 
     splash = None
     splash_path = RESOURCE_ROOT / "assets" / "splash" / "FFTool.png"
@@ -144,9 +187,6 @@ def main() -> int:
 
             app.processEvents()
 
-    config_service = ConfigService(APP_ROOT / "config" / "app_config.json")
-    config = config_service.load()
-
     ffprobe_runner = FFprobeRunner(ffprobe_path=_resolve_tool_path(config.ffprobe_path))
     ffmpeg_runner = FFmpegRunner(ffmpeg_path=_resolve_tool_path(config.ffmpeg_path))
 
@@ -158,17 +198,14 @@ def main() -> int:
         max_parallel_jobs=config.max_parallel_jobs,
     )
 
-    discord_presence = DiscordPresenceService(client_id=config.discord_client_id)
+    # discord_presence = DiscordPresenceService(client_id=config.discord_client_id)
+    discord_presence = DiscordPresenceService(client_id="1530063572162314260")
     if config.enable_discord_presence:
         discord_presence.start()
 
     icon_path = RESOURCE_ROOT / "assets" / "icons" / "FFTool.ico"
     if icon_path.exists():
         app.setWindowIcon(QIcon(str(icon_path)))
-
-    qss_path = RESOURCE_ROOT / "assets" / "styles" / "main.qss"
-    if qss_path.exists():
-        app.setStyleSheet(qss_path.read_text(encoding="utf-8"))
 
     window = MainWindow(
         config_service=config_service,
@@ -178,9 +215,7 @@ def main() -> int:
         discord_presence_service=discord_presence,
     )
 
-    # Restore the window size/position the user last left it at (see
-    # MainWindow.closeEvent). Falls back to maximized on first run, since
-    # config.window_maximized defaults to True.
+    # Restore the window size/position the user last left it at (see MainWindow.closeEvent)
     if config.window_maximized:
         window.showMaximized()
 
