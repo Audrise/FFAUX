@@ -137,8 +137,9 @@ QHeaderView::section {
     color: #b8b8b8;
     padding: 1px 3px;
     border: none;
-    border-right: 1px solid #2a2a2a;
-    border-bottom: 1px solid #2a2a2a;
+    border-top: 1px solid #555555;
+    border-right: 1px solid #363636;
+    border-bottom: 1px solid #000;
 }
 
 QTableWidget::item {
