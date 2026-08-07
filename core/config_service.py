@@ -30,7 +30,6 @@ class AppConfig:
     window_x: int = -1
     window_y: int = -1
     enable_discord_presence: bool = True
-    discord_client_id: str = ""
     track_table_column_widths: list[int] = field(default_factory=list)
     track_table_hidden_columns: Optional[list[int]] = None
     track_table_column_order: Optional[list[int]] = None
