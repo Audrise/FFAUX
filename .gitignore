@@ -11,8 +11,7 @@ dist/
 FFTool-Wizard/
 
 # App runtime / local config
-config/app_config.json
-config/app.log
+config/*
 
 # Local-only assets
 assets/templates/*.json
