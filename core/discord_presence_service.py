@@ -48,7 +48,7 @@ _STOP = object()  # sentinel put on the queue to end the worker thread
 
 class DiscordPresenceService:
     """Example Usage
-    service = DiscordPresenceService(client_id=config.discord_client_id)
+    service = DiscordPresenceService(client_id="Application ID>")
     service.start()
     service.update(PresenceState(details="Converting audio...", state="3 files"))
     ...
