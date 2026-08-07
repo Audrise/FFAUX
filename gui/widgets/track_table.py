@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
-from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QMenu, QProgressBar, QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QMenu, QProgressBar, QTableWidget, QTableWidgetItem, QHBoxLayout, QWidget
 
 from core.models.audio_file import AudioFile, FileStatus
 from utils.file_utils import collect_audio_files, format_duration, format_file_size, format_sample_rate
@@ -212,7 +212,9 @@ class TrackTable(QTableWidget):
             _COL_STATUS: _STATUS_LABELS[audio_file.status],
         }
         for col, text in values.items():
-            self.setItem(row, col, QTableWidgetItem(str(text)))
+            item = QTableWidgetItem(str(text))
+            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.setItem(row, col, item)
 
         # audio_file.id is stored as data in the Title column item; it is used
         # to rebuild _row_by_id whenever the row structure changes.
@@ -222,8 +224,14 @@ class TrackTable(QTableWidget):
         progress_bar.setRange(0, 100)
         progress_bar.setValue(0)
         progress_bar.setTextVisible(True)
-        progress_bar.setFixedWidth(110)
-        self.setCellWidget(row, _COL_PROGRESS, progress_bar)
+        progress_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        progress_container = QWidget()
+        progress_container.setStyleSheet("background-color: transparent;")
+        progress_layout = QHBoxLayout(progress_container)
+        progress_layout.setContentsMargins(4, 2, 4, 2)
+        progress_layout.addWidget(progress_bar)
+        self.setCellWidget(row, _COL_PROGRESS, progress_container)
 
         self._row_by_id[audio_file.id] = row
 
