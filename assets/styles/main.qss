@@ -124,14 +124,6 @@ QComboBox::drop-down {
    TABLE WIDGET
    ============================================================
 */
-QTableWidget {
-    background-color: #1c1c1c;
-    alternate-background-color: #212121;
-    gridline-color: #2a2a2a;
-    border: 1px solid #2a2a2a;
-    outline: none;
-}
-
 QHeaderView::section {
     background-color: #232323;
     color: #b8b8b8;
@@ -140,6 +132,14 @@ QHeaderView::section {
     border-top: 1px solid #555555;
     border-right: 1px solid #363636;
     border-bottom: 1px solid #000;
+}
+
+QTableWidget {
+    background-color: #1c1c1c;
+    alternate-background-color: #212121;
+    gridline-color: #2a2a2a;
+    border: 1px solid #2a2a2a;
+    outline: none;
 }
 
 QTableWidget::item {
