@@ -19,7 +19,7 @@ from core.filename_parser import FilenameParser
 from core.job_manager import JobManager
 from core.metadata_service import MetadataService
 from core.models.audio_file import AudioFile, FileStatus
-from core.models.conversion_settings import ConversionSettings
+from core.models.conversion_settings import ConversionSettings, OutputFormat
 from core.models.job import Job, OperationType
 from core.models.metadata import Metadata
 from core.template_service import TemplateService
@@ -56,7 +56,7 @@ class MainWindow(QMainWindow):
         self._filename_parser = FilenameParser()
         self._discord_presence = discord_presence_service or DiscordPresenceService(client_id="")
         self._audio_files: dict[str, AudioFile] = {}
-        self._conversion_settings = ConversionSettings()
+        self._conversion_settings = self._make_default_conversion_settings()
         self._batch_convert_total = 0
         self._batch_convert_success = 0
 
@@ -292,6 +292,18 @@ class MainWindow(QMainWindow):
         menu.exec(self._track_table.viewport().mapToGlobal(pos))
 
     # User Action
+    def _make_default_conversion_settings(self) -> ConversionSettings:
+        config = self._config_service.config
+        return ConversionSettings(
+            output_format=OutputFormat(config.default_output_format),
+            sample_rate_hz=config.default_sample_rate_hz,
+            bit_depth=config.default_bit_depth,
+            bitrate_kbps=config.default_bitrate_kbps,
+            use_soxr=config.default_use_soxr,
+            soxr_precision=config.default_soxr_precision,
+            flac_compression_level=config.default_flac_compression_level,
+        )
+
     def _on_add_files_clicked(self) -> None:
         paths, _ = QFileDialog.getOpenFileNames(
             self, "Select audio", "", "Audio Files (*.mp3 *.wav *.flac *.m4a *.aac *.ogg *.wma *.opus)"
