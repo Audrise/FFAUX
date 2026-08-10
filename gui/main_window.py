@@ -79,7 +79,7 @@ class MainWindow(QMainWindow):
         if session_paths:
             self._on_files_added(session_paths)
 
-        self._discord_presence.update(PresenceState(state="Managing audio files", large_image="app_logo"))
+        self._discord_presence.update(PresenceState(state="Managing audio library", large_image="app_logo"))
 
     def _update_file_dependent_actions(self) -> None:
         self._process_action.setEnabled(bool(self._audio_files))
@@ -452,8 +452,17 @@ class MainWindow(QMainWindow):
         self._edit_files_metadata(audio_files)
 
     def _edit_files_metadata(self, audio_files: list[AudioFile]) -> None:
+        if len(audio_files) == 1:
+            details = f"Editing {audio_files[0].filename} metadata"
+        else:
+            details = f"Editing {len(audio_files)} audio metadata"
+        self._discord_presence.update(PresenceState(details=details, large_image="app_logo"))
+
         dialog = MetadataEditorDialog(audio_files, self._metadata_service, self._template_service, self)
         if not dialog.exec():
+            self._discord_presence.update(
+                PresenceState(state="Managing audio files", large_image="app_logo")
+            )
             return
 
         new_metadata, cover_path, cover_changed, deleted_keys, metadata_changed = dialog.get_result()
@@ -507,7 +516,11 @@ class MainWindow(QMainWindow):
             logger.info("Applying metadata to %s", audio_file.filename)
 
         if job_count:
-            self._progress_panel.reset(total=job_count)
+                self._progress_panel.reset(total=job_count)
+        else:
+            self._discord_presence.update(
+                PresenceState(state="Managing audio files", large_image="app_logo")
+            )
 
     def _on_settings_clicked(self) -> None:
         dialog = SettingsDialog(self._config_service, self)
@@ -555,7 +568,7 @@ class MainWindow(QMainWindow):
         self._process_action.setEnabled(True)
         self._cancel_action.setEnabled(False)
         self._discord_presence.update(
-            PresenceState(state="Managing audio files", large_image="app_logo")
+            PresenceState(state="Managing audio library", large_image="app_logo")
         )
         logger.info("Batch finished")
 
