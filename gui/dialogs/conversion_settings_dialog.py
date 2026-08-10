@@ -130,11 +130,8 @@ class ConversionSettingsDialog(QDialog):
         return OutputFormat(data)
 
     def _set_row_visible(self, field_widget, visible: bool) -> None:
-        # setRowVisible (not just widget.setVisible()) is required here --
-        # otherwise the row's vertical spacing in QFormLayout stays
-        # reserved even while hidden, leaving blank gaps stacked up for
-        # every hidden row (e.g. MP3 hides 4 rows -> 4 rows' worth of
-        # leftover spacing).
+        # blank gaps stacked up for
+        # every hidden row (e.g. MP3 hides 4 rows -> 4 rows' worth of leftover spacing).
         self._form.setRowVisible(field_widget, visible)
 
     def _update_field_states(self) -> None:
@@ -151,8 +148,6 @@ class ConversionSettingsDialog(QDialog):
         )
         self._set_row_visible(self._flac_compression_spin, is_flac)
 
-        # See SettingsDialog._update_conversion_field_states for why
-        # adjustSize() (not a fixed resize()) is needed here.
         self._form.activate()
         self.adjustSize()
 
