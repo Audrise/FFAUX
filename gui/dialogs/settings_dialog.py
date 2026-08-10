@@ -28,6 +28,8 @@ from core.models.conversion_settings import (
     OutputFormat,
 )
 
+from utils.logger import get_logger
+
 _FORMAT_LABELS = {
     OutputFormat.MP3: "MP3",
     OutputFormat.AAC: "AAC",
@@ -37,6 +39,8 @@ _FORMAT_LABELS = {
     OutputFormat.OPUS: "Opus",
     OutputFormat.ALAC: "ALAC",
 }
+
+logger = get_logger("gui.dialogs.settings_dialog")
 
 class SettingsDialog(QDialog):
     def __init__(self, config_service: ConfigService, parent=None, on_reset_table_layout=None):
@@ -187,8 +191,7 @@ class SettingsDialog(QDialog):
         return OutputFormat(self._format_combo.currentData())
 
     def _set_row_visible(self, field_widget, visible: bool) -> None:
-        # See ConversionSettingsDialog._set_row_visible -- setRowVisible
-        # (not just widget.setVisible()) is needed so the row's spacing
+        # setRowVisible (not just widget.setVisible()) is needed so the row's spacing
         # actually collapses instead of leaving stacked-up blank gaps.
         self._conversion_form.setRowVisible(field_widget, visible)
 
@@ -206,12 +209,6 @@ class SettingsDialog(QDialog):
         )
         self._set_row_visible(self._flac_compression_spin, is_flac)
 
-        #  forcing a fixed resize(440, 320)
-        # here backfires: when hidden rows make the content shorter than
-        # 320px, Qt has to fill that leftover space *somewhere* in the
-        # stacked layouts, and it lands as a stray gap around the
-        # separator since neither QFormLayout has an explicit stretch
-        # factor telling Qt where the slack should go.
         self._conversion_form.activate()
         self.adjustSize()
 
@@ -232,6 +229,8 @@ class SettingsDialog(QDialog):
         cfg.set("default_use_soxr", self._use_soxr_check.isChecked())
         cfg.set("default_soxr_precision", self._soxr_precision_spin.value())
         cfg.set("default_flac_compression_level", self._flac_compression_spin.value())
+
+        logger.info("Settings successfully saved")
 
         cfg.save()
         self.accept()
