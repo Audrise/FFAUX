@@ -30,6 +30,7 @@ class AppConfig:
     window_x: int = -1
     window_y: int = -1
     enable_discord_presence: bool = True
+    restore_session_on_launch: bool = True
     track_table_column_widths: list[int] = field(default_factory=list)
     track_table_hidden_columns: Optional[list[int]] = None
     track_table_column_order: Optional[list[int]] = None
