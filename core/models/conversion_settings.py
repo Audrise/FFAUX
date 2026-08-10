@@ -48,6 +48,7 @@ class ConversionSettings:
     sample_rate_hz: int = 44100
     bit_depth: int = 16
     bitrate_kbps: int = 320
+    use_soxr: bool = True  # user-toggleable; only takes effect for FLAC/WAV
     soxr_precision: int = 28  # 1-33
     flac_compression_level: int = 5  # 0-12
     custom_output_dir: str = ""  # use default folder (config output_directory / source folder)
@@ -56,7 +57,7 @@ class ConversionSettings:
         return self.output_format in LOSSLESS_FORMATS
 
     def uses_soxr(self) -> bool:
-        return self.output_format in SOXR_FORMATS
+        return self.output_format in SOXR_FORMATS and self.use_soxr
 
     def codec_name(self) -> str:
         if self.output_format == OutputFormat.WAV:
@@ -78,9 +79,10 @@ class ConversionSettings:
 
         if self.output_format in SOXR_FORMATS:
             params["preserve_streams"] = True
-            params["use_soxr"] = True
-            params["soxr_precision"] = self.soxr_precision
             params["sample_fmt"] = self.sample_fmt()
+            if self.use_soxr:
+                params["use_soxr"] = True
+                params["soxr_precision"] = self.soxr_precision
             if self.output_format == OutputFormat.FLAC:
                 params["flac_compression_level"] = self.flac_compression_level
         elif self.output_format in LOSSY_FORMATS:
