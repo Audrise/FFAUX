@@ -30,3 +30,20 @@ def test_set_unknown_key_raises(tmp_path):
         assert False, "Should be raise KeyError"
     except KeyError:
         pass
+
+def test_restore_session_on_launch_defaults_true(tmp_path):
+    service = ConfigService(tmp_path / "config.json")
+    config = service.load()
+    assert config.restore_session_on_launch is True
+
+def test_restore_session_on_launch_persists(tmp_path):
+    config_path = tmp_path / "config.json"
+    service = ConfigService(config_path)
+    service.load()
+
+    service.set("restore_session_on_launch", False)
+    service.save()
+
+    service2 = ConfigService(config_path)
+    loaded = service2.load()
+    assert loaded.restore_session_on_launch is False
