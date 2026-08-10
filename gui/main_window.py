@@ -75,9 +75,12 @@ class MainWindow(QMainWindow):
         if column_order is not None:
             self._track_table.apply_column_order(column_order)
 
-        session_paths = self._config_service.config.session_paths
-        if session_paths:
-            self._on_files_added(session_paths)
+        # Save always runs regardless (see closeEvent), so no data is lost
+        # if this gets turned back on later -- only the LOAD is gated.
+        if self._config_service.config.restore_session_on_launch:
+            session_paths = self._config_service.config.session_paths
+            if session_paths:
+                self._on_files_added(session_paths)
 
         self._discord_presence.update(PresenceState(state="Managing audio library", large_image="app_logo"))
 
@@ -535,10 +538,25 @@ class MainWindow(QMainWindow):
             )
 
     def _on_settings_clicked(self) -> None:
-        dialog = SettingsDialog(self._config_service, self)
+        dialog = SettingsDialog(
+            self._config_service,
+            self,
+            on_reset_table_layout=self._track_table.reset_layout,
+        )
         if dialog.exec():
             self._job_manager.set_ffmpeg_path(self._config_service.get("ffmpeg_path"))
             self._job_manager.set_max_parallel_jobs(self._config_service.get("max_parallel_jobs"))
+
+            # Apply live, no restart needed. Both start() and stop() are
+            # idempotent (no-op if already in that state), so this is safe
+            # to call unconditionally regardless of the previous state.
+            if self._config_service.config.enable_discord_presence:
+                self._discord_presence.start()
+                self._discord_presence.update(
+                    PresenceState(state="Managing audio library", large_image="app_logo")
+                )
+            else:
+                self._discord_presence.stop()
 
     # Reactions to JobManager signals
     def _on_job_started(self, job_id: str) -> None:
