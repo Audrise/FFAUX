@@ -124,7 +124,7 @@ class TrackTable(QTableWidget):
     def reset_layout(self) -> None:
         """Reset widths, visibility, AND order back to defaults in one
         call (see SettingsDialog's "Reset Table Layout to Default"
-        button) -- unlike reset_column_widths(), which only handles
+        button) unlike reset_column_widths(), which only handles
         widths.
         """
         header = self.horizontalHeader()
