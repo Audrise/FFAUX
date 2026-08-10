@@ -39,11 +39,12 @@ _FORMAT_LABELS = {
 }
 
 class SettingsDialog(QDialog):
-    def __init__(self, config_service: ConfigService, parent=None):
+    def __init__(self, config_service: ConfigService, parent=None, on_reset_table_layout=None):
         super().__init__(parent)
         self.setWindowTitle("FFTool Settings")
         self.resize(440, 320)
         self._config_service = config_service
+        self._on_reset_table_layout = on_reset_table_layout
         config = config_service.config
 
         self._ffmpeg_edit = self._make_path_field(config.ffmpeg_path)
@@ -54,21 +55,32 @@ class SettingsDialog(QDialog):
         self._parallel_spin.setRange(1, 8)
         self._parallel_spin.setValue(config.max_parallel_jobs)
 
+        self._output_suffix_edit = QLineEdit(config.output_suffix)
+        self._output_suffix_edit.setPlaceholderText("_converted")
+
+        self._enable_discord_check = QCheckBox("Enable Discord Rich Presence")
+        self._enable_discord_check.setChecked(config.enable_discord_presence)
+
+        self._restore_session_check = QCheckBox("Restore previous session on launch")
+        self._restore_session_check.setChecked(config.restore_session_on_launch)
+
+        self._reset_layout_btn = QPushButton("Reset Table Layout to Default")
+        self._reset_layout_btn.clicked.connect(self._on_reset_layout_clicked)
+
         form = QFormLayout()
         form.addRow("FFmpeg Path:", self._wrap_with_browse(self._ffmpeg_edit, is_dir=False))
         form.addRow("FFprobe Path:", self._wrap_with_browse(self._ffprobe_edit, is_dir=False))
         form.addRow("Default ouput folder:", self._wrap_with_browse(self._output_dir_edit, is_dir=True))
+        form.addRow("Output filename suffix:", self._output_suffix_edit)
         form.addRow("Maximum parallel jobs:", self._parallel_spin)
+        form.addRow("", self._enable_discord_check)
+        form.addRow("", self._restore_session_check)
+        form.addRow("Table columns:", self._reset_layout_btn)
 
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.HLine)
         separator.setFrameShadow(QFrame.Shadow.Sunken)
 
-        # --- Default Conversion Settings ---------------------------------
-        # Seeds MainWindow's ConversionSettings on startup (see main.py),
-        # instead of every launch always starting from hardcoded defaults
-        # (MP3 44100Hz etc). Mirrors ConversionSettingsDialog's fields/
-        # visibility behavior so both dialogs stay consistent.
         self._format_combo = QComboBox()
         for fmt in OutputFormat:
             self._format_combo.addItem(_FORMAT_LABELS[fmt], userData=fmt)
@@ -153,6 +165,22 @@ class SettingsDialog(QDialog):
         row.addWidget(browse_btn)
         return row
 
+    def _on_reset_layout_clicked(self) -> None:
+        """Reset the track table's column widths/visibility/order back to
+        default, live (no need to click OK), AND clear the saved layout
+        from config so it doesn't get reapplied on next launch. This is
+        an immediate action, not gated behind OK/Cancel -- clicking
+        Cancel afterwards does not undo it.
+        """
+        if self._on_reset_table_layout is not None:
+            self._on_reset_table_layout()
+
+        cfg = self._config_service
+        cfg.set("track_table_column_widths", [])
+        cfg.set("track_table_hidden_columns", None)
+        cfg.set("track_table_column_order", None)
+        cfg.save()
+
     def _current_format(self) -> OutputFormat:
         # See ConversionSettingsDialog._current_format for why OutputFormat(data)
         # is used instead of just returning currentData() directly.
@@ -192,7 +220,10 @@ class SettingsDialog(QDialog):
         cfg.set("ffmpeg_path", self._ffmpeg_edit.text())
         cfg.set("ffprobe_path", self._ffprobe_edit.text())
         cfg.set("output_directory", self._output_dir_edit.text())
+        cfg.set("output_suffix", self._output_suffix_edit.text() or "_converted")
         cfg.set("max_parallel_jobs", self._parallel_spin.value())
+        cfg.set("enable_discord_presence", self._enable_discord_check.isChecked())
+        cfg.set("restore_session_on_launch", self._restore_session_check.isChecked())
 
         cfg.set("default_output_format", self._current_format().value)
         cfg.set("default_sample_rate_hz", self._sample_rate_combo.currentData())
