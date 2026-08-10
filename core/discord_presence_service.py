@@ -72,7 +72,7 @@ class DiscordPresenceService:
 
     def start(self) -> None:
         if not self.is_available:
-            logger.info(
+            logger.warning(
                 "Discord presence disabled (pypresence not installed or no client_id configured)"
             )
             return
@@ -112,7 +112,7 @@ class DiscordPresenceService:
             logger.info("Discord presence connected")
 
         except Exception as exc:
-            logger.info(exc)
+            logger.warning(exc) # Could not find Discord installed and running on this machine.
             self._connected = False
             self._drain_queue_quietly()
             return
@@ -136,7 +136,7 @@ class DiscordPresenceService:
                     )
 
             except Exception as exc:
-                logger.info("Discord presence update failed: %s", exc)
+                logger.warning("Discord presence update failed: %s", exc)
 
         try:
             rpc.close()
