@@ -35,6 +35,20 @@ class AppConfig:
     track_table_column_order: Optional[list[int]] = None
     session_paths: list[str] = field(default_factory=list)
 
+    # Default conversion settings, edited from SettingsDialog's "Default
+    # Conversion Settings" section, and used to seed MainWindow's
+    # ConversionSettings on startup (see main.py). Kept as plain
+    # str/int/bool here (not the ConversionSettings/OutputFormat classes
+    # directly) to stay consistent with the rest of this JSON-serializable
+    # config -- convert via OutputFormat(value) where needed.
+    default_output_format: str = "mp3"
+    default_sample_rate_hz: int = 44100
+    default_bit_depth: int = 16
+    default_bitrate_kbps: int = 320
+    default_use_soxr: bool = True
+    default_soxr_precision: int = 28
+    default_flac_compression_level: int = 5
+
 class ConfigService:
     def __init__(self, config_path: str | Path):
         self.config_path = Path(config_path)
