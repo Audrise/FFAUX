@@ -231,6 +231,8 @@ def main() -> int:
     if splash:
         splash.close()
 
+    logger.info("FFTool started successfully")
+
     return app.exec()
 
 if __name__ == "__main__":
