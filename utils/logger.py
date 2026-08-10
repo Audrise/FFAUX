@@ -1,5 +1,5 @@
 """
-# Centralized logging configuration.
+Centralized logging configuration.
 
 Other modules simply use: `logger = logging.getLogger(__name__)`.
 The GUI can attach additional handlers (e.g., QtLogHandler) to display
@@ -9,17 +9,30 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from datetime import datetime, timezone
 
 APP_LOGGER_NAME = "FFTool"
 
-def setup_logging(log_file: str | Path | None = None, level: int = logging.INFO) -> logging.Logger:
+class DayFormatter(logging.Formatter):
+    DAYS = ("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
+
+    def formatTime(self, record, datefmt=None):
+        dt = datetime.fromtimestamp(record.created)
+        return f"{self.DAYS[dt.weekday()]} {dt:%d-%m-%y %H:%M:%S}"
+
+def setup_logging(
+    log_file: str | Path | None = None,
+    level: int = logging.INFO,
+) -> logging.Logger:
     logger = logging.getLogger(APP_LOGGER_NAME)
     logger.setLevel(level)
 
     if logger.handlers:
         return logger  # already set up; avoid duplicate handlers
 
-    formatter = logging.Formatter("[%(levelname)s] [%(asctime)s] %(name)s: %(message)s", datefmt="%H:%M:%S")
+    formatter = DayFormatter(
+        "[%(asctime)s] [%(levelname)s] %(name)s: %(message)s"
+    )
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
