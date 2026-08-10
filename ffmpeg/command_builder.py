@@ -21,6 +21,7 @@ def _build_convert(job: Job) -> list[str]:
         # cover art as a video stream) + metadata from the source without re-encoding the video/cover.
         args += ["-map", "0", "-map_metadata", "0", "-c:v", "copy"]
 
+    if params.get("use_soxr"):
         # SOXR resampler (higher quality than the default FFmpeg/swresample resampler). Forced "FLAC/WAV only"
         af = "aresample=resampler=soxr"
         precision = params.get("soxr_precision")
