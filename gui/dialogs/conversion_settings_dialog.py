@@ -9,6 +9,7 @@ folder.
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDialog,
     QDialogButtonBox,
@@ -71,15 +72,18 @@ class ConversionSettingsDialog(QDialog):
         self._bitrate_spin.setSuffix(" kbps")
         self._bitrate_spin.setValue(current_settings.bitrate_kbps)
 
-        # SOXR: Relevant ONLY for FLAC & WAV
-        self._soxr_precision_spin = QSpinBox()
-        self._soxr_precision_spin.setRange(1, 33)
-        self._soxr_precision_spin.setValue(current_settings.soxr_precision)
-
         # FLAC compression level (FLAC only; WAV does not have this option)
         self._flac_compression_spin = QSpinBox()
         self._flac_compression_spin.setRange(0, 12)
         self._flac_compression_spin.setValue(current_settings.flac_compression_level)
+
+        # SOXR: Relevant ONLY for FLAC & WAV
+        self._use_soxr_check = QCheckBox("Use SOX Resampler for FLAC/WAV")
+        self._use_soxr_check.setChecked(current_settings.use_soxr)
+
+        self._soxr_precision_spin = QSpinBox()
+        self._soxr_precision_spin.setRange(1, 33)
+        self._soxr_precision_spin.setValue(current_settings.soxr_precision)
 
         # Custom output folder (Optional)
         self._output_dir_edit = QLineEdit(current_settings.custom_output_dir)
@@ -96,8 +100,9 @@ class ConversionSettingsDialog(QDialog):
         self._form.addRow("Sample Rate:", self._sample_rate_combo)
         self._form.addRow("Bitrate:", self._bitrate_spin)
         self._form.addRow("Bit Depth:", self._bit_depth_combo)
-        self._form.addRow("SOXR Precision (1-33):", self._soxr_precision_spin)
         self._form.addRow("FLAC Compression Level (0-12):", self._flac_compression_spin)
+        self._form.addRow("", self._use_soxr_check)
+        self._form.addRow("SOXR Precision (1-33):", self._soxr_precision_spin)
         self._form.addRow("Custom Output Folder:", output_dir_row)
 
         buttons = QDialogButtonBox(
@@ -111,6 +116,7 @@ class ConversionSettingsDialog(QDialog):
         layout.addWidget(buttons)
 
         self._format_combo.currentIndexChanged.connect(self._update_field_states)
+        self._use_soxr_check.toggled.connect(self._update_field_states)
         self._update_field_states()
 
     def _current_format(self) -> OutputFormat:
@@ -124,21 +130,31 @@ class ConversionSettingsDialog(QDialog):
         return OutputFormat(data)
 
     def _set_row_visible(self, field_widget, visible: bool) -> None:
-        field_widget.setVisible(visible)
-        label = self._form.labelForField(field_widget)
-        if label is not None:
-            label.setVisible(visible)
+        # setRowVisible (not just widget.setVisible()) is required here --
+        # otherwise the row's vertical spacing in QFormLayout stays
+        # reserved even while hidden, leaving blank gaps stacked up for
+        # every hidden row (e.g. MP3 hides 4 rows -> 4 rows' worth of
+        # leftover spacing).
+        self._form.setRowVisible(field_widget, visible)
 
     def _update_field_states(self) -> None:
         fmt = self._current_format()
         is_lossless = fmt in LOSSLESS_FORMATS  # FLAC, WAV, ALAC -> no bitrate
-        is_soxr_format = fmt in SOXR_FORMATS  # FLAC, WAV -> SOXR must be active.
+        is_soxr_format = fmt in SOXR_FORMATS  # FLAC, WAV -> SOXR checkbox available.
         is_flac = fmt == OutputFormat.FLAC
 
         self._set_row_visible(self._bit_depth_combo, is_lossless)
         self._set_row_visible(self._bitrate_spin, not is_lossless)
-        self._set_row_visible(self._soxr_precision_spin, is_soxr_format)
+        self._set_row_visible(self._use_soxr_check, is_soxr_format)
+        self._set_row_visible(
+            self._soxr_precision_spin, is_soxr_format and self._use_soxr_check.isChecked()
+        )
         self._set_row_visible(self._flac_compression_spin, is_flac)
+
+        # See SettingsDialog._update_conversion_field_states for why
+        # adjustSize() (not a fixed resize()) is needed here.
+        self._form.activate()
+        self.adjustSize()
 
     def _on_browse_output_dir(self) -> None:
         path = QFileDialog.getExistingDirectory(
@@ -153,6 +169,7 @@ class ConversionSettingsDialog(QDialog):
             sample_rate_hz=self._sample_rate_combo.currentData(),
             bit_depth=self._bit_depth_combo.currentData(),
             bitrate_kbps=self._bitrate_spin.value(),
+            use_soxr=self._use_soxr_check.isChecked(),
             soxr_precision=self._soxr_precision_spin.value(),
             flac_compression_level=self._flac_compression_spin.value(),
             custom_output_dir=self._output_dir_edit.text().strip(),
