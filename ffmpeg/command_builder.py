@@ -104,14 +104,7 @@ def _build_extract_cover(job: Job) -> list[str]:
 
 def _build_set_cover(job: Job) -> list[str]:
     """BUGFIX: previously this only used `-map_metadata 0`, which copies
-    tags from whatever is currently on disk in the source file. When a
-    user changed BOTH metadata fields AND the cover art in the same
-    "Edit Metadata" action, this job ran independently from the
-    APPLY_METADATA job (same source input, not chained), so its output
-    never contained the newly edited tag values -- only the old ones.
-    Now it writes the current in-memory metadata explicitly (same
-    helper as APPLY_METADATA), so a single SET_COVER job produces one
-    output file with both the updated tags AND the new cover.
+    tags from whatever is currently on disk in the source file.
     """
     cover_path = job.params["cover_path"]
     args = [
