@@ -121,6 +121,30 @@ class TrackTable(QTableWidget):
             header.setSectionResizeMode(col, QHeaderView.ResizeMode.Interactive)
             header.resizeSection(col, _DEFAULT_WIDTHS.get(col, 100))
 
+    def reset_layout(self) -> None:
+        """Reset widths, visibility, AND order back to defaults in one
+        call (see SettingsDialog's "Reset Table Layout to Default"
+        button) -- unlike reset_column_widths(), which only handles
+        widths.
+        """
+        header = self.horizontalHeader()
+
+        # Order: move every column back to its natural left-to-right
+        # logical position. Iterating logical indices ascending and
+        # re-querying visualIndex() each time (rather than caching stale
+        # positions) correctly accounts for earlier moves shifting things.
+        for logical in range(self.columnCount()):
+            current_visual = header.visualIndex(logical)
+            if current_visual != logical:
+                header.moveSection(current_visual, logical)
+
+        # Visibility: only the columns hidden by default start hidden again.
+        for col in range(self.columnCount()):
+            header.setSectionHidden(col, col in _DEFAULT_HIDDEN_COLUMNS)
+
+        # Widths: back to the per-column defaults.
+        self.reset_column_widths()
+
     # Column visibility (right-click on the header -> "Columns" submenu).
     def _on_header_context_menu(self, pos) -> None:
         header = self.horizontalHeader()
