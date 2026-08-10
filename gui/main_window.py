@@ -451,7 +451,7 @@ class MainWindow(QMainWindow):
         for audio_file_id in removed_ids:
             audio_file = self._audio_files.pop(audio_file_id, None)
             if audio_file:
-                logger.info("Deleting track: %s", audio_file.filename)
+                logger.warning("Deleting track: %s", audio_file.filename)
             self._update_file_dependent_actions()
 
     def _on_edit_metadata_clicked(self) -> None:
