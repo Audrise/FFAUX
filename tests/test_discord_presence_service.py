@@ -2,11 +2,7 @@ import core.discord_presence_service as dps
 from core.discord_presence_service import DiscordPresenceService, PresenceState
 
 class _FakePresence:
-    """Stand-in for pypresence.Presence -- records calls instead of
-    actually talking to Discord, so this test can run without Discord
-    (or pypresence) installed/running.
-    """
-
+    # Test stand-in for pypresence.Presence that records calls without Discord.
     def __init__(self, client_id):
         self.client_id = client_id
         self.calls = []
