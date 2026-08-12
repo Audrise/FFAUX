@@ -691,7 +691,7 @@ class MainWindow(QMainWindow):
                 </p>
 
                 <p>
-                    <b>Copyright © 2026 Audrise</b>
+                    <b>© 2026 Audrise. All rights reserved.
                 </p>
 
                 <p>
