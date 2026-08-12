@@ -27,13 +27,16 @@ from core.template_service import TemplateService
 from gui.dialogs.conversion_settings_dialog import ConversionSettingsDialog
 from gui.dialogs.metadata_editor_dialog import MetadataEditorDialog
 from gui.dialogs.settings_dialog import SettingsDialog
-from gui.widgets.track_table import TrackTable
 from gui.widgets.log_viewer import LogViewer
 from gui.widgets.progress_panel import ProgressPanel
+from gui.widgets.track_table import TrackTable
+
 from utils.file_utils import collect_audio_files
 from utils.logger import get_logger
 
 logger = get_logger("gui.main_window")
+
+_DISCORD_LARGE_IMAGE = "app_logo"
 
 class MainWindow(QMainWindow):
     def __init__(
@@ -46,7 +49,7 @@ class MainWindow(QMainWindow):
         parent=None,
     ):
         super().__init__(parent)
-        self.setWindowTitle("FFTool Version 1.0")
+        self.setWindowTitle("FFTool Version 1.0.0")
         self.resize(1200, 600)
 
         self._config_service = config_service
@@ -75,23 +78,19 @@ class MainWindow(QMainWindow):
         if column_order is not None:
             self._track_table.apply_column_order(column_order)
 
-        # Save always runs regardless (see closeEvent), so no data is lost
-        # if this gets turned back on later -- only the LOAD is gated.
+        # Always save; only LOAD is conditional.
         if self._config_service.config.restore_session_on_launch:
             session_paths = self._config_service.config.session_paths
             if session_paths:
                 self._on_files_added(session_paths)
 
-        self._discord_presence.update(PresenceState(state="Managing audio library", large_image="app_logo"))
+        self._discord_presence.update(PresenceState(state="Managing audio library", large_image=_DISCORD_LARGE_IMAGE))
 
     def _update_file_dependent_actions(self) -> None:
         self._process_action.setEnabled(bool(self._audio_files))
 
     def closeEvent(self, event) -> None:
-        """Remember the window's size/position/maximized state so the next
-        launch can restore it (see main.py), instead of always resetting to
-        the default maximized view.
-        """
+        # Save window state so the next launch can restore it. (see main.py)
         config = self._config_service.config
         config.window_maximized = self.isMaximized()
 
@@ -358,16 +357,19 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Empty", "Please add audio files first.")
             return
 
-        # If rows are selected, process only the selected ones (supports
-        # multi-select). If there is no selection, process the entire batch.
+        # Convert selected files (including DONE); skip DONE only for full-library conversion.
         selected_ids = self._track_table.selected_row_ids()
-        target_ids = selected_ids if selected_ids else list(self._audio_files.keys())
-        pending_ids = [
-            file_id
-            for file_id in target_ids
-            if self._audio_files.get(file_id) is not None
-            and self._audio_files[file_id].status != FileStatus.DONE
-        ]
+        if selected_ids:
+            pending_ids = [
+                file_id for file_id in selected_ids if self._audio_files.get(file_id) is not None
+            ]
+        else:
+            pending_ids = [
+                file_id
+                for file_id in self._audio_files.keys()
+                if self._audio_files[file_id].status != FileStatus.DONE
+            ]
+
         if not pending_ids:
             return
 
@@ -433,7 +435,7 @@ class MainWindow(QMainWindow):
             PresenceState(
                 details="Converting audio...",
                 state=f"{len(jobs)} file(s)",
-                large_image="app_logo",
+                large_image=_DISCORD_LARGE_IMAGE,
             )
         )
         self._job_manager.enqueue_many(jobs)
@@ -471,12 +473,12 @@ class MainWindow(QMainWindow):
             details = f"Editing {audio_files[0].filename} metadata"
         else:
             details = f"Editing {len(audio_files)} audio metadata"
-        self._discord_presence.update(PresenceState(details=details, large_image="app_logo"))
+        self._discord_presence.update(PresenceState(details=details, large_image=_DISCORD_LARGE_IMAGE))
 
         dialog = MetadataEditorDialog(audio_files, self._metadata_service, self._template_service, self)
         if not dialog.exec():
             self._discord_presence.update(
-                PresenceState(state="Managing audio files", large_image="app_logo")
+                PresenceState(state="Managing audio files", large_image=_DISCORD_LARGE_IMAGE)
             )
             return
 
@@ -534,7 +536,7 @@ class MainWindow(QMainWindow):
                 self._progress_panel.reset(total=job_count)
         else:
             self._discord_presence.update(
-                PresenceState(state="Managing audio files", large_image="app_logo")
+                PresenceState(state="Managing audio files", large_image=_DISCORD_LARGE_IMAGE)
             )
 
     def _on_settings_clicked(self) -> None:
@@ -547,13 +549,11 @@ class MainWindow(QMainWindow):
             self._job_manager.set_ffmpeg_path(self._config_service.get("ffmpeg_path"))
             self._job_manager.set_max_parallel_jobs(self._config_service.get("max_parallel_jobs"))
 
-            # Apply live, no restart needed. Both start() and stop() are
-            # idempotent (no-op if already in that state), so this is safe
-            # to call unconditionally regardless of the previous state.
+            # Apply live; start()/stop() are safe to call unconditionally.
             if self._config_service.config.enable_discord_presence:
                 self._discord_presence.start()
                 self._discord_presence.update(
-                    PresenceState(state="Managing audio library", large_image="app_logo")
+                    PresenceState(state="Managing audio library", large_image=_DISCORD_LARGE_IMAGE)
                 )
             else:
                 self._discord_presence.stop()
@@ -598,7 +598,7 @@ class MainWindow(QMainWindow):
         self._process_action.setEnabled(True)
         self._cancel_action.setEnabled(False)
         self._discord_presence.update(
-            PresenceState(state="Managing audio library", large_image="app_logo")
+            PresenceState(state="Managing audio library", large_image=_DISCORD_LARGE_IMAGE)
         )
         logger.info("Batch finished")
 
@@ -617,7 +617,7 @@ class MainWindow(QMainWindow):
         box.setIcon(QMessageBox.Icon.NoIcon)
         box.setTextFormat(Qt.TextFormat.RichText)
         box.setText("""
-            <h3>FFTool Version 1.0</h3>
+            <h3>FFTool Version 1.0.0</h3>
 
             <p>
                 A graphical user interface for audio processing built with
