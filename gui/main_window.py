@@ -343,14 +343,21 @@ class MainWindow(QMainWindow):
         self._on_files_added(found)
 
     def _on_files_added(self, paths: list[str]) -> None:
+        added_files: list[AudioFile] = []
         for path in paths:
             audio_file = AudioFile(path=path)
             self._metadata_service.read_metadata(audio_file)
             self._audio_files[audio_file.id] = audio_file
             self._track_table.add_file(audio_file)
+            added_files.append(audio_file)
 
         logger.info("Adding %d files to the batch", len(paths))
         self._update_file_dependent_actions()
+
+        if added_files:
+            self._undo_stack.append(("add", added_files))
+            self._redo_stack.clear()
+            self._update_undo_redo_actions()
 
     def _on_conversion_settings_clicked(self) -> None:
         """This is OPTIONAL and only used to prefill the dialog. The same dialog
