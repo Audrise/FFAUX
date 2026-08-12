@@ -8,10 +8,11 @@ architecture.py
 # Build & packaging output
 build/
 dist/
-FFTool-Wizard/
+installer/
 
 # App runtime / local config
 config/*
+*.html
 
 # Local-only assets
 assets/templates/*.json
