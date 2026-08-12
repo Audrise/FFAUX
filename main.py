@@ -73,11 +73,11 @@ def main() -> int:
     # Load logging
     try:
         setup_logging(log_file=APP_ROOT / "config" / "fftool.log")
-    except Exception as e:
+    except Exception as exc:
         QMessageBox.critical(
             None,
             "FFTool - Startup Failed",
-            f"Failed to initialize logging:\n\n{e}"
+            f"Failed to initialize logging:\n\n{exc}"
         )
         return 1
 
@@ -103,14 +103,15 @@ def main() -> int:
             APP_ROOT / "config" / "fftool_config.json"
         )
         config = config_service.load()
+        logger.info("Configuration loaded successfully")
 
-    except Exception as e:
-        logger.exception("Failed to load configuration")
+    except Exception as exc:
+        logger.warning(exc)
 
         QMessageBox.critical(
             None,
             "FFTool - Startup Failed",
-            f"Failed to load configuration:\n\n{e}"
+            f"Failed to load configuration:\n\n{exc}"
         )
         return 1
 
@@ -170,7 +171,7 @@ def main() -> int:
                 font-weight: 600;
             """)
 
-            title_version = QLabel("Version 1.0")
+            title_version = QLabel("Version 1.0.0")
             title_version.setAlignment(Qt.AlignCenter)
             title_version.setStyleSheet("""
                 color: white;
