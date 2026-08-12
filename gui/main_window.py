@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
         parent=None,
     ):
         super().__init__(parent)
-        self.setWindowTitle("FFTool Version 1.0.0")
+        self.setWindowTitle("FFTool v1.0.0")
         self.resize(1200, 600)
 
         self._config_service = config_service
@@ -679,26 +679,32 @@ class MainWindow(QMainWindow):
         box.setIcon(QMessageBox.Icon.NoIcon)
         box.setTextFormat(Qt.TextFormat.RichText)
         box.setText("""
-            <h3>FFTool Version 1.0.0</h3>
+            <div style="font-size: 10pt;">
 
-            <p>
-                A graphical user interface for audio processing built with
-                <b>Python3</b>, <b>PySide6</b>, and <b>FFmpeg/FFprobe</b>,
-                providing an intuitive wrapper for common audio processing tasks.
-            </p>
+                <h3>FFTool v1.0.0 [x64]</h3>
 
-            <p>
-                <b>Copyright © 2026 Audrise</b><br>
-                Licensed under the GNU General Public License v3.0 (GPL-3.0).
-            </p>
+                <p>
+                    A graphical audio processing application built with
+                    <b>Python 3</b>, <b>PySide6</b>, and <b>FFmpeg/FFprobe</b>,
+                    providing a simple and intuitive interface for common
+                    audio processing tasks.
+                </p>
 
-            <p>
-                Developed By:
-                <a href="https://github.com/Audrise" target="_blank">Audrise</a>
+                <p>
+                    <b>Copyright © 2026 Audrise</b>
+                </p>
 
-                Repository:
-                <a href="https://github.com/Audrise/FFTool" target="_blank">Visit</a>
-            </p>
-            """,
-        )
+                <p>
+                    License:
+                    <a href="LICENSE">GNU General Public License v3.0</a><br>
+
+                    Third-party licenses:
+                    <a href="THIRD_PARTY_LICENSES.html">View licenses</a><br>
+
+                    Source code:
+                    <a href="https://github.com/Audrise/FFTool">GitHub Repository</a>
+                </p>
+
+            </div>
+        """)
         box.exec()
