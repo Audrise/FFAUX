@@ -170,12 +170,7 @@ class SettingsDialog(QDialog):
         return row
 
     def _on_reset_layout_clicked(self) -> None:
-        """Reset the track table's column widths/visibility/order back to
-        default, live (no need to click OK), AND clear the saved layout
-        from config so it doesn't get reapplied on next launch. This is
-        an immediate action, not gated behind OK/Cancel -- clicking
-        Cancel afterwards does not undo it.
-        """
+        # Reset table layout immediately and clear the saved config.
         if self._on_reset_table_layout is not None:
             self._on_reset_table_layout()
 
