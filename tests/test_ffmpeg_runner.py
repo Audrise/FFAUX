@@ -40,11 +40,7 @@ def test_run_ffmpeg_missing(mock_popen):
 
 @patch("ffmpeg.ffmpeg_runner.subprocess.Popen")
 def test_run_uses_utf8_with_replace_errors_to_avoid_unicodedecodeerror(mock_popen):
-    """Regression test: without an explicit encoding, Popen falls back to
-    locale.getpreferredencoding() -- cp1252 on Windows -- which raises
-    UnicodeDecodeError and crashes the whole job the moment FFmpeg outputs
-    a UTF-8 byte sequence cp1252 cannot map (e.g. byte 0x9d).
-    """
+    # Regression test: ensure FFmpeg UTF-8 output doesn't crash under Windows cp1252.
     mock_popen.return_value = _mock_process(["frame=1"], return_code=0)
 
     runner = FFmpegRunner(ffmpeg_path="ffmpeg")
