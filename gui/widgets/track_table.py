@@ -164,8 +164,7 @@ class TrackTable(QTableWidget):
         header.setSectionHidden(col, not visible)
 
         if visible:
-            # A hidden section still keeps its old visual slot -- move it to
-            # the far right instead of popping back into its previous spot.
+            # Keep hidden sections' slots by moving them to the far right.
             last_visual = header.count() - 1
             current_visual = header.visualIndex(col)
             if current_visual != last_visual:
@@ -255,6 +254,7 @@ class TrackTable(QTableWidget):
         progress_layout = QHBoxLayout(progress_container)
         progress_layout.setContentsMargins(4, 2, 4, 2)
         progress_layout.addWidget(progress_bar)
+        progress_container.progress_bar = progress_bar
         self.setCellWidget(row, _COL_PROGRESS, progress_container)
 
         self._row_by_id[audio_file.id] = row
@@ -296,7 +296,8 @@ class TrackTable(QTableWidget):
         row = self._row_by_id.get(audio_file_id)
         if row is None:
             return
-        bar = self.cellWidget(row, _COL_PROGRESS)
+        container = self.cellWidget(row, _COL_PROGRESS)
+        bar = getattr(container, "progress_bar", None)
         if isinstance(bar, QProgressBar):
             bar.setValue(int(round(percent)))
 
@@ -306,7 +307,7 @@ class TrackTable(QTableWidget):
 
     # Selection
     def selected_row_id(self) -> str | None:
-        # Return the ID of the first selected row (compatible with legacy callers that only require a single file).
+        # Return the first selected row ID for legacy single-file callers.
         ids = self.selected_row_ids()
         return ids[0] if ids else None
 
