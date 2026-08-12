@@ -12,7 +12,6 @@ installer/
 
 # App runtime / local config
 config/*
-*.html
 
 # Local-only assets
 assets/templates/*.json
@@ -24,6 +23,7 @@ bin/*.exe
 # Misc / working folders
 notes/
 audio/
+licenses/
 
 # Build & installer scripts
 *.spec
