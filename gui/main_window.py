@@ -59,6 +59,8 @@ class MainWindow(QMainWindow):
         self._filename_parser = FilenameParser()
         self._discord_presence = discord_presence_service or DiscordPresenceService(client_id="")
         self._audio_files: dict[str, AudioFile] = {}
+        self._undo_stack: list[tuple[str, list[AudioFile]]] = []
+        self._redo_stack: list[tuple[str, list[AudioFile]]] = []
         self._conversion_settings = self._make_default_conversion_settings()
         self._batch_convert_total = 0
         self._batch_convert_success = 0
@@ -155,6 +157,19 @@ class MainWindow(QMainWindow):
 
         # Edit
         edit_menu = menu_bar.addMenu("&Edit")
+        self._undo_action = QAction("Undo", self)
+        self._undo_action.setShortcut("Ctrl+Z")
+        self._undo_action.setEnabled(False)
+        self._undo_action.triggered.connect(self._on_undo)
+        edit_menu.addAction(self._undo_action)
+
+        self._redo_action = QAction("Redo", self)
+        self._redo_action.setShortcut("Ctrl+Y")
+        self._redo_action.setEnabled(False)
+        self._redo_action.triggered.connect(self._on_redo)
+        edit_menu.addAction(self._redo_action)
+        edit_menu.addSeparator()
+
         self._edit_metadata_action = QAction("Edit Selected Metadata...", self)
         self._edit_metadata_action.setShortcut("Ctrl+E")
         self._edit_metadata_action.triggered.connect(self._on_edit_metadata_clicked)
@@ -450,11 +465,17 @@ class MainWindow(QMainWindow):
             return
 
         removed_ids = self._track_table.remove_selected_rows()
+        removed_files: list[AudioFile] = []
         for audio_file_id in removed_ids:
             audio_file = self._audio_files.pop(audio_file_id, None)
             if audio_file:
-                logger.warning("Deleting track: %s", audio_file.filename)
-            self._update_file_dependent_actions()
+                logger.info("Deleting track: %s", audio_file.filename)
+                removed_files.append(audio_file)
+
+        if removed_files:
+            self._undo_stack.append(("delete", removed_files))
+            self._redo_stack.clear()
+            self._update_undo_redo_actions()
 
     def _on_edit_metadata_clicked(self) -> None:
         audio_file_ids = self._track_table.selected_row_ids()
@@ -467,6 +488,40 @@ class MainWindow(QMainWindow):
             return
 
         self._edit_files_metadata(audio_files)
+
+    def _on_undo(self) -> None:
+        if not self._undo_stack:
+            return
+        kind, audio_files = self._undo_stack.pop()
+        if kind == "add":
+            self._track_table.remove_ids([af.id for af in audio_files])
+            for af in audio_files:
+                self._audio_files.pop(af.id, None)
+        else:  # "delete"
+            for af in audio_files:
+                self._audio_files[af.id] = af
+                self._track_table.add_file(af)
+        self._redo_stack.append((kind, audio_files))
+        self._update_undo_redo_actions()
+
+    def _on_redo(self) -> None:
+        if not self._redo_stack:
+            return
+        kind, audio_files = self._redo_stack.pop()
+        if kind == "add":
+            for af in audio_files:
+                self._audio_files[af.id] = af
+                self._track_table.add_file(af)
+        else:  # "delete"
+            self._track_table.remove_ids([af.id for af in audio_files])
+            for af in audio_files:
+                self._audio_files.pop(af.id, None)
+        self._undo_stack.append((kind, audio_files))
+        self._update_undo_redo_actions()
+
+    def _update_undo_redo_actions(self) -> None:
+        self._undo_action.setEnabled(bool(self._undo_stack))
+        self._redo_action.setEnabled(bool(self._redo_stack))
 
     def _edit_files_metadata(self, audio_files: list[AudioFile]) -> None:
         if len(audio_files) == 1:
