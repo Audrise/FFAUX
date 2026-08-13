@@ -74,11 +74,8 @@ def test_empty_selection_returns_empty_list():
     assert build_field_views([]) == []
 
 def test_can_still_edit_other_fields_when_album_differs():
-    """The exact scenario requested by the user: tracks a-c on Album 1, tracks d-f
-    on Album 2—the Album field is automatically read-only (since they differ), but other fields
-    that HAPPEN to be the same (e.g., genre, album_artist) must still be
-    editable in bulk; they should NOT be locked just because the albums differ.
-    """
+    # Tracks with differing albums keep Album read-only,
+    # while identical fields (e.g., genre, artist) remain bulk-editable.
     tracks = [
         _file("a.mp3", album="Album 1", genre="Rock", album_artist="Band X"),
         _file("b.mp3", album="Album 1", genre="Rock", album_artist="Band X"),
