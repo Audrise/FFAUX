@@ -163,25 +163,25 @@ def main() -> int:
                 )
             )
 
-            title = QLabel("FFTool")
-            title.setAlignment(Qt.AlignCenter)
-            title.setStyleSheet("""
+            app_title = QLabel("FFTool v1.0.0")
+            app_title.setAlignment(Qt.AlignCenter)
+            app_title.setStyleSheet("""
                 color: white;
                 font-size: 18px;
                 font-weight: 600;
             """)
 
-            title_version = QLabel("Version 1.0.0")
-            title_version.setAlignment(Qt.AlignCenter)
-            title_version.setStyleSheet("""
+            title = QLabel("Format Whatever You Want.")
+            title.setAlignment(Qt.AlignCenter)
+            title.setStyleSheet("""
                 color: white;
                 font-size: 14px;
                 font-weight: 500;
             """)
 
             inner.addWidget(logo)
+            inner.addWidget(app_title)
             inner.addWidget(title)
-            inner.addWidget(title_version)
 
             splash.resize(320, 280)
             splash.show()
