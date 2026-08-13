@@ -50,11 +50,7 @@ class MetadataEditor(QWidget):
         self._selected_edit: QLineEdit | None = None
 
     def load_metadata(self, metadata: Metadata) -> None:
-        """Backward-compatible: return a single Metadata field.
-        Also used internally by load_for_files() for the case of a single
-        selected file.
-        """
-
+        # Backward-compatible: return a single Metadata field (also used internally for single file loading).
         dummy = AudioFile(path="")
         dummy.metadata = metadata
         self.load_for_files([dummy])
@@ -93,11 +89,7 @@ class MetadataEditor(QWidget):
         return bool(self._deleted_keys)
 
     def add_empty_field(self) -> None:
-        """Add a new empty row below the last field: one field for the
-        tag name (user-entered), and one for its value. It only
-        becomes a valid tag if both are filled in and the dialog is saved.
-        """
-
+        # Add a new empty row for a tag (key-value); becomes valid only if both are filled and saved.
         key_edit = _FocusTrackingLineEdit(self._on_field_focused)
         key_edit.setPlaceholderText("New Tag")
 
@@ -109,11 +101,7 @@ class MetadataEditor(QWidget):
         key_edit.setFocus()
 
     def delete_selected_field(self) -> bool:
-        """Remove the field that most recently had focus (was clicked by the user).
-        Returns True if a field was successfully removed, or False if no
-        field had been selected (i.e., the user hadn't clicked any field).
-        """
-
+        # Remove the most recently focused field; return True if successful, False otherwise.
         if self._selected_edit is None:
             return False
 
@@ -152,11 +140,7 @@ class MetadataEditor(QWidget):
 
     # ------------------------------------------------------------------
     def get_metadata(self) -> Metadata:
-        """Return metadata from editable fields (where values ​​are identical
-        across all selected files) PLUS new, fully populated fields
-        (with both key and value) added via 'Add Metadata'.
-        """
-
+        # Return common metadata from editable fields plus newly added valid fields.
         values = {name: edit.text().strip() or None for name, edit in self._edits.items()}
         for key_edit, value_edit in self._new_rows:
             key = key_edit.text().strip()
@@ -166,16 +150,10 @@ class MetadataEditor(QWidget):
         return Metadata.from_dict({k: v for k, v in values.items() if v is not None})
 
     def get_deleted_keys(self) -> set[str]:
-        """Key tag explicitly removed by the user via the 'Remove Metadata' button
-        (a field inherent to the file, not a new field that hasn't been saved yet).
-        """
-
         return set(self._deleted_keys)
 
     def apply_template(self, template_metadata: Metadata) -> None:
-        """Read-only fields (which differ between tracks)
-        are left untouched—this is not yet supported.
-        """
+        # Read-only fields (which differ between tracks) are left untouched—this is not yet supported.
         template_data = template_metadata.to_dict()
         for key, edit in self._edits.items():
             if key in template_data:
