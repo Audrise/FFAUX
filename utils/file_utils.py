@@ -40,9 +40,7 @@ def format_file_size(num_bytes: int | None) -> str:
     return f"{size:.1f} TB"
 
 def collect_audio_files(paths: list[str], recursive: bool = True) -> list[str]:
-    """Accepts a mix of file and folder paths (from drag-and-drop), returns
-    a sorted, duplicate-free list of supported audio files.
-    """
+    # Accept a mix of file/folder paths (drag-and-drop) and return a sorted, duplicate-free list of supported audio files.
     found: set[str] = set()
 
     for raw_path in paths:
