@@ -1,5 +1,5 @@
 """
-Aggregate progress panel: average progress of all jobs in the batch.
+# Aggregate progress panel: average progress of all jobs in the batch.
 """
 from __future__ import annotations
 

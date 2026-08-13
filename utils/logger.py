@@ -1,5 +1,5 @@
 """
-Centralized logging configuration.
+# Centralized logging configuration.
 
 Other modules simply use: `logger = logging.getLogger(__name__)`.
 The GUI can attach additional handlers (e.g., QtLogHandler) to display
