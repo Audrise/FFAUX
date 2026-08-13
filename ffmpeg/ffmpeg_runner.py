@@ -35,15 +35,10 @@ class FFmpegRunner:
         extra_args: Optional[list[str]] = None,
     ) -> RunResult:
 
-        """
-        Run `ffmpeg <extra_args> <args>`.
-
-        Args:
-            args: CLI arguments resulting from command_builder.build().
-            on_line: Callback invoked for each line of stdout/stderr.
-            cancel_event: If set, the process will be terminated.
-            extra_args: Additional global arguments (e.g., ["-progress", "pipe:1", "-nostats"]), inserted before `args`.
-        """
+        # Run `ffmpeg <extra_args> <args>`.
+        # args: Built CLI arguments; on_line: stdout/stderr callback.
+        # cancel_event: Stops the process when set.
+        # extra_args: Global arguments inserted before `args`.
 
         full_args = [self.ffmpeg_path]
         if extra_args:
