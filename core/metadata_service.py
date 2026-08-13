@@ -33,10 +33,7 @@ class MetadataService:
         self._ffmpeg = ffmpeg_runner
 
     def read_metadata(self, audio_file: AudioFile) -> AudioFile:
-        """Populate `audio_file.metadata` and `duration_seconds` from the `ffprobe` output.
-        Returns the same `AudioFile` object (modified in-place)
-        for convenient direct use by the caller.
-        """
+        # Populate metadata and duration from `ffprobe`, then return the modified object.
         result = self._ffprobe.probe(audio_file.path)
         if not result.success:
             audio_file.error_message = result.error_message
@@ -81,26 +78,15 @@ class MetadataService:
 
     @staticmethod
     def default_output_path(audio_file: AudioFile, output_dir: str, suffix: str, extension: Optional[str] = None) -> str:
-        """
-        Determine the default output path: <output_dir or source folder>/<stem><suffix><ext>.
-
-        `extension` is optional—if provided (e.g., from
-        ConversionSettings.file_extension()), it replaces the source file
-        extension. This is necessary because format conversion can now
-        change the extension (e.g., .flac -> .mp3), rather than simply
-        preserving the original extension as before.
-        """
+        # Build the default output path from the output/source folder, stem, suffix, and extension.
+        # If provided, `extension` replaces the source extension for format conversions.
         source = Path(audio_file.path)
         target_dir = Path(output_dir) if output_dir else source.parent
         final_extension = extension if extension is not None else source.suffix
         return str(target_dir / f"{source.stem}{suffix}{final_extension}")
 
     def extract_cover_art_sync(self, audio_file: AudioFile, output_dir: str) -> Optional[str]:
-        """
-        Runs synchronously (blocking) — see trade-off notes in
-        gui/dialogs/metadata_editor_dialog.py. Returns None if
-        the file has no cover art or ffmpeg_runner is not set.
-        """
+        # Runs synchronously (blocking). Returns None if there's no cover art or ffmpeg_runner is unset.
         if self._ffmpeg is None:
             return None
         if audio_file.metadata.cover_art_path != "<embedded>":
