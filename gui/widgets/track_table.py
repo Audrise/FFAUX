@@ -57,12 +57,8 @@ _DEFAULT_WIDTHS = {
 _ID_ROLE = Qt.ItemDataRole.UserRole
 
 class TrackTable(QTableWidget):
-    """Table storing audio_file_id as data in each row
-    (via Qt.ItemDataRole.UserRole in the Title column), rather than in a dict
-    static position. so the index doesn't become "stale" after a row is deleted
-    or reordered. `_row_by_id` is rebuilt from this data whenever
-    the row structure changes.
-    """
+    # Table storing audio_file_id in row data (Qt.UserRole) to prevent stale indices.
+    # `_row_by_id` is rebuilt whenever the row structure changes.
 
     filesDropped = Signal(list)  # list[str] path of dropped audio files
 
