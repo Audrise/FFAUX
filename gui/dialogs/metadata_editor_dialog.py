@@ -107,10 +107,7 @@ class MetadataEditorDialog(QDialog):
         return row
 
     def _on_preview_metadata_clicked(self) -> None:
-        """Open a new window displaying the content of the template currently
-        selected in the "Template" combo box—replacing the old preview
-        panel that appeared automatically inline below the Template row.
-        """
+        # Open a new window showing the currently selected Template, replacing the old inline preview panel.
         name = self._template_combo.currentText()
         if not name:
             QMessageBox.information(self, "Select Metadata Template", "Select a template in the dropdown first.")
@@ -194,7 +191,6 @@ class MetadataEditorDialog(QDialog):
         else:
             QMessageBox.information(self, "Metadata Deleted", "The selected metadata field has been deleted.")
 
-    # Cover art
     def _on_extract_cover_clicked(self) -> None:
         if not self._extract_and_show_cover():
             QMessageBox.information(self, "No cover", "This file doesn't have embedded cover art.")
@@ -202,11 +198,7 @@ class MetadataEditorDialog(QDialog):
             QMessageBox.information(self, "Cover Extracted", "Cover art has been extracted from the file.")
 
     def _extract_and_show_cover(self) -> bool:
-        """Extract the embedded cover art (from the first selected file) and
-        display it in the viewer. Return False if the file does not have
-        cover art (used by both auto-extraction upon opening the dialog
-        and the "Extract from File" button).
-        """
+        # Extract and display cover art from the first file; return False if none exists.
         temp_dir = Path(tempfile.gettempdir()) / "fftool_covers"
         path = self._metadata_service.extract_cover_art_sync(self._primary_file, str(temp_dir))
         if path:
