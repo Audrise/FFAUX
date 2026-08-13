@@ -1,37 +1,116 @@
+# =========================
 # Python
+# =========================
 __pycache__/
+*.py[cod]
 *.pyc
+*$py.class
 .pytest_cache/
 .venv/
-architecture.py
+venv/
+env/
+ENV/
 
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# =========================
 # Build & packaging output
+# =========================
 build/
 dist/
 installer/
+*.egg-info/
+.eggs/
 
+# PyInstaller
+*.manifest
+*.spec
+
+# Build & installer scripts
+*.iss
+*.bat
+
+# =========================
 # App runtime / local config
+# =========================
 config/*
 *.html
 
+# =========================
 # Local-only assets
+# =========================
 assets/templates/*.json
 assets/icons/*.ico
 assets/splash/*.png
 bin/*.dll
 bin/*.exe
 
+# =========================
 # Misc / working folders
+# =========================
 notes/
 audio/
-licenses/
 
-# Build & installer scripts
-*.spec
-*.iss
-*.bat
-
+# =========================
 # Audio test
+# =========================
 *.flac
 *.wav
 *.mp3
+
+# =========================
+# Testing / coverage
+# =========================
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# =========================
+# Type checking / linters
+# =========================
+.mypy_cache/
+.pyre/
+.pytype/
+.ruff_cache/
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# IDE / editors
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Logs / temporary files
+# =========================
+*.log
+*.tmp
+*.temp
+
+# =========================
+# Local database
+# =========================
+*.sqlite3
+*.db
+
+# =========================
+# Specific files
+# =========================
+architecture.py
