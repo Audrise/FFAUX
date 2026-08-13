@@ -65,6 +65,7 @@ class MainWindow(QMainWindow):
         self._metadata_pool.setMaxThreadCount(self._config_service.config.max_metadata_probe_threads)
         self._add_batch_total = 0
         self._add_batch_pending = 0
+        self._add_batch_show_message = True
 
         self._undo_stack: list[tuple[str, list[AudioFile]]] = []
         self._redo_stack: list[tuple[str, list[AudioFile]]] = []
@@ -91,7 +92,7 @@ class MainWindow(QMainWindow):
         if self._config_service.config.restore_session_on_launch:
             session_paths = self._config_service.config.session_paths
             if session_paths:
-                self._on_files_added(session_paths)
+                self._on_files_added(session_paths, show_completion_message=False)
 
         self._discord_presence.update(PresenceState(state="Managing audio library", large_image=_DISCORD_LARGE_IMAGE))
 
@@ -353,10 +354,11 @@ class MainWindow(QMainWindow):
 
         self._on_files_added(found)
 
-    def _on_files_added(self, paths: list[str]) -> None:
+    def _on_files_added(self, paths: list[str], show_completion_message: bool = True) -> None:
         # Add the row with placeholder metadata; ffprobe fills it in asynchronously.
         # Keeps the UI responsive when adding/restoring many files.
         added_files: list[AudioFile] = []
+        self._add_batch_show_message = show_completion_message
         for path in paths:
             audio_file = AudioFile(path=path)
             self._audio_files[audio_file.id] = audio_file
@@ -394,11 +396,12 @@ class MainWindow(QMainWindow):
             self._track_table.update_metadata(target_id, audio_file)
 
         if self._add_batch_pending <= 0 and self._add_batch_total > 0:
-            QMessageBox.information(
-                self,
-                "Files Added",
-                f"Successfully added {self._add_batch_total} file(s) to the batch.",
-            )
+            if self._add_batch_show_message:
+                QMessageBox.information(
+                    self,
+                    "Files Added",
+                    f"Successfully added {self._add_batch_total} file(s) to the batch.",
+                )
             self._add_batch_total = 0
             self._add_batch_pending = 0
 
