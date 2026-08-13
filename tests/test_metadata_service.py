@@ -33,9 +33,8 @@ def test_extract_cover_art_success(tmp_path):
     ffmpeg_runner.run.assert_called_once()
 
 def test_read_metadata_preserves_original_casing_for_extra_tags():
-    """Regression test: extra/custom tag KEYS (e.g. ISRC, REPLAYGAIN_TRACK_GAIN)
-    must keep their ORIGINAL casing from the file, not be forced to lowercase.
-    """
+    # Regression test: Extra/custom tag keys (e.g., ISRC) must preserve 
+    # their original casing from the file instead of being forced to lowercase.
     probe_result = MagicMock()
     probe_result.success = True
     probe_result.duration_seconds = 100.0
@@ -66,9 +65,8 @@ def test_read_metadata_preserves_original_casing_for_extra_tags():
     }
 
 def test_read_metadata_mixed_case_known_field_still_recognized():
-    """A known field reported with unusual/mixed casing (e.g. "Album_Artist")
-    must still be recognized via the case-insensitive lookup, not dropped or
-    duplicated into .extra."""
+    # Ensure known fields with mixed casing (e.g., "Album_Artist") 
+    # are recognized via case-insensitive lookup without being dropped or duplicated.
     probe_result = MagicMock()
     probe_result.success = True
     probe_result.duration_seconds = 100.0
