@@ -59,28 +59,14 @@ def _build_convert(job: Job) -> list[str]:
     return args
 
 def _metadata_args(job: Job) -> list[str]:
-    """Build the `-metadata key=value` args from the CURRENT in-memory
-    Metadata object (job.audio_file.metadata), plus `-metadata key=`
-    (empty) for any keys removed via "Remove Metadata".
-
-    Shared by _build_apply_metadata and _build_set_cover so that a job
-    which also changes the cover art embeds the SAME up-to-date tag
-    values, instead of relying on `-map_metadata 0` (which would only
-    copy whatever tags are already on disk in the source file).
-    """
+    # Build metadata args from the current in-memory metadata, including cleared keys.
+    # Shared by metadata and cover-art updates to keep tags consistent and up to date.
     args: list[str] = []
     metadata = job.audio_file.metadata.to_dict()
     for key, value in metadata.items():
         if key == "cover_art_path":
             continue
         args += ["-metadata", f"{key}={value}"]
-
-    """Tags removed by the user via "Remove Metadata" (see
-    gui/widgets/metadata_editor.py) — FFmpeg removes tags by
-    setting their value to empty. This is placed AFTER the loop above so that
-    if the same key appears in the output of .to_dict() (e.g., it hasn't
-    been updated in the in-memory object yet), this "-metadata key=" line
-    takes precedence (FFmpeg uses the *last* -metadata definition for a given key)."""
 
     for key in job.params.get("deleted_metadata_keys", []):
         args += ["-metadata", f"{key}="]
@@ -103,9 +89,8 @@ def _build_extract_cover(job: Job) -> list[str]:
     ]
 
 def _build_set_cover(job: Job) -> list[str]:
-    """BUGFIX: previously this only used `-map_metadata 0`, which copies
-    tags from whatever is currently on disk in the source file.
-    """
+    # BUGFIX: previously this only used `-map_metadata 0`, which copies
+    # tags from whatever is currently on disk in the source file.
     cover_path = job.params["cover_path"]
     args = [
         "-y",
@@ -151,12 +136,11 @@ _BUILDERS: dict[OperationType, Callable[[Job], list[str]]] = {
 }
 
 def build(job: Job) -> list[str]:
-    """Build FFmpeg CLI arguments (without 'ffmpeg' in front) for a Job.
+    # Build FFmpeg CLI arguments (without 'ffmpeg' in front) for a Job.
+    # Raises:
+    #     ValueError: if the operation does not have a registered builder,
+    #     or job.output_path is not set.
 
-    Raises:
-        ValueError: if the operation does not have a registered builder,
-        or job.output_path is not set.
-    """
     if not job.output_path and job.operation != OperationType.EXTRACT_COVER:
         raise ValueError("job.output_path must be set before the build command!")
 
