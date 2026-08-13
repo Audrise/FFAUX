@@ -62,7 +62,7 @@ class MainWindow(QMainWindow):
         self._audio_files: dict[str, AudioFile] = {}
 
         self._metadata_pool = QThreadPool()
-        self._metadata_pool.setMaxThreadCount(3)
+        self._metadata_pool.setMaxThreadCount(self._config_service.config.max_metadata_probe_threads)
         self._add_batch_total = 0
         self._add_batch_pending = 0
 
@@ -354,9 +354,8 @@ class MainWindow(QMainWindow):
         self._on_files_added(found)
 
     def _on_files_added(self, paths: list[str]) -> None:
-        # Add the row immediately with placeholder metadata; ffprobe runs
-        # asynchronously and _on_metadata_ready() fills it in when ready.
-        # Avoids blocking the UI when adding/restoring many files at once.
+        # Add the row with placeholder metadata; ffprobe fills it in asynchronously.
+        # Keeps the UI responsive when adding/restoring many files.
         added_files: list[AudioFile] = []
         for path in paths:
             audio_file = AudioFile(path=path)
@@ -379,9 +378,7 @@ class MainWindow(QMainWindow):
             self._update_undo_redo_actions()
 
     def _on_metadata_ready(self, probed_audio_file: AudioFile, target_id: str) -> None:
-        # Decrement regardless of whether the file was removed in the
-        # meantime -- the probe DID complete either way, and the batch
-        # shouldn't hang waiting for a file that no longer exists.
+        # Probe completed, so decrement even if the file was removed.
         self._add_batch_pending -= 1
 
         audio_file = self._audio_files.get(target_id)
@@ -399,7 +396,7 @@ class MainWindow(QMainWindow):
         if self._add_batch_pending <= 0 and self._add_batch_total > 0:
             QMessageBox.information(
                 self,
-                "Adding Complete",
+                "Files Added",
                 f"Successfully added {self._add_batch_total} file(s) to the batch.",
             )
             self._add_batch_total = 0
@@ -408,7 +405,6 @@ class MainWindow(QMainWindow):
     def _on_conversion_settings_clicked(self) -> None:
         # Optional prefill only; the dialog is always shown again when Convert is clicked.
         # This does not skip the dialog.
-
         dialog = ConversionSettingsDialog(self._conversion_settings, self)
         if dialog.exec():
             self._conversion_settings = dialog.get_settings()
@@ -654,6 +650,7 @@ class MainWindow(QMainWindow):
         if dialog.exec():
             self._job_manager.set_ffmpeg_path(self._config_service.get("ffmpeg_path"))
             self._job_manager.set_max_parallel_jobs(self._config_service.get("max_parallel_jobs"))
+            self._metadata_pool.setMaxThreadCount(self._config_service.get("max_metadata_probe_threads"))
 
             # Apply live; start()/stop() are safe to call unconditionally.
             if self._config_service.config.enable_discord_presence:
@@ -664,12 +661,9 @@ class MainWindow(QMainWindow):
             else:
                 self._discord_presence.stop()
 
-    # Reactions to JobManager signals
     def _on_job_started(self, job_id: str) -> None:
-        """job_id here is the Job.id; we need audio_file.id to update the row.
-        Since one job = one audio_file in this MVP, we map them back through
-        JobManager lookup if needed. For simplicity, TrackTable is updated
-        using the audio_file.id stored in job.audio_file."""
+    # job_id is Job.id; use job.audio_file.id to update the row.
+    # One job maps to one audio_file in this MVP.
 
         job = self._job_manager.get_job(job_id)
         if job:
