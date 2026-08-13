@@ -120,12 +120,8 @@ class ConversionSettingsDialog(QDialog):
         self._update_field_states()
 
     def _current_format(self) -> OutputFormat:
-        """PySide6 sometimes "flattens" str-Enum values ​​(OutputFormat inherits
-        from str) into plain strings when passing through QVariant (combo box's userData()).
-        Calling OutputFormat(data) is safe regardless of whether the data is already
-        an OutputFormat instance or just a raw string—Enum(value) always
-        reconstructs the correct member."""
-
+        # PySide6 may flatten str-Enum values to plain strings via QVariant/userData().
+        # Calling OutputFormat(data) safely restores the correct enum member.
         data = self._format_combo.currentData()
         return OutputFormat(data)
 
