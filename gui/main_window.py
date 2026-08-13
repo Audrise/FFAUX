@@ -11,12 +11,13 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QFileDialog, QMainWindow, QMenu, QMessageBox, QSplitter, QVBoxLayout, QWidget
 from PySide6.QtGui import QShortcut, QKeySequence, QAction
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QThreadPool
 
 from core.discord_presence_service import DiscordPresenceService, PresenceState
 from core.config_service import ConfigService
 from core.filename_parser import FilenameParser
 from core.job_manager import JobManager
+from core.metadata_probe_worker import MetadataProbeWorker
 from core.metadata_service import MetadataService
 from core.models.audio_file import AudioFile, FileStatus
 from core.models.conversion_settings import ConversionSettings, OutputFormat
@@ -59,6 +60,12 @@ class MainWindow(QMainWindow):
         self._filename_parser = FilenameParser()
         self._discord_presence = discord_presence_service or DiscordPresenceService(client_id="")
         self._audio_files: dict[str, AudioFile] = {}
+
+        self._metadata_pool = QThreadPool()
+        self._metadata_pool.setMaxThreadCount(3)
+        self._add_batch_total = 0
+        self._add_batch_pending = 0
+
         self._undo_stack: list[tuple[str, list[AudioFile]]] = []
         self._redo_stack: list[tuple[str, list[AudioFile]]] = []
         self._conversion_settings = self._make_default_conversion_settings()
@@ -92,6 +99,10 @@ class MainWindow(QMainWindow):
         self._process_action.setEnabled(bool(self._audio_files))
 
     def closeEvent(self, event) -> None:
+        # Drop QUEUED metadata probes so closing doesn't wait;
+        # running workers finish on their own and auto-delete.
+        self._metadata_pool.clear()
+
         # Save window state so the next launch can restore it. (see main.py)
         config = self._config_service.config
         config.window_maximized = self.isMaximized()
@@ -343,13 +354,21 @@ class MainWindow(QMainWindow):
         self._on_files_added(found)
 
     def _on_files_added(self, paths: list[str]) -> None:
+        # Add the row immediately with placeholder metadata; ffprobe runs
+        # asynchronously and _on_metadata_ready() fills it in when ready.
+        # Avoids blocking the UI when adding/restoring many files at once.
         added_files: list[AudioFile] = []
         for path in paths:
             audio_file = AudioFile(path=path)
-            self._metadata_service.read_metadata(audio_file)
             self._audio_files[audio_file.id] = audio_file
             self._track_table.add_file(audio_file)
             added_files.append(audio_file)
+
+            worker = MetadataProbeWorker(audio_file.id, path, self._metadata_service)
+            worker.signals.finished.connect(self._on_metadata_ready)
+            self._add_batch_total += 1
+            self._add_batch_pending += 1
+            self._metadata_pool.start(worker)
 
         logger.info("Adding %d files to the batch", len(paths))
         self._update_file_dependent_actions()
@@ -359,11 +378,36 @@ class MainWindow(QMainWindow):
             self._redo_stack.clear()
             self._update_undo_redo_actions()
 
+    def _on_metadata_ready(self, probed_audio_file: AudioFile, target_id: str) -> None:
+        # Decrement regardless of whether the file was removed in the
+        # meantime -- the probe DID complete either way, and the batch
+        # shouldn't hang waiting for a file that no longer exists.
+        self._add_batch_pending -= 1
+
+        audio_file = self._audio_files.get(target_id)
+        if audio_file is not None:
+            audio_file.metadata = probed_audio_file.metadata
+            audio_file.duration_seconds = probed_audio_file.duration_seconds
+            audio_file.bitrate_kbps = probed_audio_file.bitrate_kbps
+            audio_file.sample_rate_hz = probed_audio_file.sample_rate_hz
+            audio_file.codec = probed_audio_file.codec
+            audio_file.file_size_bytes = probed_audio_file.file_size_bytes
+            audio_file.error_message = probed_audio_file.error_message
+
+            self._track_table.update_metadata(target_id, audio_file)
+
+        if self._add_batch_pending <= 0 and self._add_batch_total > 0:
+            QMessageBox.information(
+                self,
+                "Adding Complete",
+                f"Successfully added {self._add_batch_total} file(s) to the batch.",
+            )
+            self._add_batch_total = 0
+            self._add_batch_pending = 0
+
     def _on_conversion_settings_clicked(self) -> None:
-        """This is OPTIONAL and only used to prefill the dialog. The same dialog
-        will ALWAYS be shown again every time the Convert button is clicked
-        (see _on_process_clicked), so this is NOT a way to skip the dialog.
-        """
+        # Optional prefill only; the dialog is always shown again when Convert is clicked.
+        # This does not skip the dialog.
 
         dialog = ConversionSettingsDialog(self._conversion_settings, self)
         if dialog.exec():

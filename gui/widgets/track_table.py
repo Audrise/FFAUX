@@ -122,17 +122,11 @@ class TrackTable(QTableWidget):
             header.resizeSection(col, _DEFAULT_WIDTHS.get(col, 100))
 
     def reset_layout(self) -> None:
-        """Reset widths, visibility, AND order back to defaults in one
-        call (see SettingsDialog's "Reset Table Layout to Default"
-        button) unlike reset_column_widths(), which only handles
-        widths.
-        """
+        # Reset column widths, visibility, and order to defaults in one call.
         header = self.horizontalHeader()
 
-        # Order: move every column back to its natural left-to-right
-        # logical position. Iterating logical indices ascending and
-        # re-querying visualIndex() each time (rather than caching stale
-        # positions) correctly accounts for earlier moves shifting things.
+        # Move each column back to its logical position, rechecking visualIndex()
+        # after each move so earlier moves don't leave positions stale.
         for logical in range(self.columnCount()):
             current_visual = header.visualIndex(logical)
             if current_visual != logical:
@@ -258,6 +252,35 @@ class TrackTable(QTableWidget):
         self.setCellWidget(row, _COL_PROGRESS, progress_container)
 
         self._row_by_id[audio_file.id] = row
+
+    def update_metadata(self, audio_file_id: str, audio_file: AudioFile) -> None:
+        # Refresh only metadata-dependent columns after async ffprobe completes.
+        row = self._row_by_id.get(audio_file_id)
+        if row is None:
+            return  # row was removed (e.g. user deleted it) before the probe finished
+
+        meta = audio_file.metadata
+        values = {
+            _COL_FILE_NAME: audio_file.filename,
+            _COL_TRACK: meta.track_number or "",
+            _COL_TITLE: meta.title or audio_file.filename,
+            _COL_ARTIST: meta.artist or "",
+            _COL_ALBUM: meta.album or "",
+            _COL_YEAR: meta.year or "",
+            _COL_DURATION: format_duration(audio_file.duration_seconds),
+            _COL_SAMPLE_RATE: format_sample_rate(audio_file.sample_rate_hz),
+            _COL_BITRATE: f"{audio_file.bitrate_kbps} kbps" if audio_file.bitrate_kbps else "-",
+            _COL_SIZE: format_file_size(audio_file.file_size_bytes),
+            _COL_CODEC: audio_file.codec or "-",
+            _COL_RATING: meta.rating or "",
+        }
+        for col, text in values.items():
+            item = self.item(row, col)
+            if item is None:
+                item = QTableWidgetItem()
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.setItem(row, col, item)
+            item.setText(str(text))
 
     def remove_ids(self, audio_file_ids: list[str]) -> None:
         # Delete rows for a set of audio_file_ids at once (multi-select)
