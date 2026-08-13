@@ -31,11 +31,7 @@ except ImportError:  # pypresence is an OPTIONAL dependency
 
 @dataclass
 class PresenceState:
-    """One Rich Presence update. Field names mirror pypresence's
-    `Presence.update()` kwargs on purpose so callers can reason about
-    them directly (see pypresence docs / Discord's Rich Presence docs
-    for what each one renders as).
-    """
+    # Rich Presence update; fields mirror `pypresence`'s `Presence.update()` kwargs.
     details: Optional[str] = None
     state: Optional[str] = None
     large_image: Optional[str] = None
@@ -47,14 +43,7 @@ class PresenceState:
 _STOP = object()  # sentinel put on the queue to end the worker thread
 
 class DiscordPresenceService:
-    """Example Usage
-    service = DiscordPresenceService(client_id="Application ID>")
-    service.start()
-    service.update(PresenceState(details="Converting audio...", state="3 files"))
-    ...
-    service.stop()
-    """
-
+    # Example usage see (test_discord_presence_service.py)
     def __init__(self, client_id: str):
         self._client_id = client_id
         self._queue: "queue.Queue[object]" = queue.Queue()
@@ -100,11 +89,8 @@ class DiscordPresenceService:
         self._thread = None
 
     def _run(self) -> None:
-        """Worker thread body: connect once, then process queued updates
-        one at a time. Every pypresence call happens here, off the GUI
-        thread. any failure just logs and leaves the service
-        disconnected instead of raising into the caller.
-        """
+        # Worker thread: connects once, then processes queued updates sequentially.
+        # All `pypresence` calls stay off the GUI thread; failures are logged.
         rpc = Presence(self._client_id)
         try:
             rpc.connect()
@@ -146,11 +132,7 @@ class DiscordPresenceService:
         self._connected = False
 
     def _drain_queue_quietly(self) -> None:
-        """If connect() failed, still consume whatever gets queued
-        afterwards (up to and including the stop sentinel) so stop()'s
-        thread.join() doesn't hang waiting on a thread that's just
-        sitting there not reading from the queue.
-        """
+        # If connect() fails, keep consuming the queue so stop()'s join() doesn't hang.
         while True:
             item = self._queue.get()
             if item is _STOP:
