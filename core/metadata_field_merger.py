@@ -31,10 +31,7 @@ _KNOWN_FIELD_ORDER = list(KNOWN_FIELD_LABELS.keys())
 VALUE_SEPARATOR = " - "
 
 def field_label(field_key: str) -> str:
-    """Display label for a field.
-    Extra or unrecognized fields (additional tags such as ISRC, publisher) are used
-    as-is, with the first letter of each word capitalized.
-    """
+    # Display label for a field. Unknown fields are used as-is with each word capitalized.
     if field_key in KNOWN_FIELD_LABELS:
         return KNOWN_FIELD_LABELS[field_key]
     return field_key.replace("_", " ").strip().title()
