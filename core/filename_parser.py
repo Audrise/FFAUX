@@ -40,11 +40,9 @@ class FilenameParser:
         return compiled
 
     def parse(self, file_path: str, pattern: str) -> Optional[Metadata]:
-        """
-        Try to parse the file name (without extension) according to the pattern.
-        Returns:
-            Metadata if it matches, None if the file name doesn't match the pattern.
-        """
+        # Try to parse the file name (without extension) according to the pattern.
+        # Returns:
+        #     Metadata if it matches, None if the file name doesn't match the pattern.
         stem = Path(file_path).stem
         regex = self.pattern_to_regex(pattern)
         match = regex.match(stem)
