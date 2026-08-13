@@ -29,7 +29,7 @@ class AppConfig:
     window_height: int = 600
     window_x: int = -1
     window_y: int = -1
-    enable_discord_presence: bool = True
+    enable_discord_presence: bool = False
     restore_session_on_launch: bool = True
     track_table_column_widths: list[int] = field(default_factory=list)
     track_table_hidden_columns: Optional[list[int]] = None
@@ -39,7 +39,7 @@ class AppConfig:
     default_sample_rate_hz: int = 44100
     default_bit_depth: int = 16
     default_bitrate_kbps: int = 320
-    default_use_soxr: bool = True
+    default_use_soxr: bool = False
     default_soxr_precision: int = 28
     default_flac_compression_level: int = 5
 
