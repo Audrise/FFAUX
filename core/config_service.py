@@ -71,7 +71,7 @@ class ConfigService:
 
     def save(self) -> None:
         self.config_path.write_text(
-            json.dumps(asdict(self._config), indent=2, ensure_ascii=False),
+            json.dumps(asdict(self._config), indent=4, ensure_ascii=False),
             encoding="utf-8",
         )
 

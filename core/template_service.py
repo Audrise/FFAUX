@@ -27,7 +27,7 @@ class TemplateService:
             "name": name,
             "metadata": metadata.to_dict(),
         }
-        path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+        path.write_text(json.dumps(payload, indent=4, ensure_ascii=False), encoding="utf-8")
         return path
 
     def load_template(self, name: str) -> Metadata:
