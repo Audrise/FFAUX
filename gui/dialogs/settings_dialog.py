@@ -59,6 +59,10 @@ class SettingsDialog(QDialog):
         self._parallel_spin.setRange(1, 8)
         self._parallel_spin.setValue(config.max_parallel_jobs)
 
+        self._metadata_probe_spin = QSpinBox()
+        self._metadata_probe_spin.setRange(1, 8)
+        self._metadata_probe_spin.setValue(config.max_metadata_probe_threads)
+
         self._output_suffix_edit = QLineEdit(config.output_suffix)
         self._output_suffix_edit.setPlaceholderText("_converted")
 
@@ -77,6 +81,7 @@ class SettingsDialog(QDialog):
         form.addRow("Default ouput folder:", self._wrap_with_browse(self._output_dir_edit, is_dir=True))
         form.addRow("Output filename suffix:", self._output_suffix_edit)
         form.addRow("Maximum parallel jobs:", self._parallel_spin)
+        form.addRow("Maximum metadata reading threads:", self._metadata_probe_spin)
         form.addRow("", self._enable_discord_check)
         form.addRow("", self._restore_session_check)
         form.addRow("Table columns:", self._reset_layout_btn)
@@ -214,6 +219,7 @@ class SettingsDialog(QDialog):
         cfg.set("output_directory", self._output_dir_edit.text())
         cfg.set("output_suffix", self._output_suffix_edit.text() or "_converted")
         cfg.set("max_parallel_jobs", self._parallel_spin.value())
+        cfg.set("max_metadata_probe_threads", self._metadata_probe_spin.value())
         cfg.set("enable_discord_presence", self._enable_discord_check.isChecked())
         cfg.set("restore_session_on_launch", self._restore_session_check.isChecked())
 
