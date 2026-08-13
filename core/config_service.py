@@ -21,6 +21,7 @@ class AppConfig:
     output_directory: str = ""
     output_suffix: str = "_converted"
     max_parallel_jobs: int = 2
+    max_metadata_probe_threads: int = 2
     default_bitrate: str = "192k"
     last_template: str = ""
     theme: str = "system"
