@@ -56,11 +56,8 @@ def test_build_apply_metadata_with_deleted_keys():
     assert "title=Song Title" in args
 
 def test_build_apply_metadata_deleted_key_overrides_existing_value():
-    """If the deleted key happens to still have a value in
-    audio_file.metadata (e.g., it hasn't been cleared from memory yet), the
-    deletion line (-metadata key=) must still WIN because it is placed
-    later—FFmpeg uses the last -metadata definition for the same key.
-    """
+    # Ensure deletion (-metadata key=) comes last so FFmpeg overrides any existing value in memory.
+    # `_row_by_id` is rebuilt whenever the row structure changes.
     audio_file = AudioFile(path="input.mp3")
     audio_file.metadata.comment = "Old Comment"
     job = Job(
@@ -76,13 +73,8 @@ def test_build_apply_metadata_deleted_key_overrides_existing_value():
     assert args[comment_indices[-1]] == "comment="
 
 def test_build_set_cover_writes_current_metadata_explicitly():
-    """Regression test: SET_COVER used to rely on `-map_metadata 0`, which
-    only copies whatever tags are already on disk in the source file. If a
-    user changed metadata AND the cover in the same action, the SET_COVER
-    job's output never contained the newly edited tag values. It must now
-    write the current in-memory metadata explicitly, just like
-    APPLY_METADATA does.
-    """
+    # Regression test: SET_COVER must write current in-memory metadata explicitly
+    # instead of relying on `-map_metadata 0`, ensuring newly edited tags aren't lost.
     audio_file = AudioFile(path="input.flac")
     audio_file.metadata.title = "New Title"
     audio_file.metadata.artist = "New Artist"
