@@ -95,6 +95,9 @@ class ConversionSettingsDialog(QDialog):
         output_dir_row.addWidget(self._output_dir_edit)
         output_dir_row.addWidget(browse_btn)
 
+        self._output_suffix_edit = QLineEdit(current_settings.custom_output_suffix)
+        self._output_suffix_edit.setPlaceholderText("Leave blank to use the default suffix name.")
+
         self._form = QFormLayout()
         self._form.addRow("Output Format:", self._format_combo)
         self._form.addRow("Sample Rate:", self._sample_rate_combo)
@@ -103,7 +106,8 @@ class ConversionSettingsDialog(QDialog):
         self._form.addRow("FLAC Compression Level (0-12):", self._flac_compression_spin)
         self._form.addRow("", self._use_soxr_check)
         self._form.addRow("SOXR Precision (1-33):", self._soxr_precision_spin)
-        self._form.addRow("Custom Output Folder:", output_dir_row)
+        self._form.addRow("Output Suffix:", self._output_suffix_edit)
+        self._form.addRow("Output Folder:", output_dir_row)
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
@@ -163,5 +167,6 @@ class ConversionSettingsDialog(QDialog):
             use_soxr=self._use_soxr_check.isChecked(),
             soxr_precision=self._soxr_precision_spin.value(),
             flac_compression_level=self._flac_compression_spin.value(),
+            custom_output_suffix=self._output_suffix_edit.text().strip(),
             custom_output_dir=self._output_dir_edit.text().strip(),
         )
