@@ -25,11 +25,12 @@ from core.models.job import Job, OperationType
 from core.models.metadata import Metadata
 from core.template_service import TemplateService
 
+from gui.dialogs.conversion_progress_dialog import ConversionProgressDialog
 from gui.dialogs.conversion_settings_dialog import ConversionSettingsDialog
 from gui.dialogs.metadata_editor_dialog import MetadataEditorDialog
 from gui.dialogs.settings_dialog import SettingsDialog
+
 from gui.widgets.log_viewer import LogViewer
-from gui.widgets.progress_panel import ProgressPanel
 from gui.widgets.track_table import TrackTable
 
 from utils.file_utils import collect_audio_files
@@ -72,6 +73,7 @@ class MainWindow(QMainWindow):
         self._conversion_settings = self._make_default_conversion_settings()
         self._batch_convert_total = 0
         self._batch_convert_success = 0
+        self._conversion_progress_dialog: ConversionProgressDialog | None = None
 
         self._build_ui()
         self._connect_signals()
@@ -218,13 +220,6 @@ class MainWindow(QMainWindow):
         self._toggle_log_action.triggered.connect(self._on_toggle_log)
         view_menu.addAction(self._toggle_log_action)
 
-        self._toggle_progress_panel_action = QAction("Show Progress Bar", self)
-        self._toggle_progress_panel_action.setShortcut("Ctrl+.")
-        self._toggle_progress_panel_action.setCheckable(True)
-        self._toggle_progress_panel_action.setChecked(False)
-        self._toggle_progress_panel_action.triggered.connect(self._on_toggle_progress_panel)
-        view_menu.addAction(self._toggle_progress_panel_action)
-
         view_menu.addSeparator()
         self._reset_columns_action = QAction("Reset Column Widths", self)
         self._reset_columns_action.setShortcut("Ctrl+>")
@@ -259,10 +254,6 @@ class MainWindow(QMainWindow):
         self._splitter.setStretchFactor(1, 1)
 
         root_layout.addWidget(self._splitter, stretch=1)
-
-        self._progress_panel = ProgressPanel()
-        root_layout.addWidget(self._progress_panel)
-        self._progress_panel.hide()
 
     def _connect_signals(self) -> None:
         self._track_table.cellDoubleClicked.connect(lambda *_: self._on_edit_metadata_clicked())
@@ -323,7 +314,6 @@ class MainWindow(QMainWindow):
 
         menu.addSeparator()
         menu.addAction(self._toggle_log_action)
-        menu.addAction(self._toggle_progress_panel_action)
         menu.addAction(self._reset_columns_action)
         menu.addSeparator()
 
@@ -496,7 +486,9 @@ class MainWindow(QMainWindow):
                 output_dir,
                 config.output_suffix,
                 extension=settings.file_extension(),
+                custom_suffix=settings.custom_output_suffix,
             )
+
             job = Job(
                 audio_file=audio_file,
                 operation=OperationType.CONVERT,
@@ -508,7 +500,10 @@ class MainWindow(QMainWindow):
         if not jobs:
             return
 
-        self._progress_panel.reset(total=len(jobs))
+        self._conversion_progress_dialog = ConversionProgressDialog(jobs, parent=self)
+        self._conversion_progress_dialog.cancelRequested.connect(self._on_cancel_clicked)
+        self._conversion_progress_dialog.show()
+
         self._process_action.setEnabled(False)
         self._cancel_action.setEnabled(True)
         self._batch_convert_total = len(jobs)
@@ -654,9 +649,7 @@ class MainWindow(QMainWindow):
 
             logger.info("Applying metadata to %s", audio_file.filename)
 
-        if job_count:
-                self._progress_panel.reset(total=job_count)
-        else:
+        if job_count == 0:
             self._discord_presence.update(
                 PresenceState(state="Managing audio files", large_image=_DISCORD_LARGE_IMAGE)
             )
@@ -684,16 +677,21 @@ class MainWindow(QMainWindow):
     def _on_job_started(self, job_id: str) -> None:
     # job_id is Job.id; use job.audio_file.id to update the row.
     # One job maps to one audio_file in this MVP.
-
         job = self._job_manager.get_job(job_id)
         if job:
             self._track_table.update_status(job.audio_file.id, FileStatus.RUNNING)
+
+            if job.operation == OperationType.CONVERT and self._conversion_progress_dialog is not None:
+                source_name = job.audio_file.filename
+                target_name = Path(job.output_path).name
+                self._conversion_progress_dialog.set_current_file(source_name, target_name)
 
     def _on_job_progress(self, job_id: str, percent: float) -> None:
         job = self._job_manager.get_job(job_id)
         if job:
             self._track_table.update_progress(job.audio_file.id, percent)
-        self._progress_panel.update_job_progress(job_id, percent)
+            if job.operation == OperationType.CONVERT and self._conversion_progress_dialog is not None:
+                self._conversion_progress_dialog.update_job_progress(job_id, percent)
 
     def _on_job_finished(self, job_id: str, success: bool, message: str) -> None:
         job = self._job_manager.get_job(job_id)
@@ -701,15 +699,14 @@ class MainWindow(QMainWindow):
             status = FileStatus.DONE if success else FileStatus.FAILED
             self._track_table.update_status(job.audio_file.id, status)
             self._track_table.update_progress(job.audio_file.id, 100 if success else job.audio_file.progress)
-            if job.operation == OperationType.CONVERT and success:
-                self._batch_convert_success += 1
-        self._progress_panel.mark_job_done()
+            if job.operation == OperationType.CONVERT:
+                if success:
+                    self._batch_convert_success += 1
+                if self._conversion_progress_dialog is not None:
+                    self._conversion_progress_dialog.mark_job_done()
 
     def _on_toggle_log(self, checked: bool) -> None:
         self._log_viewer.setVisible(checked)
-
-    def _on_toggle_progress_panel(self, checked: bool) -> None:
-        self._progress_panel.setVisible(checked)
 
     def _on_reset_column_widths_clicked(self) -> None:
         self._track_table.reset_column_widths()
@@ -717,17 +714,13 @@ class MainWindow(QMainWindow):
     def _on_batch_finished(self) -> None:
         self._process_action.setEnabled(True)
         self._cancel_action.setEnabled(False)
+        self._conversion_progress_dialog = None
         self._discord_presence.update(
             PresenceState(state="Managing audio library", large_image=_DISCORD_LARGE_IMAGE)
         )
         logger.info("Batch finished")
 
         if self._batch_convert_total > 0:
-            QMessageBox.information(
-                self,
-                "Conversion Complete",
-                f"{self._batch_convert_success} of {self._batch_convert_total} file(s) successfully converted.",
-            )
             self._batch_convert_total = 0
             self._batch_convert_success = 0
 
