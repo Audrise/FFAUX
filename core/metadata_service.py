@@ -77,10 +77,11 @@ class MetadataService:
         return audio_file
 
     @staticmethod
-    def default_output_path(audio_file: AudioFile, output_dir: str, suffix: str, extension: Optional[str] = None) -> str:
+    def default_output_path(audio_file: AudioFile, output_dir: str, suffix: str, custom_suffix: str = "", extension: Optional[str] = None) -> str:
         # Build the default output path from the output/source folder, stem, suffix, and extension.
         # If provided, `extension` replaces the source extension for format conversions.
         source = Path(audio_file.path)
+        suffix = custom_suffix if custom_suffix else suffix
         target_dir = Path(output_dir) if output_dir else source.parent
         final_extension = extension if extension is not None else source.suffix
         return str(target_dir / f"{source.stem}{suffix}{final_extension}")
