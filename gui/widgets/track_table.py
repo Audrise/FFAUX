@@ -56,6 +56,13 @@ _DEFAULT_WIDTHS = {
 
 _ID_ROLE = Qt.ItemDataRole.UserRole
 
+_SORT_COLUMNS = {
+    "track_no": _COL_TRACK,
+    "title": _COL_TITLE,
+    "artist": _COL_ARTIST,
+    "album": _COL_ALBUM,
+}
+
 class TrackTable(QTableWidget):
     # Table storing audio_file_id in row data (Qt.UserRole) to prevent stale indices.
     # `_row_by_id` is rebuilt whenever the row structure changes.
@@ -340,3 +347,30 @@ class TrackTable(QTableWidget):
             if file_id:
                 ids.append(file_id)
         return ids
+
+    def sort_by(self, key: str, ascending: bool = True) -> None:
+        # QTableWidget.sortItems() moves items, but not setCellWidget() widgets.
+        # Save progress bars by audio_file_id and re-attach them after sorting.
+        col = _SORT_COLUMNS.get(key)
+        if col is None:
+            return
+
+        progress_widgets: dict[str, QWidget] = {}
+        for row in range(self.rowCount()):
+            item = self.item(row, _COL_TITLE)
+            file_id = item.data(_ID_ROLE) if item else None
+            widget = self.cellWidget(row, _COL_PROGRESS)
+            if file_id and widget is not None:
+                progress_widgets[file_id] = widget
+
+        order = Qt.SortOrder.AscendingOrder if ascending else Qt.SortOrder.DescendingOrder
+        self.sortItems(col, order)
+
+        for row in range(self.rowCount()):
+            item = self.item(row, _COL_TITLE)
+            file_id = item.data(_ID_ROLE) if item else None
+            widget = progress_widgets.get(file_id) if file_id else None
+            if widget is not None:
+                self.setCellWidget(row, _COL_PROGRESS, widget)
+
+        self._rebuild_row_index()

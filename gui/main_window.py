@@ -182,6 +182,23 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(self._redo_action)
         edit_menu.addSeparator()
 
+        sort_menu = edit_menu.addMenu("Sort By")
+        self._sort_track_no_action = QAction("Track No", self)
+        self._sort_track_no_action.triggered.connect(lambda: self._track_table.sort_by("track_no"))
+        sort_menu.addAction(self._sort_track_no_action)
+
+        self._sort_filename_action = QAction("Title", self)
+        self._sort_filename_action.triggered.connect(lambda: self._track_table.sort_by("title"))
+        sort_menu.addAction(self._sort_filename_action)
+
+        self._sort_artist_action = QAction("Artist", self)
+        self._sort_artist_action.triggered.connect(lambda: self._track_table.sort_by("artist"))
+        sort_menu.addAction(self._sort_artist_action)
+
+        self._sort_album_action = QAction("Album", self)
+        self._sort_album_action.triggered.connect(lambda: self._track_table.sort_by("album"))
+        sort_menu.addAction(self._sort_album_action)
+
         self._edit_metadata_action = QAction("Edit Selected Metadata...", self)
         self._edit_metadata_action.setShortcut("Ctrl+E")
         self._edit_metadata_action.triggered.connect(self._on_edit_metadata_clicked)
@@ -519,11 +536,11 @@ class MainWindow(QMainWindow):
         for audio_file_id in removed_ids:
             audio_file = self._audio_files.pop(audio_file_id, None)
             if audio_file:
-                logger.info("Deleting track: %s", audio_file.filename)
                 removed_files.append(audio_file)
 
         if removed_files:
             self._undo_stack.append(("delete", removed_files))
+            logger.info("Deleted %d tracks", len(removed_files))
             self._redo_stack.clear()
             self._update_undo_redo_actions()
 
