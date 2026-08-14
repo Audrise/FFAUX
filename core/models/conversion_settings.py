@@ -51,6 +51,7 @@ class ConversionSettings:
     use_soxr: bool = True  # user-toggleable; only takes effect for FLAC/WAV
     soxr_precision: int = 28  # 1-33
     flac_compression_level: int = 5  # 0-12
+    custom_output_suffix: str = ""
     custom_output_dir: str = ""  # use default folder (config output_directory / source folder)
 
     def is_lossless(self) -> bool:
