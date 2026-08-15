@@ -49,7 +49,6 @@ class ConversionProgressDialog(QDialog):
         self._target_label = QLabel("-")
         self._target_label.setWordWrap(True)
 
-        # logger.info(f"Converting 1 of {self._total_jobs} files")
 
         if self._total_jobs > 1:
             logger.info(
