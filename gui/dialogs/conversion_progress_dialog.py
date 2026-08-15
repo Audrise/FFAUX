@@ -37,7 +37,8 @@ class ConversionProgressDialog(QDialog):
         self._total_jobs = len(jobs)
         self._completed_jobs = 0
         self._failed_jobs = 0
-        self._current_jobs = 0
+        self._current_jobs = 1
+        self._source_name = ""
 
         # Status
         self._status_label = QLabel(f"Converting 1 of {self._total_jobs} files")
@@ -56,7 +57,7 @@ class ConversionProgressDialog(QDialog):
         self._target_label = QLabel("-")
         self._target_label.setWordWrap(True)
 
-        logger.info(f"Converting 1 of {self._total_jobs} files")
+        # logger.info(f"Converting 1 of {self._total_jobs} files")
 
         if self._total_jobs > 1:
             logger.info(
@@ -128,9 +129,10 @@ class ConversionProgressDialog(QDialog):
     def set_current_file(self, source_name: str, target_name: str) -> None:
         self._source_label.setText(source_name)
         self._target_label.setText(target_name)
+        self._source_name = source_name
 
         if self._total_jobs == 1:
-            logger.info(f"Converting {source_name}")
+            logger.info(f"Converting {self._source_name}")
 
     def update_job_progress(self, job_id: str, percent: float) -> None:
         self._progress_panel.update_job_progress(job_id, percent)
@@ -145,12 +147,17 @@ class ConversionProgressDialog(QDialog):
 
         finished_jobs = self._completed_jobs + self._failed_jobs
 
+        # Update statistics immediately, including the final job.
+        self._stats_label.setText(
+            f"+ {self._completed_jobs} Completed     "
+            f"- {self._failed_jobs} Failed"
+        )
+
         if finished_jobs >= self._total_jobs:
             self._on_conversion_finished()
             return
 
         self._current_jobs = finished_jobs + 1
-
         self._status_label.setText(
             f"Converting {self._current_jobs} of {self._total_jobs} files"
         )
@@ -159,11 +166,6 @@ class ConversionProgressDialog(QDialog):
             logger.info(
                 f"Converting {self._current_jobs} of {self._total_jobs} files"
             )
-
-        self._stats_label.setText(
-            f"+ {self._completed_jobs} Completed     "
-            f"- {self._failed_jobs} Failed"
-        )
 
     def _on_conversion_finished(self) -> None:
         self.setWindowTitle("Conversion Complete")
