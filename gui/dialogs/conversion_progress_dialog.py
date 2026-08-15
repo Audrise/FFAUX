@@ -22,6 +22,9 @@ from PySide6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QVBoxLayout, QF
 
 from core.models.job import Job
 from gui.widgets.progress_panel import ProgressPanel
+from utils.logger import get_logger
+
+logger = get_logger("gui.dialogs.conversion_progress")
 
 class ConversionProgressDialog(QDialog):
     cancelRequested = Signal()
@@ -34,9 +37,10 @@ class ConversionProgressDialog(QDialog):
         self._total_jobs = len(jobs)
         self._completed_jobs = 0
         self._failed_jobs = 0
+        self._current_jobs = 0
 
         # Status
-        self._status_label = QLabel(f"Converting 0 of {self._total_jobs} files")
+        self._status_label = QLabel(f"Converting 1 of {self._total_jobs} files")
         self._status_label.setStyleSheet("font-size: 16px; font-weight: bold;")
 
         # Current file title
@@ -51,6 +55,13 @@ class ConversionProgressDialog(QDialog):
 
         self._target_label = QLabel("-")
         self._target_label.setWordWrap(True)
+
+        logger.info(f"Converting 1 of {self._total_jobs} files")
+
+        if self._total_jobs > 1:
+            logger.info(
+                f"Converting {self._current_jobs} of {self._total_jobs} files"
+            )
 
         current_file_layout = QVBoxLayout()
         current_file_layout.setContentsMargins(10, 8, 10, 8)
@@ -70,7 +81,7 @@ class ConversionProgressDialog(QDialog):
 
         # Statistics
         self._stats_label = QLabel(
-            "+ 0 completed     - 0 failed"
+            "+ 0 Completed     - 0 Failed"
         )
 
         # Buttons
@@ -110,12 +121,16 @@ class ConversionProgressDialog(QDialog):
         layout.addWidget(self._buttons)
 
     def _on_cancel_clicked(self) -> None:
+        logger.warning("Converting Cancelled")
         self.cancelRequested.emit()
         self.reject()
 
     def set_current_file(self, source_name: str, target_name: str) -> None:
         self._source_label.setText(source_name)
         self._target_label.setText(target_name)
+
+        if self._total_jobs == 1:
+            logger.info(f"Converting {source_name}")
 
     def update_job_progress(self, job_id: str, percent: float) -> None:
         self._progress_panel.update_job_progress(job_id, percent)
@@ -130,15 +145,25 @@ class ConversionProgressDialog(QDialog):
 
         finished_jobs = self._completed_jobs + self._failed_jobs
 
-        self._status_label.setText(f"Converting {finished_jobs} of {self._total_jobs} files")
-
-        self._stats_label.setText(
-            f"+ {self._completed_jobs} completed     "
-            f"- {self._failed_jobs} failed"
-        )
-
         if finished_jobs >= self._total_jobs:
             self._on_conversion_finished()
+            return
+
+        self._current_jobs = finished_jobs + 1
+
+        self._status_label.setText(
+            f"Converting {self._current_jobs} of {self._total_jobs} files"
+        )
+
+        if self._total_jobs > 1:
+            logger.info(
+                f"Converting {self._current_jobs} of {self._total_jobs} files"
+            )
+
+        self._stats_label.setText(
+            f"+ {self._completed_jobs} Completed     "
+            f"- {self._failed_jobs} Failed"
+        )
 
     def _on_conversion_finished(self) -> None:
         self.setWindowTitle("Conversion Complete")
