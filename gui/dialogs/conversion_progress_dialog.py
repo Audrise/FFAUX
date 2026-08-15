@@ -4,14 +4,6 @@
 Replaces the old always-in-window bottom progress bar (previously
 toggled via View > Show Progress Bar / Ctrl+.), which has been removed.
 
-Non-modal (.show(), not .exec()) so the main window stays fully usable
-while conversion runs in the background:
-  - OK: just dismisses this dialog. Conversion keeps running regardless --
-    JobManager's QThreadPool workers are independent of whether this
-    dialog is open or closed.
-  - Cancel: emits cancelRequested (MainWindow wires this to the same
-    cancel_all() used by "Cancel All"), then dismisses the dialog.
-
 Reuses gui/widgets/progress_panel.py's ProgressPanel for the actual
 aggregate progress bar/counter logic instead of reimplementing it.
 """
