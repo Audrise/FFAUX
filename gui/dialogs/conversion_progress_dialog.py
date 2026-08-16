@@ -24,7 +24,7 @@ class ConversionProgressDialog(QDialog):
     def __init__(self, jobs: list[Job], parent=None):
         super().__init__(parent)
         self.setWindowTitle("Converting")
-        self.resize(480, 260)
+        self.resize(480, 280)
 
         self._total_jobs = len(jobs)
         self._completed_jobs = 0
@@ -121,6 +121,7 @@ class ConversionProgressDialog(QDialog):
         self._source_label.setText(source_name)
         self._target_label.setText(target_name)
         self._source_name = source_name
+        self._progress_panel.reset(self._total_jobs)
 
         if self._total_jobs == 1:
             logger.info(f"Converting {self._source_name}")
