@@ -41,10 +41,10 @@ _FORMAT_LABELS = {
 }
 
 class ConversionSettingsDialog(QDialog):
-    def __init__(self, current_settings: ConversionSettings, parent=None):
+    def __init__(self, current_settings: ConversionSettings, default_output_dir: str = "", parent=None):
         super().__init__(parent)
         self.setWindowTitle("Convert Settings")
-        self.resize(440, 320)
+        self.setMinimumSize(480, 330)
 
         # Format output
         self._format_combo = QComboBox()
@@ -87,7 +87,8 @@ class ConversionSettingsDialog(QDialog):
 
         # Custom output folder (Optional)
         self._output_dir_edit = QLineEdit(current_settings.custom_output_dir)
-        self._output_dir_edit.setPlaceholderText("Leave blank to use the default folder.")
+        self._output_dir_edit.setPlaceholderText("Leave blank for default")
+
         browse_btn = QPushButton("...")
         browse_btn.setFixedWidth(32)
         browse_btn.clicked.connect(self._on_browse_output_dir)
@@ -96,17 +97,17 @@ class ConversionSettingsDialog(QDialog):
         output_dir_row.addWidget(browse_btn)
 
         self._output_suffix_edit = QLineEdit(current_settings.custom_output_suffix)
-        self._output_suffix_edit.setPlaceholderText("Leave blank to use the default suffix name.")
+        self._output_suffix_edit.setPlaceholderText("Leave blank for default")
 
         self._form = QFormLayout()
-        self._form.addRow("Output Format:", self._format_combo)
-        self._form.addRow("Sample Rate:", self._sample_rate_combo)
+        self._form.addRow("Output Audio Format:", self._format_combo)
+        self._form.addRow("Sampling Rate:", self._sample_rate_combo)
         self._form.addRow("Bitrate:", self._bitrate_spin)
         self._form.addRow("Bit Depth:", self._bit_depth_combo)
-        self._form.addRow("FLAC Compression Level (0-12):", self._flac_compression_spin)
+        self._form.addRow("FLAC Compression (0-12):", self._flac_compression_spin)
         self._form.addRow("", self._use_soxr_check)
         self._form.addRow("SOXR Precision (1-33):", self._soxr_precision_spin)
-        self._form.addRow("Output Suffix:", self._output_suffix_edit)
+        self._form.addRow("Output Suffix Name:", self._output_suffix_edit)
         self._form.addRow("Output Folder:", output_dir_row)
 
         buttons = QDialogButtonBox(
