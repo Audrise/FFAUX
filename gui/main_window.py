@@ -15,7 +15,6 @@ from PySide6.QtCore import Qt, QThreadPool
 
 from core.discord_presence_service import DiscordPresenceService, PresenceState
 from core.config_service import ConfigService
-from core.filename_parser import FilenameParser
 from core.job_manager import JobManager
 from core.metadata_probe_worker import MetadataProbeWorker
 from core.metadata_service import MetadataService
@@ -58,7 +57,6 @@ class MainWindow(QMainWindow):
         self._job_manager = job_manager
         self._metadata_service = metadata_service
         self._template_service = template_service
-        self._filename_parser = FilenameParser()
         self._discord_presence = discord_presence_service or DiscordPresenceService(client_id="")
         self._audio_files: dict[str, AudioFile] = {}
 
