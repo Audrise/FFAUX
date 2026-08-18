@@ -414,7 +414,7 @@ class MainWindow(QMainWindow):
 
     def _on_conversion_settings_clicked(self) -> None:
         # Optional prefill only; the dialog is always shown again when Convert is clicked. This does not skip the dialog.
-        dialog = ConversionSettingsDialog(self._conversion_settings, default_output_dir=self._config_service.config.output_directory, parent=self,)
+        dialog = ConversionSettingsDialog(self._conversion_settings, default_output_dir=self._config_service.config.output_directory, parent=self)
         if dialog.exec():
             self._conversion_settings = dialog.get_settings()
             logger.info(
@@ -467,7 +467,7 @@ class MainWindow(QMainWindow):
             )
             return
 
-        dialog = ConversionSettingsDialog(self._conversion_settings, default_output_dir=self._config_service.config.output_directory, parent=self,)
+        dialog = ConversionSettingsDialog(self._conversion_settings, default_output_dir=self._config_service.config.output_directory, parent=self)
         if not dialog.exec():
             return
 
