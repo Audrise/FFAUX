@@ -9,7 +9,10 @@ aggregate progress bar/counter logic instead of reimplementing it.
 """
 from __future__ import annotations
 
-from PySide6.QtCore import Signal
+from pathlib import Path
+
+from PySide6.QtCore import Signal, QUrl
+from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QDialogButtonBox, QVBoxLayout, QLabel, QFrame, QDialog
 
 from core.models.job import Job
@@ -27,18 +30,18 @@ class ConversionProgressDialog(QDialog):
         self.setWindowTitle("Converting")
         self.resize(480, 260)
 
+        self._buttons = QDialogButtonBox()
         self._total_jobs = len(jobs)
         self._completed_jobs = 0
         self._failed_jobs = 0
         self._current_jobs = 1
         self._source_name = ""
+        self._output_dir = str(Path(jobs[0].output_path).parent) if jobs else ""
         self._cancelled = False
         self._finished = False
 
         # Status
-        self._status_label = QLabel(
-            f"Converting 1 of {self._total_jobs} files"
-        )
+        self._status_label = QLabel(f"Converting 1 of {self._total_jobs} files")
         self._status_label.setStyleSheet(
             "font-size: 16px; font-weight: bold;"
         )
@@ -78,17 +81,9 @@ class ConversionProgressDialog(QDialog):
         self._progress_panel.reset(total=self._total_jobs)
 
         # Statistics
-        self._stats_label = QLabel(
-            "+ 0 Completed     - 0 Failed"
-        )
+        self._stats_label = QLabel("+ 0 Completed     - 0 Failed")
 
-        self._buttons = QDialogButtonBox()
-
-        self._cancel_btn = self._buttons.addButton(
-            "Cancel",
-            QDialogButtonBox.ButtonRole.RejectRole,
-        )
-
+        self._cancel_btn = self._buttons.addButton("Cancel", QDialogButtonBox.ButtonRole.RejectRole)
         self._cancel_btn.clicked.connect(self._on_cancel_clicked)
 
         # Main layout
@@ -153,10 +148,7 @@ class ConversionProgressDialog(QDialog):
 
         self._current_jobs = finished_jobs + 1
 
-        self._status_label.setText(
-            f"Converting {self._current_jobs} "
-            f"of {self._total_jobs} files"
-        )
+        self._status_label.setText(f"Converting {self._current_jobs} of {self._total_jobs} files")
 
         if self._total_jobs > 1:
             logger.info(f"Converting {self._current_jobs} of {self._total_jobs} files")
@@ -191,7 +183,7 @@ class ConversionProgressDialog(QDialog):
             "font-size: 16px; font-weight: bold;"
         )
 
-        current_file_label = QLabel("LAST FILE:")
+        current_file_label = QLabel(f"{self._current_jobs} of {self._total_jobs} Files converted")
         current_file_label.setStyleSheet(
             "font-size: 11px; font-weight: bold; color: #888;"
         )
@@ -216,22 +208,18 @@ class ConversionProgressDialog(QDialog):
         current_file_frame.setFrameShape(QFrame.Shape.StyledPanel)
         current_file_frame.setLayout(current_file_layout)
 
-        stats_label = QLabel(
-            f"+ {self._completed_jobs} Completed     "
-            f"- {self._failed_jobs} Failed"
-        )
+        stats_label = QLabel(f"+ {self._completed_jobs} Completed     - {self._failed_jobs} Failed")
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok
-        )
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+        buttons.accepted.connect(self._result_dialog.accept)
 
-        buttons.accepted.connect(
-            self._result_dialog.accept
-        )
+        if self._output_dir:
+            open_folder_btn = buttons.addButton("Open Output Folder", QDialogButtonBox.ButtonRole.ActionRole)
+            open_folder_btn.clicked.connect(self._result_dialog.accept)
+            open_folder_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(self._output_dir)))
 
         layout = QVBoxLayout(self._result_dialog)
         layout.setSpacing(8)
-
         layout.addWidget(status_label)
         layout.addWidget(current_file_label)
         layout.addWidget(current_file_frame)
