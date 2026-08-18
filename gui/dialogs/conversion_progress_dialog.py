@@ -10,7 +10,7 @@ aggregate progress bar/counter logic instead of reimplementing it.
 from __future__ import annotations
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QVBoxLayout, QFrame
+from PySide6.QtWidgets import QDialogButtonBox, QVBoxLayout, QLabel, QFrame, QDialog
 
 from core.models.job import Job
 from gui.widgets.progress_panel import ProgressPanel
@@ -23,22 +23,31 @@ class ConversionProgressDialog(QDialog):
 
     def __init__(self, jobs: list[Job], parent=None):
         super().__init__(parent)
+
         self.setWindowTitle("Converting")
-        self.resize(480, 280)
+        self.resize(480, 260)
 
         self._total_jobs = len(jobs)
         self._completed_jobs = 0
         self._failed_jobs = 0
         self._current_jobs = 1
         self._source_name = ""
+        self._cancelled = False
+        self._finished = False
 
         # Status
-        self._status_label = QLabel(f"Converting 1 of {self._total_jobs} files")
-        self._status_label.setStyleSheet("font-size: 16px; font-weight: bold;")
+        self._status_label = QLabel(
+            f"Converting 1 of {self._total_jobs} files"
+        )
+        self._status_label.setStyleSheet(
+            "font-size: 16px; font-weight: bold;"
+        )
 
         # Current file title
         current_file_label = QLabel("CURRENT FILE:")
-        current_file_label.setStyleSheet("font-size: 11px; font-weight: bold; color: #888;")
+        current_file_label.setStyleSheet(
+            "font-size: 11px; font-weight: bold; color: #888;"
+        )
 
         # Current source/target
         self._source_label = QLabel("-")
@@ -49,11 +58,8 @@ class ConversionProgressDialog(QDialog):
         self._target_label = QLabel("-")
         self._target_label.setWordWrap(True)
 
-
         if self._total_jobs > 1:
-            logger.info(
-                f"Converting {self._current_jobs} of {self._total_jobs} files"
-            )
+            logger.info(f"Converting {self._current_jobs} of {self._total_jobs} files")
 
         current_file_layout = QVBoxLayout()
         current_file_layout.setContentsMargins(10, 8, 10, 8)
@@ -76,60 +82,56 @@ class ConversionProgressDialog(QDialog):
             "+ 0 Completed     - 0 Failed"
         )
 
-        # Buttons
         self._buttons = QDialogButtonBox()
-
-        self._ok_btn = self._buttons.addButton(
-            "OK",
-            QDialogButtonBox.ButtonRole.AcceptRole,
-        )
 
         self._cancel_btn = self._buttons.addButton(
             "Cancel",
             QDialogButtonBox.ButtonRole.RejectRole,
         )
 
-        self._ok_btn.clicked.connect(self.accept)
         self._cancel_btn.clicked.connect(self._on_cancel_clicked)
-
-        # Hide OK while converting
-        self._ok_btn.setVisible(False)
 
         # Main layout
         layout = QVBoxLayout(self)
         layout.setSpacing(8)
-
         layout.addWidget(self._status_label)
-
         layout.addWidget(current_file_label)
         layout.addWidget(current_file_frame)
-
         layout.addWidget(self._stats_label)
-
-        # Progress bar at the bottom of the content
         layout.addWidget(self._progress_panel)
-
-        # Buttons at the very bottom
         layout.addWidget(self._buttons)
 
     def _on_cancel_clicked(self) -> None:
+        self._cancelled = True
         logger.warning("Converting Cancelled")
         self.cancelRequested.emit()
         self.reject()
 
-    def set_current_file(self, source_name: str, target_name: str) -> None:
+    def set_current_file(self, source_name: str,target_name: str) -> None:
+        # Ignore updates after cancellation.
+        if self._cancelled or self._finished:
+            return
+
         self._source_label.setText(source_name)
         self._target_label.setText(target_name)
         self._source_name = source_name
+
         self._progress_panel.reset(self._total_jobs)
 
         if self._total_jobs == 1:
             logger.info(f"Converting {self._source_name}")
 
-    def update_job_progress(self, job_id: str, percent: float) -> None:
+    def update_job_progress(self,job_id: str,percent: float) -> None:
+        if self._cancelled or self._finished:
+            return
+
         self._progress_panel.update_job_progress(job_id, percent)
 
     def mark_job_done(self, failed: bool = False) -> None:
+        # IMPORTANT: Ignore late "job done" signals after Cancel.
+        if self._cancelled or self._finished:
+            return
+
         self._progress_panel.mark_job_done()
 
         if failed:
@@ -137,7 +139,7 @@ class ConversionProgressDialog(QDialog):
         else:
             self._completed_jobs += 1
 
-        finished_jobs = self._completed_jobs + self._failed_jobs
+        finished_jobs = (self._completed_jobs + self._failed_jobs)
 
         # Update statistics immediately, including the final job.
         self._stats_label.setText(
@@ -150,19 +152,93 @@ class ConversionProgressDialog(QDialog):
             return
 
         self._current_jobs = finished_jobs + 1
+
         self._status_label.setText(
-            f"Converting {self._current_jobs} of {self._total_jobs} files"
+            f"Converting {self._current_jobs} "
+            f"of {self._total_jobs} files"
         )
 
         if self._total_jobs > 1:
-            logger.info(
-                f"Converting {self._current_jobs} of {self._total_jobs} files"
-            )
+            logger.info(f"Converting {self._current_jobs} of {self._total_jobs} files")
 
     def _on_conversion_finished(self) -> None:
-        self.setWindowTitle("Conversion Complete")
-        self._status_label.setText("Conversion Complete")
+        # Do not show result if user cancelled.
+        if self._cancelled:
+            return
 
-        self._cancel_btn.setVisible(False)
-        self._ok_btn.setVisible(True)
-        # self.accept()
+        # Prevent this from being executed more than once.
+        if self._finished:
+            return
+
+        self._finished = True
+
+        logger.info("Conversion finished: %d completed, %d failed", self._completed_jobs, self._failed_jobs)
+
+        self.accept()
+        self._show_conversion_result()
+
+    def _show_conversion_result(self) -> None:
+        # Extra safety guard
+        if self._cancelled:
+            return
+
+        self._result_dialog = QDialog(self.parentWidget())
+        self._result_dialog.setWindowTitle("Conversion Complete")
+        self._result_dialog.resize(480, 260)
+
+        status_label = QLabel("Conversion Complete")
+        status_label.setStyleSheet(
+            "font-size: 16px; font-weight: bold;"
+        )
+
+        current_file_label = QLabel("LAST FILE:")
+        current_file_label.setStyleSheet(
+            "font-size: 11px; font-weight: bold; color: #888;"
+        )
+
+        source_label = QLabel(self._source_label.text())
+        source_label.setWordWrap(True)
+
+        arrow_label = QLabel("↓")
+
+        target_label = QLabel(self._target_label.text())
+        target_label.setWordWrap(True)
+
+        current_file_layout = QVBoxLayout()
+        current_file_layout.setContentsMargins(10, 8, 10, 8)
+        current_file_layout.setSpacing(2)
+
+        current_file_layout.addWidget(source_label)
+        current_file_layout.addWidget(arrow_label)
+        current_file_layout.addWidget(target_label)
+
+        current_file_frame = QFrame()
+        current_file_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        current_file_frame.setLayout(current_file_layout)
+
+        stats_label = QLabel(
+            f"+ {self._completed_jobs} Completed     "
+            f"- {self._failed_jobs} Failed"
+        )
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok
+        )
+
+        buttons.accepted.connect(
+            self._result_dialog.accept
+        )
+
+        layout = QVBoxLayout(self._result_dialog)
+        layout.setSpacing(8)
+
+        layout.addWidget(status_label)
+        layout.addWidget(current_file_label)
+        layout.addWidget(current_file_frame)
+        layout.addWidget(stats_label)
+        layout.addWidget(self._progress_panel)
+        layout.addWidget(buttons)
+
+        self._result_dialog.show()
+        self._result_dialog.raise_()
+        self._result_dialog.activateWindow()
