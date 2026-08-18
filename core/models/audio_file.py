@@ -50,6 +50,7 @@ class AudioFile:
     def mark_running(self) -> None:
         self.status = FileStatus.RUNNING
         self.error_message = None
+        self.progress = 0.0
 
     def mark_done(self, output_path: Optional[str] = None) -> None:
         self.status = FileStatus.DONE
@@ -60,3 +61,4 @@ class AudioFile:
     def mark_failed(self, message: str) -> None:
         self.status = FileStatus.FAILED
         self.error_message = message
+        self.progress = 0.0
