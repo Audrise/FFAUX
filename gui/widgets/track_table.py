@@ -7,7 +7,7 @@ It supports multi-selection for Edit/Convert/Delete actions.
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QDragEnterEvent, QDropEvent
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QWheelEvent
 from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QMenu, QProgressBar, QTableWidget, QTableWidgetItem, QHBoxLayout, QWidget
 
 from core.models.audio_file import AudioFile, FileStatus
@@ -39,12 +39,12 @@ _DEFAULT_HIDDEN_COLUMNS = {
 
 _DEFAULT_WIDTHS = {
     _COL_FILE_NAME: 240,
-    _COL_TRACK: 70,
+    _COL_TRACK: 65,
     _COL_TITLE: 220,
     _COL_ARTIST: 120,
     _COL_ALBUM: 420,
     _COL_YEAR: 90,
-    _COL_DURATION: 90,
+    _COL_DURATION: 85,
     _COL_SAMPLE_RATE: 90,
     _COL_BITRATE: 90,
     _COL_SIZE: 90,
@@ -208,6 +208,29 @@ class TrackTable(QTableWidget):
         if audio_files:
             self.filesDropped.emit(audio_files)
         event.acceptProposedAction()
+
+    # At the top/bottom, further vertical scrolling switches to horizontal scrolling.
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        delta = event.pixelDelta().y() or event.angleDelta().y()
+
+        vbar = self.verticalScrollBar()
+        hbar = self.horizontalScrollBar()
+
+        if delta < 0:
+            if vbar.value() >= vbar.maximum():
+                if hbar.value() < hbar.maximum():
+                    hbar.setValue(hbar.value() - delta)
+                    event.accept()
+                    return
+
+        elif delta > 0:
+            if vbar.value() >= vbar.maximum():
+                if hbar.value() > hbar.minimum():
+                    hbar.setValue(hbar.value() - delta)
+                    event.accept()
+                    return
+
+        super().wheelEvent(event)
 
     # Fill & read row data
     def add_file(self, audio_file: AudioFile) -> None:
