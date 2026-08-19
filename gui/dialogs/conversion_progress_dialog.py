@@ -1,9 +1,6 @@
 """
 # Dialog shown right after the user clicks "Save" in Conversion Settings.
 
-Replaces the old always-in-window bottom progress bar (previously
-toggled via View > Show Progress Bar / Ctrl+.), which has been removed.
-
 Reuses gui/widgets/progress_panel.py's ProgressPanel for the actual
 aggregate progress bar/counter logic instead of reimplementing it.
 """
@@ -67,11 +64,9 @@ class ConversionProgressDialog(QDialog):
         current_file_layout = QVBoxLayout()
         current_file_layout.setContentsMargins(10, 8, 10, 8)
         current_file_layout.setSpacing(2)
-
         current_file_layout.addWidget(self._source_label)
         current_file_layout.addWidget(self._arrow_label)
         current_file_layout.addWidget(self._target_label)
-
         current_file_frame = QFrame()
         current_file_frame.setFrameShape(QFrame.Shape.StyledPanel)
         current_file_frame.setLayout(current_file_layout)
@@ -116,7 +111,7 @@ class ConversionProgressDialog(QDialog):
         if self._total_jobs == 1:
             logger.info(f"Converting {self._source_name}")
 
-    def update_job_progress(self,job_id: str,percent: float) -> None:
+    def update_job_progress(self, job_id: str,percent: float) -> None:
         if self._cancelled or self._finished:
             return
 
@@ -137,10 +132,7 @@ class ConversionProgressDialog(QDialog):
         finished_jobs = (self._completed_jobs + self._failed_jobs)
 
         # Update statistics immediately, including the final job.
-        self._stats_label.setText(
-            f"+ {self._completed_jobs} Completed     "
-            f"- {self._failed_jobs} Failed"
-        )
+        self._stats_label.setText(f"+ {self._completed_jobs} Completed     - {self._failed_jobs} Failed")
 
         if finished_jobs >= self._total_jobs:
             self._on_conversion_finished()
