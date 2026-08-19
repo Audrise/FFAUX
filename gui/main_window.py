@@ -9,7 +9,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtWidgets import QFileDialog, QMainWindow, QMenu, QMessageBox, QSplitter, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QFileDialog, QHBoxLayout, QLineEdit, QMainWindow, QMenu, QMenuBar,
+    QMessageBox, QSplitter, QVBoxLayout, QWidget,
+)
 from PySide6.QtGui import QShortcut, QKeySequence, QAction
 from PySide6.QtCore import Qt, QThreadPool
 
@@ -123,7 +126,14 @@ class MainWindow(QMainWindow):
         super().closeEvent(event)
 
     def _build_menu_bar(self) -> None:
-        menu_bar = self.menuBar()
+        # Built manually (instead of self.menuBar()) so it can be combined
+        # with the search box in one explicit horizontal row below, then
+        # installed via setMenuWidget(). This is more predictable than
+        # QMenuBar.setCornerWidget(), which can shrink/hide the menu items
+        # depending on available width and the active stylesheet -- that's
+        # what caused the search box to end up squeezed above everything,
+        # pushing "File Edit View Help" out of view.
+        menu_bar = QMenuBar(self)
 
         # File
         file_menu = menu_bar.addMenu("&File")
@@ -231,6 +241,24 @@ class MainWindow(QMainWindow):
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
 
+        # Search
+        self._search_bar = QLineEdit()
+        self._search_bar.setObjectName("SearchBar")
+        self._search_bar.setPlaceholderText("Search by file name, title, artist, or album...")
+        self._search_bar.setClearButtonEnabled(True)
+        self._search_bar.setFixedWidth(280)
+
+        menu_row = QWidget()
+        menu_row.setObjectName("MenuRow")
+        menu_row_layout = QHBoxLayout(menu_row)
+        menu_row_layout.setContentsMargins(0, 0, 0, 0)
+        menu_row_layout.setSpacing(0)
+        menu_row_layout.addWidget(menu_bar)
+        menu_row_layout.addSpacing(12)
+        menu_row_layout.addWidget(self._search_bar)
+        menu_row_layout.addStretch(1)
+        self.setMenuWidget(menu_row)
+
     def _build_ui(self) -> None:
         self._build_menu_bar()
 
@@ -239,9 +267,10 @@ class MainWindow(QMainWindow):
 
         root_layout = QVBoxLayout(central)
 
+        self._track_table = TrackTable()
+
         self._splitter = QSplitter(Qt.Orientation.Vertical)
 
-        self._track_table = TrackTable()
         self._log_viewer = LogViewer()
         self._log_viewer.hide()
 
@@ -256,6 +285,8 @@ class MainWindow(QMainWindow):
     def _connect_signals(self) -> None:
         self._track_table.cellDoubleClicked.connect(lambda *_: self._on_edit_metadata_clicked())
         self._track_table.filesDropped.connect(self._on_files_added)
+
+        self._search_bar.textChanged.connect(self._track_table.filter_rows)
 
         self._track_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self._track_table.customContextMenuRequested.connect(self._on_track_table_context_menu)
@@ -465,7 +496,11 @@ class MainWindow(QMainWindow):
             )
             return
 
-        dialog = ConversionSettingsDialog(self._conversion_settings, default_output_dir=self._config_service.config.output_directory, parent=self)
+        dialog = ConversionSettingsDialog(
+            self._conversion_settings,
+            default_output_dir=self._config_service.config.output_directory,
+            parent=self,
+        )
         if not dialog.exec():
             return
 
