@@ -371,6 +371,22 @@ class TrackTable(QTableWidget):
                 ids.append(file_id)
         return ids
 
+    # Search (View > Show Search Bar / Ctrl+F, or right-click on the table).
+    def filter_rows(self, query: str) -> None:
+        query = query.strip().lower()
+        search_cols = (_COL_FILE_NAME, _COL_TITLE, _COL_ARTIST, _COL_ALBUM)
+
+        for row in range(self.rowCount()):
+            if not query:
+                self.setRowHidden(row, False)
+                continue
+
+            match = any(
+                query in (self.item(row, col).text().lower() if self.item(row, col) else "")
+                for col in search_cols
+            )
+            self.setRowHidden(row, not match)
+
     def sort_by(self, key: str, ascending: bool = True) -> None:
         # QTableWidget.sortItems() moves items, but not setCellWidget() widgets.
         # Save progress bars by audio_file_id and re-attach them after sorting.
