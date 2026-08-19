@@ -8,6 +8,12 @@ QWidget {
     font-size: 12px;
 }
 
+QWidget#MenuRow {
+    background-color: #181818;
+    color: #d4d4d4;
+    border-bottom: 1px solid #2a2a2a;
+}
+
 QMainWindow {
     background-color: #1a1a1a;
 }
@@ -100,6 +106,18 @@ QSpinBox {
     padding: 3px 6px;
     color: #d4d4d4;
     selection-background-color: #2d5f8a;
+}
+
+QLineEdit#SearchBar {
+    background-color: transparent;
+    border-radius: 0px;
+    border: none;
+    padding: 0px 0px 0px;
+    color: #d4d4d4;
+}
+
+QLineEdit#SearchBar:hover {
+    background-color: #2d5f8a;
 }
 
 QComboBox::drop-down {
