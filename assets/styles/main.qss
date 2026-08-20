@@ -110,14 +110,17 @@ QSpinBox {
 
 QLineEdit#SearchBar {
     background-color: transparent;
+    border: 1px solid transparent;
     border-radius: 0px;
-    border: none;
-    padding: 0px 0px 0px;
     color: #d4d4d4;
 }
 
 QLineEdit#SearchBar:hover {
     background-color: #2d5f8a;
+}
+
+QLineEdit#SearchBar:focus {
+    border: 1px solid #555555;
 }
 
 QComboBox::drop-down {
