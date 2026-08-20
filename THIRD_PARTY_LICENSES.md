@@ -81,13 +81,13 @@ depending on the applicable distribution terms.
 ### Copyright
 Copyright (C) The Qt Company Ltd.
 
+---
 <br>
-<h1 align="center">License Texts</h1>
+<br>
 
-<p align="center">
-    The full text of the **GNU General Public License Version 3 (GPLv3)**
-    is included in the <a href="https://github.com/Audrise/FFTool/blob/main/LICENSE">`LICENSE`</a> file distributed with FFTool.
-    Where required by the applicable license terms, the corresponding source
-    code for bundled third-party software is available from the respective
-    project websites listed above.
-</p>
+# License Texts
+The full text of the **GNU General Public License Version 3 (GPLv3)**
+is included in the <a href="https://github.com/Audrise/FFTool/blob/main/LICENSE">`LICENSE`</a> file distributed with FFTool.
+Where required by the applicable license terms, the corresponding source
+code for bundled third-party software is available from the respective
+project websites listed above.
