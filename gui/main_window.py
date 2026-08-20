@@ -11,9 +11,9 @@ from pathlib import Path
 
 from PySide6.QtWidgets import (
     QFileDialog, QHBoxLayout, QLineEdit, QMainWindow, QMenu, QMenuBar,
-    QMessageBox, QSplitter, QVBoxLayout, QWidget,
+    QMessageBox, QSplitter, QVBoxLayout, QWidget
 )
-from PySide6.QtGui import QShortcut, QKeySequence, QAction
+from PySide6.QtGui import QShortcut, QKeySequence, QAction, QIcon
 from PySide6.QtCore import Qt, QThreadPool
 
 from core.discord_presence_service import DiscordPresenceService, PresenceState
@@ -234,23 +234,40 @@ class MainWindow(QMainWindow):
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
 
-        # Search
+        # Undo icon
+        self._undo_action = QAction(self)
+        self._undo_action.setIcon(QIcon("assets/icons/Undo.ico"))
+        self._undo_action.setShortcut("Ctrl+Z")
+        self._undo_action.setEnabled(False)
+        self._undo_action.triggered.connect(self._on_undo)
+
+        # Redo icon
+        self._redo_action = QAction(self)
+        self._redo_action.setIcon(QIcon("assets/icons/Redo.ico"))
+        self._redo_action.setShortcut("Ctrl+Y")
+        self._redo_action.setEnabled(False)
+        self._redo_action.triggered.connect(self._on_redo)
+
+        menu_bar.addAction(self._undo_action)
+        menu_bar.addAction(self._redo_action)
+
+        # Search bar
         self._search_bar = QLineEdit()
         self._search_bar.setObjectName("SearchBar")
-        self._search_bar.setPlaceholderText("Search by file name, title, artist, or album...")
+        self._search_bar.setPlaceholderText("Search for track no, title, artist, album, year...")
         self._search_bar.setClearButtonEnabled(True)
-        self._search_bar.setFixedWidth(260)
+        self._search_bar.setFixedWidth(285)
         self._search_bar.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+        self._search_bar.addAction(QIcon("assets/icons/Loupe.ico"), QLineEdit.ActionPosition.LeadingPosition)
 
         menu_row = QWidget()
         menu_row.setObjectName("MenuRow")
         menu_row_layout = QHBoxLayout(menu_row)
-        menu_row_layout.setContentsMargins(0, 0, 0, 0)
+        menu_row_layout.setContentsMargins(0, 0, 10, 0)
         menu_row_layout.setSpacing(0)
         menu_row_layout.addWidget(menu_bar)
-        menu_row_layout.addSpacing(12)
-        menu_row_layout.addWidget(self._search_bar)
         menu_row_layout.addStretch(1)
+        menu_row_layout.addWidget(self._search_bar)
         self.setMenuWidget(menu_row)
 
     def _build_ui(self) -> None:
@@ -270,7 +287,6 @@ class MainWindow(QMainWindow):
 
         self._splitter.addWidget(self._track_table)
         self._splitter.addWidget(self._log_viewer)
-
         self._splitter.setStretchFactor(0, 2)
         self._splitter.setStretchFactor(1, 1)
 
@@ -790,7 +806,7 @@ class MainWindow(QMainWindow):
         confirm = QMessageBox.question(
             self,
             "Confirm Exit",
-            "Are you sure you want to exit?",
+            "Are you sure you want to exit FFTool?",
             QMessageBox.StandardButton.Yes
             | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
