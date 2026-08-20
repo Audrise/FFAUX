@@ -126,13 +126,6 @@ class MainWindow(QMainWindow):
         super().closeEvent(event)
 
     def _build_menu_bar(self) -> None:
-        # Built manually (instead of self.menuBar()) so it can be combined
-        # with the search box in one explicit horizontal row below, then
-        # installed via setMenuWidget(). This is more predictable than
-        # QMenuBar.setCornerWidget(), which can shrink/hide the menu items
-        # depending on available width and the active stylesheet -- that's
-        # what caused the search box to end up squeezed above everything,
-        # pushing "File Edit View Help" out of view.
         menu_bar = QMenuBar(self)
 
         # File
@@ -174,7 +167,7 @@ class MainWindow(QMainWindow):
 
         exit_action = QAction("Exit", self)
         exit_action.setShortcut("Ctrl+Q")
-        exit_action.triggered.connect(self.close)
+        exit_action.triggered.connect(self._confirm_exit)
         file_menu.addAction(exit_action)
 
         # Edit
@@ -246,7 +239,8 @@ class MainWindow(QMainWindow):
         self._search_bar.setObjectName("SearchBar")
         self._search_bar.setPlaceholderText("Search by file name, title, artist, or album...")
         self._search_bar.setClearButtonEnabled(True)
-        self._search_bar.setFixedWidth(280)
+        self._search_bar.setFixedWidth(260)
+        self._search_bar.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
 
         menu_row = QWidget()
         menu_row.setObjectName("MenuRow")
@@ -347,7 +341,7 @@ class MainWindow(QMainWindow):
         menu.addSeparator()
 
         exit_action = menu.addAction(
-            "Exit", self.close
+            "Exit", self._confirm_exit
         )
         exit_action.setShortcut("Ctrl+Q")
 
@@ -791,3 +785,16 @@ class MainWindow(QMainWindow):
             </div>
         """)
         box.exec()
+
+    def _confirm_exit(self):
+        confirm = QMessageBox.question(
+            self,
+            "Confirm Exit",
+            "Are you sure you want to exit?",
+            QMessageBox.StandardButton.Yes
+            | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if confirm == QMessageBox.StandardButton.Yes:
+            self.close()
