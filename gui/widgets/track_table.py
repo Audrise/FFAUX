@@ -374,7 +374,7 @@ class TrackTable(QTableWidget):
     # Search (View > Show Search Bar / Ctrl+F, or right-click on the table).
     def filter_rows(self, query: str) -> None:
         query = query.strip().lower()
-        search_cols = (_COL_FILE_NAME, _COL_TITLE, _COL_ARTIST, _COL_ALBUM)
+        search_cols = (_COL_FILE_NAME, _COL_TITLE, _COL_ARTIST, _COL_ALBUM, _COL_YEAR, _COL_CODEC)
 
         for row in range(self.rowCount()):
             if not query:
