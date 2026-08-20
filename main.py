@@ -40,6 +40,11 @@ def _app_root() -> Path:
 RESOURCE_ROOT = _resource_root()
 APP_ROOT = _app_root()
 
+# main_window assets
+UNDO_PATH = RESOURCE_ROOT / "assets" / "icons" / "Undo.ico"
+REDO_PATH = RESOURCE_ROOT / "assets" / "icons" / "Redo.ico"
+LOUPE_PATH = RESOURCE_ROOT / "assets" / "icons" / "Loupe.ico"
+
 def _resolve_tool_path(path_str: str) -> str:
     path = Path(path_str)
     if path.is_absolute():
@@ -214,6 +219,9 @@ def main() -> int:
         metadata_service=metadata_service,
         template_service=template_service,
         discord_presence_service=discord_presence,
+        undo_path=UNDO_PATH,
+        redo_path=REDO_PATH,
+        loupe_path=LOUPE_PATH,
     )
 
     # Restore the window size/position the user last left it at (see MainWindow.closeEvent)
