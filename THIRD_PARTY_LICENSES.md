@@ -83,7 +83,6 @@ Copyright (C) The Qt Company Ltd.
 
 ---
 <br>
-<br>
 
 # License Texts
 The full text of the **GNU General Public License Version 3 (GPLv3)**
