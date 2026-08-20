@@ -50,6 +50,9 @@ class MainWindow(QMainWindow):
         metadata_service: MetadataService,
         template_service: TemplateService,
         discord_presence_service: DiscordPresenceService | None = None,
+        undo_path: Path | None = None,
+        redo_path: Path | None = None,
+        loupe_path: Path | None = None,
         parent=None,
     ):
         super().__init__(parent)
@@ -62,6 +65,9 @@ class MainWindow(QMainWindow):
         self._template_service = template_service
         self._discord_presence = discord_presence_service or DiscordPresenceService(client_id="")
         self._audio_files: dict[str, AudioFile] = {}
+        self._undo_path = undo_path
+        self._redo_path = redo_path
+        self._loupe_path = loupe_path
 
         self._metadata_pool = QThreadPool()
         self._metadata_pool.setMaxThreadCount(self._config_service.config.max_metadata_probe_threads)
@@ -236,14 +242,18 @@ class MainWindow(QMainWindow):
 
         # Undo icon
         self._undo_action = QAction(self)
-        self._undo_action.setIcon(QIcon("assets/icons/Undo.ico"))
+        if self._undo_path is not None and self._undo_path.exists():
+            self._undo_action.setIcon(QIcon(str(self._undo_path)))
+
         self._undo_action.setShortcut("Ctrl+Z")
         self._undo_action.setEnabled(False)
         self._undo_action.triggered.connect(self._on_undo)
 
         # Redo icon
         self._redo_action = QAction(self)
-        self._redo_action.setIcon(QIcon("assets/icons/Redo.ico"))
+        if self._redo_path is not None and self._redo_path.exists():
+            self._redo_action.setIcon(QIcon(str(self._redo_path)))
+
         self._redo_action.setShortcut("Ctrl+Y")
         self._redo_action.setEnabled(False)
         self._redo_action.triggered.connect(self._on_redo)
@@ -258,7 +268,11 @@ class MainWindow(QMainWindow):
         self._search_bar.setClearButtonEnabled(True)
         self._search_bar.setFixedWidth(285)
         self._search_bar.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
-        self._search_bar.addAction(QIcon("assets/icons/Loupe.ico"), QLineEdit.ActionPosition.LeadingPosition)
+        if self._loupe_path is not None and self._loupe_path.exists():
+            self._search_bar.addAction(
+                QIcon(str(self._loupe_path)),
+                QLineEdit.ActionPosition.LeadingPosition,
+            )
 
         menu_row = QWidget()
         menu_row.setObjectName("MenuRow")
