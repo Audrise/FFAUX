@@ -175,7 +175,7 @@ QHeaderView::section {
 
 QTableWidget {
     background-color: #1c1c1c;
-    alternate-background-color: #212121;
+    /* alternate-background-color: #212121; */
     gridline-color: #2a2a2a;
     border: 1px solid #2a2a2a;
     outline: none;
