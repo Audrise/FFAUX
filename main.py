@@ -43,7 +43,7 @@ APP_ROOT = _app_root()
 # main_window assets
 UNDO_PATH = RESOURCE_ROOT / "assets" / "icons" / "Undo.ico"
 REDO_PATH = RESOURCE_ROOT / "assets" / "icons" / "Redo.ico"
-LOUPE_PATH = RESOURCE_ROOT / "assets" / "icons" / "Loupe.ico"
+SEARCH_PATH = RESOURCE_ROOT / "assets" / "icons" / "Search.ico"
 
 def _resolve_tool_path(path_str: str) -> str:
     path = Path(path_str)
@@ -135,7 +135,7 @@ def main() -> int:
             splash.setAttribute(Qt.WA_TranslucentBackground)
 
             container = QWidget()
-            container.setStyleSheet("background-color: #1a1a1a; border-radius: 15px;")
+            container.setObjectName("splashContainer")
 
             shadow = QGraphicsDropShadowEffect()
             shadow.setBlurRadius(30)
@@ -164,11 +164,11 @@ def main() -> int:
 
             app_title = QLabel("FFTool v1.0.0")
             app_title.setAlignment(Qt.AlignCenter)
-            app_title.setStyleSheet("color: white; font-size: 18px; font-weight: 600;")
+            app_title.setObjectName("splashTitle")
 
             title = QLabel("Format Whatever You Want.")
             title.setAlignment(Qt.AlignCenter)
-            title.setStyleSheet("color: white; font-size: 14px; font-weight: 500;")
+            title.setObjectName("splashSlogan")
 
             inner.addWidget(logo)
             inner.addWidget(app_title)
@@ -207,7 +207,7 @@ def main() -> int:
         discord_presence_service=discord_presence,
         undo_path=UNDO_PATH,
         redo_path=REDO_PATH,
-        loupe_path=LOUPE_PATH,
+        search_path=SEARCH_PATH,
     )
 
     # Restore the window size/position the user last left it at (see MainWindow.closeEvent)

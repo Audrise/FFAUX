@@ -3,13 +3,33 @@
    ============================================================
 */
 QWidget {
-    background-color: #1e1e1e;
+    background-color: #1a1a1a;
     color: #d4d4d4;
     font-size: 12px;
 }
 
 QMainWindow {
     background-color: #1a1a1a;
+}
+
+/* ============================================================
+   SPLASH SCREEN
+   ============================================================
+*/
+#splashContainer {
+    border-radius: 20px;
+}
+
+#splashTitle {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+#splashSlogan {
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
 }
 
 /* ============================================================
@@ -102,18 +122,20 @@ QSpinBox {
     selection-background-color: #2d5f8a;
 }
 
-QLineEdit#SearchBar {
+#SearchBar {
     background-color: transparent;
     border: 1px solid transparent;
     border-radius: 0px;
     color: #d4d4d4;
 }
 
-QLineEdit#SearchBar:focus {
+#SearchBar:focus {
+    background-color: #2a2a2a;
+    color: #ffffff;
     border-bottom: 1.2px solid #555555;
 }
 
-QWidget#MenuRow {
+#MenuRow {
     background-color: #181818;
     color: #d4d4d4;
     border-bottom: 1px solid #2a2a2a;
@@ -183,6 +205,52 @@ QPlainTextEdit {
     color: #d4d4d4;
     border: 1px solid #2a2a2a;
     font-family: Consolas, monospace;
+    font-size: 11px;
+}
+
+/* ============================================================
+   DIALOG LABELS
+   (ConversionProgressDialog: status heading + section caption,
+   reused for both the "Converting..." and "Conversion Complete"
+   states)
+   ============================================================
+*/
+QLabel[class="dialog-title"] {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+QLabel[class="section-caption"] {
+    font-size: 11px;
+    font-weight: bold;
+    color: #888;
+}
+
+/* ============================================================
+   COVER ART
+   ============================================================
+*/
+#coverArtImage {
+    border: 1px solid palette(white);
+    border-radius: 4px;
+    color: palette(mid);
+}
+
+#coverArtInfo {
+    color: palette(white);
+    font-size: 11px;
+}
+
+#coverArtLabel {
+    font-size: 12px;
+}
+
+/* ============================================================
+   TRACK TABLE - PROGRESS CELL CONTAINER
+   ============================================================
+*/
+#progressContainer {
+    background-color: transparent;
 }
 
 /* ============================================================
@@ -190,7 +258,7 @@ QPlainTextEdit {
    ============================================================
 */
 QProgressBar {
-    background-color: #252525;
+    background-color: transparent;
     border: 1px solid #3a3a3a;
     border-radius: 3px;
     text-align: center;

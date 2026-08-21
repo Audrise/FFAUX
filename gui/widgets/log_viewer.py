@@ -11,7 +11,6 @@ class LogViewer(QPlainTextEdit):
         super().__init__(parent)
         self.setReadOnly(True)
         self.setMaximumBlockCount(5000)  # prevent memory bloat
-        self.setStyleSheet("font-family: Consolas, monospace; font-size: 11px;")
 
     def append_line(self, job_id: str, line: str) -> None:
         self.moveCursor(QTextCursor.MoveOperation.End)

@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QFileDialog, QHBoxLayout, QLabel, QPushButton, QVB
 
 from utils.file_utils import format_file_size
 
-_COVER_SIZE = 180
+_COVER_SIZE = 220
 _IMAGE_FILTER = "Image (*.jpg *.jpeg *.png *.bmp *.webp)"
 
 class CoverArtViewer(QWidget):
@@ -29,12 +29,12 @@ class CoverArtViewer(QWidget):
         self._image_label = QLabel("No cover art")
         self._image_label.setFixedSize(_COVER_SIZE, _COVER_SIZE)
         self._image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._image_label.setStyleSheet("border: 1px solid palette(white); border-radius: 4px; color: palette(mid);")
+        self._image_label.setObjectName("coverArtImage")
 
         # Resolution info (ex. "1400 x 1400 px") & ukuran file (ex. "312 KB")
         self._info_label = QLabel("")
         self._info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._info_label.setStyleSheet("color: palette(white); font-size: 11px;")
+        self._info_label.setObjectName("coverArtInfo")
 
         self._load_btn = QPushButton("Change Cover...")
         self._extract_btn = QPushButton("Extract from File")
@@ -51,8 +51,11 @@ class CoverArtViewer(QWidget):
         btn_row.addWidget(self._remove_btn)
 
         layout = QVBoxLayout(self)
+        layout.addStretch(1)
         layout.addWidget(self._image_label, alignment=Qt.AlignmentFlag.AlignHCenter)
+        layout.addSpacing(4)
         layout.addWidget(self._info_label)
+        layout.addSpacing(30)
         layout.addLayout(btn_row)
 
     @property
@@ -72,6 +75,7 @@ class CoverArtViewer(QWidget):
 
             file_size = format_file_size(Path(path).stat().st_size)
             self._info_label.setText(f"{source_pixmap.width()} x {source_pixmap.height()} px  -  {file_size}")
+            self._info_label.setObjectName("coverArtLabel")
 
         else:
             self._image_label.setText("No cover art")

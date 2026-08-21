@@ -131,7 +131,6 @@ class MetadataEditorDialog(QDialog):
         text_area = QPlainTextEdit()
         text_area.setReadOnly(True)
         text_area.setPlainText(preview_text)
-        text_area.setStyleSheet("font-family: Consolas, monospace; font-size: 11px;")
 
         close_btn = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         close_btn.rejected.connect(preview_window.reject)

@@ -138,7 +138,6 @@ class MetadataEditor(QWidget):
         self._deleted_keys.clear()
         self._selected_edit = None
 
-    # ------------------------------------------------------------------
     def get_metadata(self) -> Metadata:
         # Return common metadata from editable fields plus newly added valid fields.
         values = {name: edit.text().strip() or None for name, edit in self._edits.items()}

@@ -52,7 +52,7 @@ class MainWindow(QMainWindow):
         discord_presence_service: DiscordPresenceService | None = None,
         undo_path: Path | None = None,
         redo_path: Path | None = None,
-        loupe_path: Path | None = None,
+        search_path: Path | None = None,
         parent=None,
     ):
         super().__init__(parent)
@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
         self._audio_files: dict[str, AudioFile] = {}
         self._undo_path = undo_path
         self._redo_path = redo_path
-        self._loupe_path = loupe_path
+        self._search_path = search_path
 
         self._metadata_pool = QThreadPool()
         self._metadata_pool.setMaxThreadCount(self._config_service.config.max_metadata_probe_threads)
@@ -268,9 +268,9 @@ class MainWindow(QMainWindow):
         self._search_bar.setClearButtonEnabled(True)
         self._search_bar.setFixedWidth(285)
         self._search_bar.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
-        if self._loupe_path is not None and self._loupe_path.exists():
+        if self._search_path is not None and self._search_path.exists():
             self._search_bar.addAction(
-                QIcon(str(self._loupe_path)),
+                QIcon(str(self._search_path)),
                 QLineEdit.ActionPosition.LeadingPosition,
             )
 

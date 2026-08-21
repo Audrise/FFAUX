@@ -270,7 +270,7 @@ class TrackTable(QTableWidget):
         progress_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         progress_container = QWidget()
-        progress_container.setStyleSheet("background-color: transparent;")
+        progress_container.setObjectName("progressContainer")
         progress_layout = QHBoxLayout(progress_container)
         progress_layout.setContentsMargins(4, 2, 4, 2)
         progress_layout.addWidget(progress_bar)
