@@ -39,15 +39,11 @@ class ConversionProgressDialog(QDialog):
 
         # Status
         self._status_label = QLabel(f"Converting 1 of {self._total_jobs} files")
-        self._status_label.setStyleSheet(
-            "font-size: 16px; font-weight: bold;"
-        )
+        self._status_label.setStyleSheet("font-size: 16px; font-weight: bold;")
 
         # Current file title
         current_file_label = QLabel("CURRENT FILE:")
-        current_file_label.setStyleSheet(
-            "font-size: 11px; font-weight: bold; color: #888;"
-        )
+        current_file_label.setStyleSheet("font-size: 11px; font-weight: bold; color: #888;")
 
         # Current source/target
         self._source_label = QLabel("-")
@@ -171,14 +167,10 @@ class ConversionProgressDialog(QDialog):
         self._result_dialog.resize(480, 260)
 
         status_label = QLabel("Conversion Complete")
-        status_label.setStyleSheet(
-            "font-size: 16px; font-weight: bold;"
-        )
+        status_label.setStyleSheet("font-size: 16px; font-weight: bold;")
 
         current_file_label = QLabel(f"{self._current_jobs} of {self._total_jobs} Files converted")
-        current_file_label.setStyleSheet(
-            "font-size: 11px; font-weight: bold; color: #888;"
-        )
+        current_file_label.setStyleSheet("font-size: 11px; font-weight: bold; color: #888;")
 
         source_label = QLabel(self._source_label.text())
         source_label.setWordWrap(True)

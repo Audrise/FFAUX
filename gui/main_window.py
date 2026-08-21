@@ -806,7 +806,7 @@ class MainWindow(QMainWindow):
                     <a href="LICENSE">GNU General Public License v3.0</a><br>
 
                     Third-party licenses:
-                    <a href="THIRD_PARTY_LICENSES.html">View licenses</a><br>
+                    <a href="THIRD_PARTY_LICENSES_NB.html">View licenses</a><br>
 
                     Source code:
                     <a href="https://github.com/Audrise/FFTool">GitHub Repository</a>

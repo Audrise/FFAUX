@@ -8,12 +8,6 @@ QWidget {
     font-size: 12px;
 }
 
-QWidget#MenuRow {
-    background-color: #181818;
-    color: #d4d4d4;
-    border-bottom: 1px solid #2a2a2a;
-}
-
 QMainWindow {
     background-color: #1a1a1a;
 }
@@ -117,6 +111,12 @@ QLineEdit#SearchBar {
 
 QLineEdit#SearchBar:focus {
     border-bottom: 1.2px solid #555555;
+}
+
+QWidget#MenuRow {
+    background-color: #181818;
+    color: #d4d4d4;
+    border-bottom: 1px solid #2a2a2a;
 }
 
 QComboBox::drop-down {

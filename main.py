@@ -66,7 +66,7 @@ def main() -> int:
         missing_list = "\n".join(f"  - {p}" for p in missing)
         QMessageBox.critical(
             None,
-            "FFTool - Startup Failed",
+            "Startup Failed",
             "FFTool cannot start because required folders are missing:\n\n"
             f"{missing_list}\n\n"
             "This usually happens when FFTool.exe is moved out of its "
@@ -81,7 +81,7 @@ def main() -> int:
     except Exception as exc:
         QMessageBox.critical(
             None,
-            "FFTool - Startup Failed",
+            "Startup Failed",
             f"Failed to initialize logging:\n\n{exc}"
         )
         return 1
@@ -93,7 +93,7 @@ def main() -> int:
 
         QMessageBox.critical(
             None,
-            "FFTool - Startup Failed",
+            "Startup Failed",
             "FFTool cannot start because the required stylesheet is missing:\n\n"
             f"{qss_path}\n\n"
             "Please reinstall FFTool using the official installer."
@@ -115,7 +115,7 @@ def main() -> int:
 
         QMessageBox.critical(
             None,
-            "FFTool - Startup Failed",
+            "Startup Failed",
             f"Failed to load configuration:\n\n{exc}"
         )
         return 1
@@ -135,13 +135,7 @@ def main() -> int:
             splash.setAttribute(Qt.WA_TranslucentBackground)
 
             container = QWidget()
-
-            container.setStyleSheet("""
-            QWidget {
-                background-color: #1a1a1a;
-                border-radius: 15px;
-            }
-            """)
+            container.setStyleSheet("background-color: #1a1a1a; border-radius: 15px;")
 
             shadow = QGraphicsDropShadowEffect()
             shadow.setBlurRadius(30)
@@ -170,19 +164,11 @@ def main() -> int:
 
             app_title = QLabel("FFTool v1.0.0")
             app_title.setAlignment(Qt.AlignCenter)
-            app_title.setStyleSheet("""
-                color: white;
-                font-size: 18px;
-                font-weight: 600;
-            """)
+            app_title.setStyleSheet("color: white; font-size: 18px; font-weight: 600;")
 
             title = QLabel("Format Whatever You Want.")
             title.setAlignment(Qt.AlignCenter)
-            title.setStyleSheet("""
-                color: white;
-                font-size: 14px;
-                font-weight: 500;
-            """)
+            title.setStyleSheet("color: white; font-size: 14px; font-weight: 500;")
 
             inner.addWidget(logo)
             inner.addWidget(app_title)
