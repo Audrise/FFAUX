@@ -144,7 +144,7 @@ def main() -> int:
             container.setGraphicsEffect(shadow)
 
             layout = QVBoxLayout(splash)
-            layout.setContentsMargins(15, 15, 15, 15)
+            layout.setContentsMargins(20, 15, 20, 15)
             layout.addWidget(container)
 
             inner = QVBoxLayout(container)
