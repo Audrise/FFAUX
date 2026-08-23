@@ -149,14 +149,14 @@ def main() -> int:
 
             inner = QVBoxLayout(container)
             inner.setContentsMargins(30, 30, 30, 30)
-            inner.setSpacing(5)
+            inner.setSpacing(4)
 
             logo = QLabel()
             logo.setAlignment(Qt.AlignCenter)
             logo.setPixmap(
                 pixmap.scaled(
-                    180,
-                    180,
+                    200,
+                    200,
                     Qt.KeepAspectRatio,
                     Qt.SmoothTransformation,
                 )
