@@ -157,19 +157,12 @@ class SpectrogramProgressDialog(QDialog):
 
         layout = QVBoxLayout(result_dialog)
         layout.setSpacing(8)
-
         layout.addWidget(status_label)
         layout.addWidget(current_file_label)
         layout.addWidget(current_file_frame)
         layout.addWidget(output_label)
         layout.addWidget(output_frame)
-
-        # Reuse the same progress panel so the final state
-        # remains visible in the result dialog.
         layout.addWidget(self._progress_panel)
-
-        # IMPORTANT:
-        # Use the local `buttons` created above, not `self._buttons`.
         layout.addWidget(buttons)
 
         result_dialog.show()

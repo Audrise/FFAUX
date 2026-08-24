@@ -10,10 +10,11 @@ from PySide6.QtWidgets import (
     QWidget,
     QLabel,
     QVBoxLayout,
-    QGraphicsDropShadowEffect,
+    QGraphicsOpacityEffect,
+    QGraphicsDropShadowEffect
 )
 from PySide6.QtGui import QIcon, QPixmap, QColor
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QEventLoop, QPropertyAnimation
 
 from core.config_service import ConfigService
 from core.discord_presence_service import DiscordPresenceService
@@ -121,6 +122,7 @@ def main() -> int:
         return 1
 
     splash = None
+    fade_animation = None
     splash_path = RESOURCE_ROOT / "assets" / "splash" / "FFTool.png"
 
     if splash_path.exists():
@@ -138,13 +140,13 @@ def main() -> int:
             container.setObjectName("splashContainer")
 
             shadow = QGraphicsDropShadowEffect()
-            shadow.setBlurRadius(30)
-            shadow.setOffset(0, 8)
+            shadow.setBlurRadius(35)
+            shadow.setOffset(0, 0)
             shadow.setColor(QColor(0, 0, 0, 120))
             container.setGraphicsEffect(shadow)
 
             layout = QVBoxLayout(splash)
-            layout.setContentsMargins(20, 15, 20, 15)
+            layout.setContentsMargins(30, 15, 30, 15)
             layout.addWidget(container)
 
             inner = QVBoxLayout(container)
@@ -155,8 +157,8 @@ def main() -> int:
             logo.setAlignment(Qt.AlignCenter)
             logo.setPixmap(
                 pixmap.scaled(
-                    200,
-                    200,
+                    170,
+                    170,
                     Qt.KeepAspectRatio,
                     Qt.SmoothTransformation,
                 )
@@ -175,9 +177,23 @@ def main() -> int:
             inner.addWidget(title)
 
             splash.resize(320, 280)
+
+            opacity_effect = QGraphicsOpacityEffect()
+            opacity_effect.setOpacity(0)
+            splash.setGraphicsEffect(opacity_effect)
+
+            fade_animation = QPropertyAnimation(opacity_effect, b"opacity", splash)
+            fade_animation.setDuration(150)
+            fade_animation.setStartValue(0.0)
+            fade_animation.setEndValue(1.0)
+
             splash.show()
 
-            app.processEvents()
+            loop = QEventLoop()
+            fade_animation.finished.connect(loop.quit)
+
+            fade_animation.start()
+            loop.exec()
 
     ffprobe_runner = FFprobeRunner(ffprobe_path=_resolve_tool_path(config.ffprobe_path))
     ffmpeg_runner = FFmpegRunner(ffmpeg_path=_resolve_tool_path(config.ffmpeg_path))
@@ -209,7 +225,6 @@ def main() -> int:
         search_path=SEARCH_PATH,
     )
 
-    # Restore the window size/position the user last left it at (see MainWindow.closeEvent)
     if config.window_maximized:
         window.showMaximized()
 
