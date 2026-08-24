@@ -31,6 +31,7 @@ class AppConfig:
     window_height: int = 600
     window_x: int = -1
     window_y: int = -1
+    discord_client_id: str = ""
     enable_discord_presence: bool = False
     restore_session_on_launch: bool = True
     track_table_column_widths: list[int] = field(default_factory=list)

@@ -190,8 +190,7 @@ def main() -> int:
         max_parallel_jobs=config.max_parallel_jobs,
     )
 
-    # discord_presence = DiscordPresenceService(client_id=config.discord_client_id)
-    discord_presence = DiscordPresenceService(client_id="1530063572162314260")
+    discord_presence = DiscordPresenceService(client_id=config.discord_client_id)
     if config.enable_discord_presence:
         discord_presence.start()
 

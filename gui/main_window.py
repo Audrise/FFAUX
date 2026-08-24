@@ -108,8 +108,18 @@ class MainWindow(QMainWindow):
 
         self._discord_presence.update(PresenceState(state="Managing audio library", large_image=_DISCORD_LARGE_IMAGE))
 
+        self._update_selection_dependent_actions()
+
     def _update_file_dependent_actions(self) -> None:
-        self._process_action.setEnabled(bool(self._audio_files))
+        has_files = bool(self._audio_files)
+        self._process_action.setEnabled(has_files)
+        self._sort_menu.setEnabled(has_files)
+
+    def _update_selection_dependent_actions(self) -> None:
+        has_selection = bool(self._track_table.selected_row_ids())
+        self._delete_action.setEnabled(has_selection)
+        self._edit_metadata_action.setEnabled(has_selection)
+        self._spectrogram_action.setEnabled(has_selection)
 
     def closeEvent(self, event) -> None:
         # Drop QUEUED metadata probes so closing doesn't wait;
@@ -201,6 +211,7 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(self._redo_action)
 
         sort_menu = edit_menu.addMenu("Sort By")
+        self._sort_menu = sort_menu
         self._sort_track_no_action = QAction("Track No", self)
         self._sort_track_no_action.triggered.connect(lambda: self._track_table.sort_by("track_no"))
         sort_menu.addAction(self._sort_track_no_action)
@@ -306,6 +317,12 @@ class MainWindow(QMainWindow):
     def _connect_signals(self) -> None:
         self._track_table.cellDoubleClicked.connect(lambda *_: self._on_edit_metadata_clicked())
         self._track_table.filesDropped.connect(self._on_files_added)
+
+        # Single connection covers every case that changes selection --
+        # mouse click, Ctrl+A, Escape/clearSelection, arrow-key nav,
+        # rows disappearing after delete/undo/redo -- so Delete/Edit
+        # Selected Metadata/Generate Spectrogram stay in sync automatically.
+        self._track_table.itemSelectionChanged.connect(self._update_selection_dependent_actions)
 
         self._search_bar.textChanged.connect(self._track_table.filter_rows)
 

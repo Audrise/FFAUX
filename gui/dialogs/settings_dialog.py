@@ -69,23 +69,26 @@ class SettingsDialog(QDialog):
         self._enable_discord_check = QCheckBox("Enable Discord Rich Presence")
         self._enable_discord_check.setChecked(config.enable_discord_presence)
 
+        self._set_presence_id = QLineEdit(config.discord_client_id)
+
         self._restore_session_check = QCheckBox("Restore previous session on launch")
         self._restore_session_check.setChecked(config.restore_session_on_launch)
 
         self._reset_layout_btn = QPushButton("Reset Table Layout to Default")
         self._reset_layout_btn.clicked.connect(self._on_reset_layout_clicked)
 
-        form = QFormLayout()
-        form.addRow("FFmpeg Path:", self._wrap_with_browse(self._ffmpeg_edit, is_dir=False))
-        form.addRow("FFprobe Path:", self._wrap_with_browse(self._ffprobe_edit, is_dir=False))
-        form.addRow("Default ouput folder:", self._wrap_with_browse(self._output_dir_edit, is_dir=True))
-        form.addRow("Output filename suffix:", self._output_suffix_edit)
-        form.addRow("Output Spectrogram suffix:", self._spectrogram_suffix_edit)
-        form.addRow("Maximum parallel jobs:", self._parallel_spin)
-        form.addRow("Maximum metadata reading threads:", self._metadata_probe_spin)
-        form.addRow("", self._enable_discord_check)
-        form.addRow("", self._restore_session_check)
-        form.addRow("Table columns:", self._reset_layout_btn)
+        self._form = QFormLayout()
+        self._form.addRow("FFmpeg Path:", self._wrap_with_browse(self._ffmpeg_edit, is_dir=False))
+        self._form.addRow("FFprobe Path:", self._wrap_with_browse(self._ffprobe_edit, is_dir=False))
+        self._form.addRow("Default ouput folder:", self._wrap_with_browse(self._output_dir_edit, is_dir=True))
+        self._form.addRow("Output filename suffix:", self._output_suffix_edit)
+        self._form.addRow("Output Spectrogram suffix:", self._spectrogram_suffix_edit)
+        self._form.addRow("Maximum parallel jobs:", self._parallel_spin)
+        self._form.addRow("Maximum metadata reading threads:", self._metadata_probe_spin)
+        self._form.addRow("Discord cliend id:", self._set_presence_id)
+        self._form.addRow("", self._enable_discord_check)
+        self._form.addRow("", self._restore_session_check)
+        self._form.addRow("Table columns:", self._reset_layout_btn)
 
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.HLine)
@@ -143,13 +146,14 @@ class SettingsDialog(QDialog):
         buttons.rejected.connect(self.reject)
 
         layout = QVBoxLayout(self)
-        layout.addLayout(form)
+        layout.addLayout(self._form)
         layout.addWidget(separator)
         layout.addLayout(self._conversion_form)
         layout.addWidget(buttons)
 
         self._format_combo.currentIndexChanged.connect(self._update_conversion_field_states)
         self._use_soxr_check.toggled.connect(self._update_conversion_field_states)
+        self._enable_discord_check.toggled.connect(self._update_conversion_field_states)
         self._update_conversion_field_states()
 
     def _make_path_field(self, value: str, is_dir: bool = False) -> QLineEdit:
@@ -192,25 +196,34 @@ class SettingsDialog(QDialog):
         return OutputFormat(self._format_combo.currentData())
 
     def _set_row_visible(self, field_widget, visible: bool) -> None:
-        # setRowVisible (not just widget.setVisible()) is needed so the row's spacing
-        # actually collapses instead of leaving stacked-up blank gaps.
         self._conversion_form.setRowVisible(field_widget, visible)
+
+    def _set_general_row_visible(self, field_widget, visible: bool) -> None:
+        self._form.setRowVisible(field_widget, visible)
 
     def _update_conversion_field_states(self) -> None:
         fmt = self._current_format()
         is_lossless = fmt in LOSSLESS_FORMATS
         is_soxr_format = fmt in SOXR_FORMATS
         is_flac = fmt == OutputFormat.FLAC
+        is_discord_enabled = self._enable_discord_check.isChecked()
+
+        self._set_general_row_visible(
+            self._set_presence_id,
+            is_discord_enabled,
+        )
 
         self._set_row_visible(self._bit_depth_combo, is_lossless)
         self._set_row_visible(self._bitrate_spin, not is_lossless)
         self._set_row_visible(self._use_soxr_check, is_soxr_format)
         self._set_row_visible(
-            self._soxr_precision_spin, is_soxr_format and self._use_soxr_check.isChecked()
+            self._soxr_precision_spin,
+            is_soxr_format and self._use_soxr_check.isChecked(),
         )
         self._set_row_visible(self._flac_compression_spin, is_flac)
 
         self._conversion_form.activate()
+        self._form.activate()
         self.adjustSize()
 
     def _on_save(self) -> None:
@@ -222,6 +235,7 @@ class SettingsDialog(QDialog):
         cfg.set("spectrogram_suffix", self._spectrogram_suffix_edit.text())
         cfg.set("max_parallel_jobs", self._parallel_spin.value())
         cfg.set("max_metadata_probe_threads", self._metadata_probe_spin.value())
+        cfg.set("discord_client_id", self._set_presence_id.text())
         cfg.set("enable_discord_presence", self._enable_discord_check.isChecked())
         cfg.set("restore_session_on_launch", self._restore_session_check.isChecked())
 
