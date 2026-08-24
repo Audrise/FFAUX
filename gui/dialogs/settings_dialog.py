@@ -64,7 +64,7 @@ class SettingsDialog(QDialog):
         self._metadata_probe_spin.setValue(config.max_metadata_probe_threads)
 
         self._output_suffix_edit = QLineEdit(config.output_suffix)
-        self._output_suffix_edit.setPlaceholderText("_converted")
+        self._spectrogram_suffix_edit = QLineEdit(config.spectrogram_suffix)
 
         self._enable_discord_check = QCheckBox("Enable Discord Rich Presence")
         self._enable_discord_check.setChecked(config.enable_discord_presence)
@@ -80,6 +80,7 @@ class SettingsDialog(QDialog):
         form.addRow("FFprobe Path:", self._wrap_with_browse(self._ffprobe_edit, is_dir=False))
         form.addRow("Default ouput folder:", self._wrap_with_browse(self._output_dir_edit, is_dir=True))
         form.addRow("Output filename suffix:", self._output_suffix_edit)
+        form.addRow("Output Spectrogram suffix:", self._spectrogram_suffix_edit)
         form.addRow("Maximum parallel jobs:", self._parallel_spin)
         form.addRow("Maximum metadata reading threads:", self._metadata_probe_spin)
         form.addRow("", self._enable_discord_check)
@@ -217,7 +218,8 @@ class SettingsDialog(QDialog):
         cfg.set("ffmpeg_path", self._ffmpeg_edit.text())
         cfg.set("ffprobe_path", self._ffprobe_edit.text())
         cfg.set("output_directory", self._output_dir_edit.text())
-        cfg.set("output_suffix", self._output_suffix_edit.text() or "_converted")
+        cfg.set("output_suffix", self._output_suffix_edit.text())
+        cfg.set("spectrogram_suffix", self._spectrogram_suffix_edit.text())
         cfg.set("max_parallel_jobs", self._parallel_spin.value())
         cfg.set("max_metadata_probe_threads", self._metadata_probe_spin.value())
         cfg.set("enable_discord_presence", self._enable_discord_check.isChecked())

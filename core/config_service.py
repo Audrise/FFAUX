@@ -20,6 +20,7 @@ class AppConfig:
     ffprobe_path: str = "bin/ffprobe.exe"
     output_directory: str = ""
     output_suffix: str = "_converted"
+    spectrogram_suffix: str = "_scanned"
     max_parallel_jobs: int = 2
     max_metadata_probe_threads: int = 2
     default_bitrate: str = "192k"

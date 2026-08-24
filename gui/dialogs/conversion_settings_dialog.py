@@ -41,7 +41,7 @@ _FORMAT_LABELS = {
 }
 
 class ConversionSettingsDialog(QDialog):
-    def __init__(self, current_settings: ConversionSettings, default_output_dir: str = "", parent=None):
+    def __init__(self, current_settings: ConversionSettings, default_output_dir: str = "", output_suffix: str = "" ,parent=None):
         super().__init__(parent)
         self.setWindowTitle("Convert Settings")
         self.setMinimumSize(480, 330)
@@ -87,7 +87,7 @@ class ConversionSettingsDialog(QDialog):
 
         # Custom output folder (Optional)
         self._output_dir_edit = QLineEdit(current_settings.custom_output_dir)
-        self._output_dir_edit.setPlaceholderText("Leave blank for default")
+        self._output_dir_edit.setPlaceholderText(default_output_dir)
 
         browse_btn = QPushButton("...")
         browse_btn.setFixedWidth(32)
@@ -97,7 +97,7 @@ class ConversionSettingsDialog(QDialog):
         output_dir_row.addWidget(browse_btn)
 
         self._output_suffix_edit = QLineEdit(current_settings.custom_output_suffix)
-        self._output_suffix_edit.setPlaceholderText("Leave blank for default")
+        self._output_suffix_edit.setPlaceholderText(output_suffix)
 
         self._form = QFormLayout()
         self._form.addRow("Output Audio Format:", self._format_combo)

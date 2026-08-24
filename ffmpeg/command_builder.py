@@ -126,6 +126,19 @@ def _build_trim(job: Job) -> list[str]:
     args += ["-c", "copy", job.output_path]
     return args
 
+def _build_spectrogram(job: Job) -> list[str]:
+    # showspectrumpic reads the whole file from start to end (same as a
+    # normal convert), so the existing -progress pipe:1 mechanism in
+    # ffmpeg_worker.py produces a real 0-100% progress reading for this
+    # too, with no special-casing needed.
+    resolution = job.params.get("resolution", "1920x1080")
+    args = [
+        "-y", "-i", job.audio_file.path,
+        "-lavfi", f"showspectrumpic=s={resolution}:legend=1",
+        job.output_path,
+    ]
+    return args
+
 _BUILDERS: dict[OperationType, Callable[[Job], list[str]]] = {
     OperationType.CONVERT: _build_convert,
     OperationType.APPLY_METADATA: _build_apply_metadata,
@@ -133,6 +146,7 @@ _BUILDERS: dict[OperationType, Callable[[Job], list[str]]] = {
     OperationType.SET_COVER: _build_set_cover,
     OperationType.NORMALIZE: _build_normalize,
     OperationType.TRIM: _build_trim,
+    OperationType.GENERATE_SPECTROGRAM: _build_spectrogram,
 }
 
 def build(job: Job) -> list[str]:

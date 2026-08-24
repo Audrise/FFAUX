@@ -31,6 +31,8 @@ from gui.dialogs.conversion_progress_dialog import ConversionProgressDialog
 from gui.dialogs.conversion_settings_dialog import ConversionSettingsDialog
 from gui.dialogs.metadata_editor_dialog import MetadataEditorDialog
 from gui.dialogs.settings_dialog import SettingsDialog
+from gui.dialogs.spectrogram_progress_dialog import SpectrogramProgressDialog
+from gui.dialogs.spectrogram_settings_dialog import SpectrogramSettingsDialog
 
 from gui.widgets.log_viewer import LogViewer
 from gui.widgets.track_table import TrackTable
@@ -81,6 +83,7 @@ class MainWindow(QMainWindow):
         self._batch_convert_total = 0
         self._batch_convert_success = 0
         self._conversion_progress_dialog: ConversionProgressDialog | None = None
+        self._spectrogram_progress_dialog: SpectrogramProgressDialog | None = None
 
         self._build_ui()
         self._connect_signals()
@@ -178,18 +181,24 @@ class MainWindow(QMainWindow):
 
         # Edit
         edit_menu = menu_bar.addMenu("&Edit")
+
+        # Undo
         self._undo_action = QAction("Undo", self)
+        if self._undo_path is not None and self._undo_path.exists():
+            self._undo_action.setIcon(QIcon(str(self._undo_path)))
         self._undo_action.setShortcut("Ctrl+Z")
         self._undo_action.setEnabled(False)
         self._undo_action.triggered.connect(self._on_undo)
         edit_menu.addAction(self._undo_action)
 
+        # Redo
         self._redo_action = QAction("Redo", self)
+        if self._redo_path is not None and self._redo_path.exists():
+            self._redo_action.setIcon(QIcon(str(self._redo_path)))
         self._redo_action.setShortcut("Ctrl+Y")
         self._redo_action.setEnabled(False)
         self._redo_action.triggered.connect(self._on_redo)
         edit_menu.addAction(self._redo_action)
-        edit_menu.addSeparator()
 
         sort_menu = edit_menu.addMenu("Sort By")
         self._sort_track_no_action = QAction("Track No", self)
@@ -212,6 +221,11 @@ class MainWindow(QMainWindow):
         self._edit_metadata_action.setShortcut("Ctrl+E")
         self._edit_metadata_action.triggered.connect(self._on_edit_metadata_clicked)
         edit_menu.addAction(self._edit_metadata_action)
+
+        self._spectrogram_action = QAction("Generate Spectrogram...", self)
+        self._spectrogram_action.setShortcut("Ctrl+G")
+        self._spectrogram_action.triggered.connect(self._on_generate_spectrogram_clicked)
+        edit_menu.addAction(self._spectrogram_action)
 
         self._settings_action = QAction("Settings...", self)
         self._settings_action.setShortcut("Ctrl+,")
@@ -240,24 +254,7 @@ class MainWindow(QMainWindow):
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
 
-        # Undo icon
-        self._undo_action = QAction(self)
-        if self._undo_path is not None and self._undo_path.exists():
-            self._undo_action.setIcon(QIcon(str(self._undo_path)))
-
-        self._undo_action.setShortcut("Ctrl+Z")
-        self._undo_action.setEnabled(False)
-        self._undo_action.triggered.connect(self._on_undo)
-
-        # Redo icon
-        self._redo_action = QAction(self)
-        if self._redo_path is not None and self._redo_path.exists():
-            self._redo_action.setIcon(QIcon(str(self._redo_path)))
-
-        self._redo_action.setShortcut("Ctrl+Y")
-        self._redo_action.setEnabled(False)
-        self._redo_action.triggered.connect(self._on_redo)
-
+        # Undo/Redo bars
         menu_bar.addAction(self._undo_action)
         menu_bar.addAction(self._redo_action)
 
@@ -359,6 +356,12 @@ class MainWindow(QMainWindow):
         )
         convert_action.setShortcut("Ctrl+R")
 
+        spectrogram_action = menu.addAction(
+            "Generate Spectrogram...",
+            self._on_generate_spectrogram_clicked
+        )
+        spectrogram_action.setShortcut("Ctrl+G")
+
         delete_action = menu.addAction(
             "Delete",
             self._on_delete_selected_file
@@ -375,7 +378,7 @@ class MainWindow(QMainWindow):
         )
         exit_action.setShortcut("Ctrl+Q")
 
-        for action in (edit_metadata_action, convert_action, delete_action):
+        for action in (edit_metadata_action, convert_action, spectrogram_action, delete_action):
             action.setEnabled(has_selection)
 
         menu.exec(self._track_table.viewport().mapToGlobal(pos))
@@ -467,7 +470,12 @@ class MainWindow(QMainWindow):
 
     def _on_conversion_settings_clicked(self) -> None:
         # Optional prefill only; the dialog is always shown again when Convert is clicked. This does not skip the dialog.
-        dialog = ConversionSettingsDialog(self._conversion_settings, default_output_dir=self._config_service.config.output_directory, parent=self)
+        dialog = ConversionSettingsDialog(
+            self._conversion_settings,
+            default_output_dir=self._config_service.config.output_directory,
+            output_suffix=self._config_service.config.output_suffix,
+            parent=self,
+        )
         if dialog.exec():
             self._conversion_settings = dialog.get_settings()
             logger.info(
@@ -479,6 +487,7 @@ class MainWindow(QMainWindow):
     def _on_process_clicked(self) -> None:
         if not self._audio_files:
             QMessageBox.information(self, "Empty", "Please add audio files first.")
+            self._process_action.setEnabled(False)
             return
 
         # Convert selected files (including DONE); skip DONE only for full-library conversion.
@@ -523,6 +532,7 @@ class MainWindow(QMainWindow):
         dialog = ConversionSettingsDialog(
             self._conversion_settings,
             default_output_dir=self._config_service.config.output_directory,
+            output_suffix=self._config_service.config.output_suffix,
             parent=self,
         )
         if not dialog.exec():
@@ -575,6 +585,60 @@ class MainWindow(QMainWindow):
 
     def _on_cancel_clicked(self) -> None:
         self._job_manager.cancel_all()
+
+    def _on_generate_spectrogram_clicked(self) -> None:
+        selected_ids = self._track_table.selected_row_ids()
+        if len(selected_ids) != 1:
+            QMessageBox.information(
+                self,
+                "Select One File",
+                "Please select exactly one audio file to generate a spectrogram for.",
+            )
+            return
+
+        audio_file = self._audio_files.get(selected_ids[0])
+        if audio_file is None:
+            return
+
+        if not Path(audio_file.path).is_file():
+            QMessageBox.warning(self, "File Not Found", f"'{audio_file.filename}' no longer exists on disk.")
+            return
+
+        config = self._config_service.config
+        dialog = SpectrogramSettingsDialog(
+            default_output_dir=config.output_directory,
+            default_spectrogram_suffix=config.spectrogram_suffix,
+            source_filename=audio_file.filename,
+            parent=self,
+        )
+        if not dialog.exec():
+            return
+
+        output_dir = dialog.output_dir() or config.output_directory
+        output_name = dialog.output_name() or f"{Path(audio_file.path).stem}_scanned"
+        target_dir = Path(output_dir) if output_dir else Path(audio_file.path).parent
+        output_path = str(target_dir / f"{output_name}.png")
+
+        job = Job(
+            audio_file=audio_file,
+            operation=OperationType.GENERATE_SPECTROGRAM,
+            params={"resolution": dialog.resolution()},
+            output_path=output_path,
+        )
+
+        self._spectrogram_progress_dialog = SpectrogramProgressDialog(job, parent=self)
+        self._spectrogram_progress_dialog.cancelRequested.connect(self._on_cancel_clicked)
+        self._spectrogram_progress_dialog.show()
+
+        self._discord_presence.update(
+            PresenceState(
+                details="Generating spectrogram...",
+                state=audio_file.filename,
+                large_image=_DISCORD_LARGE_IMAGE,
+            )
+        )
+
+        self._job_manager.enqueue(job)
 
     def _on_delete_selected_file(self) -> None:
         audio_file_ids = self._track_table.selected_row_ids()
@@ -748,6 +812,8 @@ class MainWindow(QMainWindow):
             self._track_table.update_progress(job.audio_file.id, percent)
             if job.operation == OperationType.CONVERT and self._conversion_progress_dialog is not None:
                 self._conversion_progress_dialog.update_job_progress(job_id, percent)
+            elif job.operation == OperationType.GENERATE_SPECTROGRAM and self._spectrogram_progress_dialog is not None:
+                self._spectrogram_progress_dialog.update_job_progress(job_id, percent)
 
     def _on_job_finished(self, job_id: str, success: bool, message: str) -> None:
         job = self._job_manager.get_job(job_id)
@@ -760,6 +826,9 @@ class MainWindow(QMainWindow):
                     self._batch_convert_success += 1
                 if self._conversion_progress_dialog is not None:
                     self._conversion_progress_dialog.mark_job_done()
+            elif job.operation == OperationType.GENERATE_SPECTROGRAM and self._spectrogram_progress_dialog is not None:
+                self._spectrogram_progress_dialog.mark_job_done(failed=not success)
+                self._spectrogram_progress_dialog = None
 
     def _on_toggle_log(self, checked: bool) -> None:
         self._log_viewer.setVisible(checked)
