@@ -7,7 +7,7 @@ It supports multi-selection for Edit/Convert/Delete actions.
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QDragEnterEvent, QDropEvent, QWheelEvent
+from PySide6.QtGui import QAction, QDragEnterEvent, QDropEvent, QWheelEvent
 from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QMenu, QProgressBar, QTableWidget, QTableWidgetItem, QHBoxLayout, QWidget
 
 from core.models.audio_file import AudioFile, FileStatus
@@ -23,25 +23,31 @@ _STATUS_LABELS = {
 }
 
 (
-    _COL_FILE_NAME, _COL_TRACK, _COL_TITLE, _COL_ARTIST, _COL_ALBUM, _COL_YEAR, _COL_DURATION, _COL_SAMPLE_RATE,
-    _COL_BITRATE, _COL_SIZE, _COL_CODEC, _COL_RATING, _COL_STATUS, _COL_PROGRESS,
-) = range(14)
+    _COL_FILE_NAME, _COL_TRACK, _COL_DISC, _COL_TITLE, _COL_ARTIST, _COL_ALBUM_ARTIST, _COL_ALBUM,
+    _COL_YEAR, _COL_DURATION, _COL_SAMPLE_RATE, _COL_BITRATE, _COL_SIZE, _COL_CODEC, _COL_RATING,
+    _COL_STATUS, _COL_PROGRESS,
+) = range(16)
 
 _HEADERS = [
-    "File Name", "Track No", "Title", "Artist", "Album", "Year", "Duration", "Sample Rate",
-    "Bitrate", "File size", "Codec", "Rating", "Status", "Progress",
+    "File Name", "Track No", "Disc No", "Title", "Artist", "Album Artist", "Album",
+    "Year", "Duration", "Sample Rate", "Bitrate", "File size", "Codec", "Rating",
+    "Status", "Progress",
 ]
 
 _DEFAULT_HIDDEN_COLUMNS = {
     _COL_FILE_NAME,
     _COL_RATING,
+    _COL_DISC,
+    _COL_ALBUM_ARTIST,
 }
 
 _DEFAULT_WIDTHS = {
     _COL_FILE_NAME: 240,
     _COL_TRACK: 65,
+    _COL_DISC: 65,
     _COL_TITLE: 220,
     _COL_ARTIST: 120,
+    _COL_ALBUM_ARTIST: 120,
     _COL_ALBUM: 420,
     _COL_YEAR: 90,
     _COL_DURATION: 85,
@@ -58,10 +64,20 @@ _ID_ROLE = Qt.ItemDataRole.UserRole
 
 _SORT_COLUMNS = {
     "track_no": _COL_TRACK,
+    "disc_no": _COL_DISC,
     "title": _COL_TITLE,
     "artist": _COL_ARTIST,
+    "album_artist": _COL_ALBUM_ARTIST,
     "album": _COL_ALBUM,
+    "date": _COL_YEAR,
 }
+
+class NumericTableWidgetItem(QTableWidgetItem):
+    def __lt__(self, other: QTableWidgetItem) -> bool:
+        try:
+            return int(self.text()) < int(other.text())
+        except (ValueError, TypeError):
+            return super().__lt__(other)
 
 class TrackTable(QTableWidget):
     # Table storing audio_file_id in row data (Qt.UserRole) to prevent stale indices.
@@ -142,18 +158,23 @@ class TrackTable(QTableWidget):
         # Widths: back to the per-column defaults.
         self.reset_column_widths()
 
-    # Column visibility (right-click on the header -> "Columns" submenu).
+    def build_column_toggle_actions(self, parent) -> list[QAction]:
+        header = self.horizontalHeader()
+        actions: list[QAction] = []
+        for col, label in enumerate(_HEADERS):
+            action = QAction(label, parent)
+            action.setCheckable(True)
+            action.setChecked(not header.isSectionHidden(col))
+            action.toggled.connect(lambda checked, c=col: self._set_column_visible(c, checked))
+            actions.append(action)
+        return actions
+
     def _on_header_context_menu(self, pos) -> None:
         header = self.horizontalHeader()
         menu = QMenu(self)
         columns_menu = menu.addMenu("Columns")
-
-        for col, label in enumerate(_HEADERS):
-            action = columns_menu.addAction(label)
-            action.setCheckable(True)
-            action.setChecked(not header.isSectionHidden(col))
-            action.toggled.connect(lambda checked, c=col: self._set_column_visible(c, checked))
-
+        for action in self.build_column_toggle_actions(columns_menu):
+            columns_menu.addAction(action)
         menu.exec(header.mapToGlobal(pos))
 
     def _set_column_visible(self, col: int, visible: bool) -> None:
@@ -242,8 +263,10 @@ class TrackTable(QTableWidget):
         values = {
             _COL_FILE_NAME: audio_file.filename,
             _COL_TRACK: meta.track_number or "",
+            _COL_DISC: meta.disc_number or "",
             _COL_TITLE: meta.title or audio_file.filename,
             _COL_ARTIST: meta.artist or "",
+            _COL_ALBUM_ARTIST: meta.album_artist or "",
             _COL_ALBUM: meta.album or "",
             _COL_YEAR: meta.year or "",
             _COL_DURATION: format_duration(audio_file.duration_seconds),
@@ -255,7 +278,11 @@ class TrackTable(QTableWidget):
             _COL_STATUS: _STATUS_LABELS[audio_file.status],
         }
         for col, text in values.items():
-            item = QTableWidgetItem(str(text))
+            if col in (_COL_TRACK, _COL_DISC):
+                item = NumericTableWidgetItem(str(text))
+            else:
+                item = QTableWidgetItem(str(text))
+
             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.setItem(row, col, item)
 
@@ -302,11 +329,17 @@ class TrackTable(QTableWidget):
         }
         for col, text in values.items():
             item = self.item(row, col)
+
             if item is None:
-                item = QTableWidgetItem()
+                if col in (_COL_TRACK, _COL_DISC):
+                    item = NumericTableWidgetItem(str(text))
+                else:
+                    item = QTableWidgetItem(str(text))
+
                 item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(row, col, item)
-            item.setText(str(text))
+            else:
+                item.setText(str(text))
 
     def remove_ids(self, audio_file_ids: list[str]) -> None:
         # Delete rows for a set of audio_file_ids at once (multi-select)

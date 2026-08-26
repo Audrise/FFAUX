@@ -52,24 +52,25 @@ class MainWindow(QMainWindow):
         metadata_service: MetadataService,
         template_service: TemplateService,
         discord_presence_service: DiscordPresenceService | None = None,
-        undo_path: Path | None = None,
-        redo_path: Path | None = None,
-        search_path: Path | None = None,
+        undo_icon_path: Path | None = None,
+        redo_icon_path: Path | None = None,
+        search_icon_path: Path | None = None,
         parent=None,
     ):
         super().__init__(parent)
         self.setWindowTitle("FFTool v1.0.0")
         self.resize(1200, 600)
 
+        self._track_table = TrackTable()
         self._config_service = config_service
         self._job_manager = job_manager
         self._metadata_service = metadata_service
         self._template_service = template_service
         self._discord_presence = discord_presence_service or DiscordPresenceService(client_id="")
         self._audio_files: dict[str, AudioFile] = {}
-        self._undo_path = undo_path
-        self._redo_path = redo_path
-        self._search_path = search_path
+        self._undo_icon = undo_icon_path
+        self._redo_icon = redo_icon_path
+        self._search_icon = search_icon_path
 
         self._metadata_pool = QThreadPool()
         self._metadata_pool.setMaxThreadCount(self._config_service.config.max_metadata_probe_threads)
@@ -194,8 +195,8 @@ class MainWindow(QMainWindow):
 
         # Undo
         self._undo_action = QAction("Undo", self)
-        if self._undo_path is not None and self._undo_path.exists():
-            self._undo_action.setIcon(QIcon(str(self._undo_path)))
+        if self._undo_icon is not None and self._undo_icon.exists():
+            self._undo_action.setIcon(QIcon(str(self._undo_icon)))
         self._undo_action.setShortcut("Ctrl+Z")
         self._undo_action.setEnabled(False)
         self._undo_action.triggered.connect(self._on_undo)
@@ -203,15 +204,19 @@ class MainWindow(QMainWindow):
 
         # Redo
         self._redo_action = QAction("Redo", self)
-        if self._redo_path is not None and self._redo_path.exists():
-            self._redo_action.setIcon(QIcon(str(self._redo_path)))
+        if self._redo_icon is not None and self._redo_icon.exists():
+            self._redo_action.setIcon(QIcon(str(self._redo_icon)))
         self._redo_action.setShortcut("Ctrl+Y")
         self._redo_action.setEnabled(False)
         self._redo_action.triggered.connect(self._on_redo)
         edit_menu.addAction(self._redo_action)
 
+        self._columns_menu = edit_menu.addMenu("Columns")
+        self._columns_menu.aboutToShow.connect(self._on_columns_menu_about_to_show)
+
         sort_menu = edit_menu.addMenu("Sort By")
         self._sort_menu = sort_menu
+
         self._sort_track_no_action = QAction("Track No", self)
         self._sort_track_no_action.triggered.connect(lambda: self._track_table.sort_by("track_no"))
         sort_menu.addAction(self._sort_track_no_action)
@@ -253,9 +258,9 @@ class MainWindow(QMainWindow):
         view_menu.addAction(self._toggle_log_action)
 
         view_menu.addSeparator()
-        self._reset_columns_action = QAction("Reset Column Widths", self)
+        self._reset_columns_action = QAction("Reset Column Layouts", self)
         self._reset_columns_action.setShortcut("Ctrl+>")
-        self._reset_columns_action.triggered.connect(self._on_reset_column_widths_clicked)
+        self._reset_columns_action.triggered.connect(self._on_reset_column_layout_clicked)
         view_menu.addAction(self._reset_columns_action)
 
         # Help
@@ -276,9 +281,9 @@ class MainWindow(QMainWindow):
         self._search_bar.setClearButtonEnabled(True)
         self._search_bar.setFixedWidth(285)
         self._search_bar.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
-        if self._search_path is not None and self._search_path.exists():
+        if self._search_icon is not None and self._search_icon.exists():
             self._search_bar.addAction(
-                QIcon(str(self._search_path)),
+                QIcon(str(self._search_icon)),
                 QLineEdit.ActionPosition.LeadingPosition,
             )
 
@@ -300,8 +305,6 @@ class MainWindow(QMainWindow):
 
         root_layout = QVBoxLayout(central)
 
-        self._track_table = TrackTable()
-
         self._splitter = QSplitter(Qt.Orientation.Vertical)
 
         self._log_viewer = LogViewer()
@@ -317,11 +320,6 @@ class MainWindow(QMainWindow):
     def _connect_signals(self) -> None:
         self._track_table.cellDoubleClicked.connect(lambda *_: self._on_edit_metadata_clicked())
         self._track_table.filesDropped.connect(self._on_files_added)
-
-        # Single connection covers every case that changes selection --
-        # mouse click, Ctrl+A, Escape/clearSelection, arrow-key nav,
-        # rows disappearing after delete/undo/redo -- so Delete/Edit
-        # Selected Metadata/Generate Spectrogram stay in sync automatically.
         self._track_table.itemSelectionChanged.connect(self._update_selection_dependent_actions)
 
         self._search_bar.textChanged.connect(self._track_table.filter_rows)
@@ -379,16 +377,15 @@ class MainWindow(QMainWindow):
         )
         spectrogram_action.setShortcut("Ctrl+G")
 
+        menu.addAction(self._toggle_log_action)
+        menu.addAction(self._reset_columns_action)
+        menu.addSeparator()
+
         delete_action = menu.addAction(
             "Delete",
             self._on_delete_selected_file
         )
         delete_action.setShortcut("Ctrl+W")
-
-        menu.addSeparator()
-        menu.addAction(self._toggle_log_action)
-        menu.addAction(self._reset_columns_action)
-        menu.addSeparator()
 
         exit_action = menu.addAction(
             "Exit", self._confirm_exit
@@ -400,7 +397,6 @@ class MainWindow(QMainWindow):
 
         menu.exec(self._track_table.viewport().mapToGlobal(pos))
 
-    # User Action
     def _make_default_conversion_settings(self) -> ConversionSettings:
         config = self._config_service.config
         return ConversionSettings(
@@ -792,12 +788,11 @@ class MainWindow(QMainWindow):
             )
 
     def _on_settings_clicked(self) -> None:
-        dialog = SettingsDialog(
-            self._config_service,
-            self,
-            on_reset_table_layout=self._track_table.reset_layout,
-        )
+        dialog = SettingsDialog(self._config_service, self)
+
         if dialog.exec():
+            self._conversion_settings = self._make_default_conversion_settings()
+
             self._job_manager.set_ffmpeg_path(self._config_service.get("ffmpeg_path"))
             self._job_manager.set_max_parallel_jobs(self._config_service.get("max_parallel_jobs"))
             self._metadata_pool.setMaxThreadCount(self._config_service.get("max_metadata_probe_threads"))
@@ -812,8 +807,8 @@ class MainWindow(QMainWindow):
                 self._discord_presence.stop()
 
     def _on_job_started(self, job_id: str) -> None:
-    # job_id is Job.id; use job.audio_file.id to update the row.
-    # One job maps to one audio_file in this MVP.
+        # job_id is Job.id; use job.audio_file.id to update the row.
+        # One job maps to one audio_file in this MVP.
         job = self._job_manager.get_job(job_id)
         if job:
             self._track_table.update_status(job.audio_file.id, FileStatus.RUNNING)
@@ -850,8 +845,18 @@ class MainWindow(QMainWindow):
     def _on_toggle_log(self, checked: bool) -> None:
         self._log_viewer.setVisible(checked)
 
-    def _on_reset_column_widths_clicked(self) -> None:
-        self._track_table.reset_column_widths()
+    def _on_reset_column_layout_clicked(self) -> None:
+        self._track_table.reset_layout()
+        cfg = self._config_service
+        cfg.set("track_table_column_widths", [])
+        cfg.set("track_table_hidden_columns", None)
+        cfg.set("track_table_column_order", None)
+        cfg.save()
+
+    def _on_columns_menu_about_to_show(self) -> None:
+        self._columns_menu.clear()
+        for action in self._track_table.build_column_toggle_actions(self._columns_menu):
+            self._columns_menu.addAction(action)
 
     def _on_batch_finished(self) -> None:
         self._process_action.setEnabled(True)
@@ -874,7 +879,7 @@ class MainWindow(QMainWindow):
         box.setText("""
             <div style="font-size: 10pt;">
 
-                <h3>FFTool v1.0.0 [x64]</h3>
+                <h2>FFTool v1.0.0 [x64]</h2>
 
                 <p>
                     A graphical audio processing application built with

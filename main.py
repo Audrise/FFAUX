@@ -41,10 +41,14 @@ def _app_root() -> Path:
 RESOURCE_ROOT = _resource_root()
 APP_ROOT = _app_root()
 
+# FFTool
+APP_SPLASH_PATH = RESOURCE_ROOT / "assets" / "splash" / "FFTool.png"
+APP_ICON_PATH = RESOURCE_ROOT / "assets" / "icons" / "FFTool.ico"
+
 # main_window assets
-UNDO_PATH = RESOURCE_ROOT / "assets" / "icons" / "Undo.ico"
-REDO_PATH = RESOURCE_ROOT / "assets" / "icons" / "Redo.ico"
-SEARCH_PATH = RESOURCE_ROOT / "assets" / "icons" / "Search.ico"
+UNDO_ICON_PATH = RESOURCE_ROOT / "assets" / "icons" / "Undo.ico"
+REDO_ICON_PATH = RESOURCE_ROOT / "assets" / "icons" / "Redo.ico"
+SEARCH_ICON_PATH = RESOURCE_ROOT / "assets" / "icons" / "Search.ico"
 
 def _resolve_tool_path(path_str: str) -> str:
     path = Path(path_str)
@@ -123,10 +127,9 @@ def main() -> int:
 
     splash = None
     fade_animation = None
-    splash_path = RESOURCE_ROOT / "assets" / "splash" / "FFTool.png"
 
-    if splash_path.exists():
-        pixmap = QPixmap(str(splash_path))
+    if APP_SPLASH_PATH.exists():
+        pixmap = QPixmap(str(APP_SPLASH_PATH))
 
         if not pixmap.isNull():
             splash = QWidget()
@@ -210,9 +213,8 @@ def main() -> int:
     if config.enable_discord_presence:
         discord_presence.start()
 
-    icon_path = RESOURCE_ROOT / "assets" / "icons" / "FFTool.ico"
-    if icon_path.exists():
-        app.setWindowIcon(QIcon(str(icon_path)))
+    if APP_ICON_PATH.exists():
+        app.setWindowIcon(QIcon(str(APP_ICON_PATH)))
 
     window = MainWindow(
         config_service=config_service,
@@ -220,9 +222,9 @@ def main() -> int:
         metadata_service=metadata_service,
         template_service=template_service,
         discord_presence_service=discord_presence,
-        undo_path=UNDO_PATH,
-        redo_path=REDO_PATH,
-        search_path=SEARCH_PATH,
+        undo_icon_path=UNDO_ICON_PATH,
+        redo_icon_path=REDO_ICON_PATH,
+        search_icon_path=SEARCH_ICON_PATH,
     )
 
     if config.window_maximized:

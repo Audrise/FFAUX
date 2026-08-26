@@ -43,12 +43,11 @@ _FORMAT_LABELS = {
 logger = get_logger("gui.dialogs.settings_dialog")
 
 class SettingsDialog(QDialog):
-    def __init__(self, config_service: ConfigService, parent=None, on_reset_table_layout=None):
+    def __init__(self, config_service: ConfigService, parent=None):
         super().__init__(parent)
         self.setWindowTitle("FFTool Settings")
         self.resize(440, 320)
         self._config_service = config_service
-        self._on_reset_table_layout = on_reset_table_layout
         config = config_service.config
 
         self._ffmpeg_edit = self._make_path_field(config.ffmpeg_path)
@@ -66,16 +65,14 @@ class SettingsDialog(QDialog):
         self._output_suffix_edit = QLineEdit(config.output_suffix)
         self._spectrogram_suffix_edit = QLineEdit(config.spectrogram_suffix)
 
+        self._restore_session_check = QCheckBox("Restore previous session on launch")
+        self._restore_session_check.setChecked(config.restore_session_on_launch)
+
         self._enable_discord_check = QCheckBox("Enable Discord Rich Presence")
         self._enable_discord_check.setChecked(config.enable_discord_presence)
 
         self._set_presence_id = QLineEdit(config.discord_client_id)
-
-        self._restore_session_check = QCheckBox("Restore previous session on launch")
-        self._restore_session_check.setChecked(config.restore_session_on_launch)
-
-        self._reset_layout_btn = QPushButton("Reset Table Layout to Default")
-        self._reset_layout_btn.clicked.connect(self._on_reset_layout_clicked)
+        self._set_presence_id.setPlaceholderText("Add your client id here")
 
         self._form = QFormLayout()
         self._form.addRow("FFmpeg Path:", self._wrap_with_browse(self._ffmpeg_edit, is_dir=False))
@@ -84,11 +81,10 @@ class SettingsDialog(QDialog):
         self._form.addRow("Output filename suffix:", self._output_suffix_edit)
         self._form.addRow("Output Spectrogram suffix:", self._spectrogram_suffix_edit)
         self._form.addRow("Maximum parallel jobs:", self._parallel_spin)
-        self._form.addRow("Maximum metadata reading threads:", self._metadata_probe_spin)
-        self._form.addRow("Discord cliend id:", self._set_presence_id)
-        self._form.addRow("", self._enable_discord_check)
+        self._form.addRow("Maximum metadata reading:", self._metadata_probe_spin)
         self._form.addRow("", self._restore_session_check)
-        self._form.addRow("Table columns:", self._reset_layout_btn)
+        self._form.addRow("", self._enable_discord_check)
+        self._form.addRow("Discord client id:", self._set_presence_id)
 
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.HLine)
@@ -135,7 +131,7 @@ class SettingsDialog(QDialog):
         self._conversion_form.addRow("Sample Rate:", self._sample_rate_combo)
         self._conversion_form.addRow("Bitrate:", self._bitrate_spin)
         self._conversion_form.addRow("Bit Depth:", self._bit_depth_combo)
-        self._conversion_form.addRow("FLAC Compression Level (0-12):", self._flac_compression_spin)
+        self._conversion_form.addRow("FLAC Compression (0-12):", self._flac_compression_spin)
         self._conversion_form.addRow("", self._use_soxr_check)
         self._conversion_form.addRow("SOXR Precision (1-33):", self._soxr_precision_spin)
 
@@ -178,17 +174,6 @@ class SettingsDialog(QDialog):
         row.addWidget(edit)
         row.addWidget(browse_btn)
         return row
-
-    def _on_reset_layout_clicked(self) -> None:
-        # Reset table layout immediately and clear the saved config.
-        if self._on_reset_table_layout is not None:
-            self._on_reset_table_layout()
-
-        cfg = self._config_service
-        cfg.set("track_table_column_widths", [])
-        cfg.set("track_table_hidden_columns", None)
-        cfg.set("track_table_column_order", None)
-        cfg.save()
 
     def _current_format(self) -> OutputFormat:
         # See ConversionSettingsDialog._current_format for why OutputFormat(data)
@@ -235,9 +220,9 @@ class SettingsDialog(QDialog):
         cfg.set("spectrogram_suffix", self._spectrogram_suffix_edit.text())
         cfg.set("max_parallel_jobs", self._parallel_spin.value())
         cfg.set("max_metadata_probe_threads", self._metadata_probe_spin.value())
-        cfg.set("discord_client_id", self._set_presence_id.text())
-        cfg.set("enable_discord_presence", self._enable_discord_check.isChecked())
         cfg.set("restore_session_on_launch", self._restore_session_check.isChecked())
+        cfg.set("enable_discord_presence", self._enable_discord_check.isChecked())
+        cfg.set("discord_client_id", self._set_presence_id.text())
 
         cfg.set("default_output_format", self._current_format().value)
         cfg.set("default_sample_rate_hz", self._sample_rate_combo.currentData())
