@@ -1,13 +1,12 @@
 """
-# A worker that executes a single FFmpeg job in a separate thread.
+# Runs a single FFmpeg job in a separate thread
 
-This is the ONLY place (along with job_manager.py) within core/ allowed
-to import PySide6. All heavy logic (building commands, running subprocesses,
-parsing progress) remains delegated to pure-Python modules in ffmpeg/ and
-core/; this worker merely bridges callbacks to Qt signals.
+This is one of the only places in core/ that imports PySide6.
+Heavy logic stays in the pure-Python ffmpeg/ and core/ modules.
+This worker just connects callbacks to Qt signals.
 
-Pattern used: QRunnable + a separate QObject for signals, because
-QRunnable itself is not a QObject and cannot emit signals directly.
+Uses QRunnable with a separate QObject for signals since QRunnable
+can't emit signals directly
 """
 from __future__ import annotations
 
@@ -21,7 +20,7 @@ from ffmpeg.ffmpeg_runner import FFmpegRunner
 from ffmpeg.progress_parser import ProgressParser
 
 class WorkerSignals(QObject):
-    started = Signal(str)                    # job_id
+    started = Signal(str)                     # job_id
     progress = Signal(str, float)             # job_id, percent (0-100)
     log = Signal(str, str)                    # job_id, line
     finished = Signal(str, bool, str)         # job_id, success, message
@@ -75,7 +74,7 @@ class FFmpegWorker(QRunnable):
 
         if result.cancelled:
             job.status = JobStatus.CANCELLED
-            job.audio_file.status = job.audio_file.status  # tidak diubah paksa
+            job.audio_file.status = job.audio_file.status  # No forcing change
             self._finish(success=False, message="Cancelled by the user", cancelled=True)
         elif result.success:
             self._finish(success=True, message="Success")
