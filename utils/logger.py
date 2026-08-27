@@ -1,17 +1,17 @@
 """
-# Centralized logging configuration.
+# Centralize logging configuration here.
 
-Other modules simply use: `logger = logging.getLogger(__name__)`.
-The GUI can attach additional handlers (e.g., QtLogHandler) to display
-logs in a widget, without other modules needing to know that the logs are being displayed in the GUI.
+Other modules only need to use `logger = logging.getLogger(__name__)`.
+The GUI can add its own handlers (e.g. QtLogHandler) to display logs in a widget
+without requiring other modules to know how or where the logs are displayed.
 """
 from __future__ import annotations
 
 import logging
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime
 
-APP_LOGGER_NAME = "FFTool"
+APP_LOGGER_NAME = "FFAUX"
 
 class DayFormatter(logging.Formatter):
     DAYS = ("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
@@ -28,11 +28,9 @@ def setup_logging(
     logger.setLevel(level)
 
     if logger.handlers:
-        return logger  # already set up; avoid duplicate handlers
+        return logger
 
-    formatter = DayFormatter(
-        "[%(asctime)s] [%(levelname)s] %(name)s: %(message)s"
-    )
+    formatter = DayFormatter("[%(asctime)s] [%(levelname)s] %(name)s: %(message)s")
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
