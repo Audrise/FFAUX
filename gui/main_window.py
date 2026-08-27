@@ -1,9 +1,9 @@
 """
-# MainWindow is solely responsible for:
+# MainWindow is responsible for:
 
-assembling widgets, forwarding user actions to the backend
-(core/*), and updating widgets based on signals from JobManager.
-No FFmpeg, parsing, or metadata logic is implemented in this file.
+assembling the UI, forwarding user actions
+to the backend (core), and updating widgets based on JobManager signals.
+FFmpeg, parsing, and metadata logic are handled outside this file.
 """
 from __future__ import annotations
 
@@ -58,7 +58,7 @@ class MainWindow(QMainWindow):
         parent=None,
     ):
         super().__init__(parent)
-        self.setWindowTitle("FFTool v1.0.0")
+        self.setWindowTitle("FFAUX v1.0.0")
         self.resize(1200, 600)
 
         self._track_table = TrackTable()
@@ -101,7 +101,7 @@ class MainWindow(QMainWindow):
         if column_order is not None:
             self._track_table.apply_column_order(column_order)
 
-        # Always save; only LOAD is conditional.
+        # Always save, only LOAD is conditional.
         if self._config_service.config.restore_session_on_launch:
             session_paths = self._config_service.config.session_paths
             if session_paths:
@@ -123,8 +123,8 @@ class MainWindow(QMainWindow):
         self._spectrogram_action.setEnabled(has_selection)
 
     def closeEvent(self, event) -> None:
-        # Drop QUEUED metadata probes so closing doesn't wait;
-        # running workers finish on their own and auto-delete.
+        # Drop queued metadata probes so closing doesn't wait for them.
+        # Running workers finish and clean themselves up.
         self._metadata_pool.clear()
 
         # Save window state so the next launch can restore it. (see main.py)
@@ -265,7 +265,7 @@ class MainWindow(QMainWindow):
 
         # Help
         help_menu = menu_bar.addMenu("&Help")
-        about_action = QAction("About FFTool", self)
+        about_action = QAction("About FFAUX", self)
         about_action.setShortcut("Ctrl+H")
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
@@ -431,8 +431,8 @@ class MainWindow(QMainWindow):
         self._on_files_added(found)
 
     def _on_files_added(self, paths: list[str], show_completion_message: bool = True) -> None:
-        # Add the row with placeholder metadata; ffprobe fills it in asynchronously.
-        # Keeps the UI responsive when adding/restoring many files.
+        # Add the row with placeholder metadata and let ffprobe fill it in asynchronously.
+        # This keeps the UI responsive when adding or restoring many files.
         added_files: list[AudioFile] = []
         self._add_batch_show_message = show_completion_message
         for path in paths:
@@ -482,7 +482,7 @@ class MainWindow(QMainWindow):
             self._add_batch_pending = 0
 
     def _on_conversion_settings_clicked(self) -> None:
-        # Optional prefill only; the dialog is always shown again when Convert is clicked. This does not skip the dialog.
+        # Optional prefill only, the dialog is always shown again when Convert is clicked. This does not skip the dialog.
         dialog = ConversionSettingsDialog(
             self._conversion_settings,
             default_output_dir=self._config_service.config.output_directory,
@@ -503,7 +503,8 @@ class MainWindow(QMainWindow):
             self._process_action.setEnabled(False)
             return
 
-        # Convert selected files (including DONE); skip DONE only for full-library conversion.
+        # Convert the selected files, including DONE items.
+        # Only skip DONE items when converting the entire library.
         selected_ids = self._track_table.selected_row_ids()
         if selected_ids:
             pending_ids = [
@@ -797,7 +798,7 @@ class MainWindow(QMainWindow):
             self._job_manager.set_max_parallel_jobs(self._config_service.get("max_parallel_jobs"))
             self._metadata_pool.setMaxThreadCount(self._config_service.get("max_metadata_probe_threads"))
 
-            # Apply live; start()/stop() are safe to call unconditionally.
+            # Apply live, start()/stop() are safe to call unconditionally.
             if self._config_service.config.enable_discord_presence:
                 self._discord_presence.start()
                 self._discord_presence.update(
@@ -807,8 +808,8 @@ class MainWindow(QMainWindow):
                 self._discord_presence.stop()
 
     def _on_job_started(self, job_id: str) -> None:
-        # job_id is Job.id; use job.audio_file.id to update the row.
-        # One job maps to one audio_file in this MVP.
+        # job_id is the Job.id; use job.audio_file.id to update the row.
+        # Each job maps to one audio file in this MVP.
         job = self._job_manager.get_job(job_id)
         if job:
             self._track_table.update_status(job.audio_file.id, FileStatus.RUNNING)
@@ -879,7 +880,7 @@ class MainWindow(QMainWindow):
         box.setText("""
             <div style="font-size: 10pt;">
 
-                <h2>FFTool v1.0.0 [x64]</h2>
+                <h2>FFAUX v1.0.0 [x64]</h2>
 
                 <p>
                     A graphical audio processing application built with
@@ -900,7 +901,7 @@ class MainWindow(QMainWindow):
                     <a href="THIRD_PARTY_LICENSES.html">View licenses</a><br>
 
                     Source code:
-                    <a href="https://github.com/Audrise/FFTool">GitHub Repository</a>
+                    <a href="https://github.com/Audrise/FFAUX">GitHub Repository</a>
                 </p>
 
             </div>
@@ -911,7 +912,7 @@ class MainWindow(QMainWindow):
         confirm = QMessageBox.question(
             self,
             "Confirm Exit",
-            "Are you sure you want to exit FFTool?",
+            "Are you sure you want to exit FFAUX?",
             QMessageBox.StandardButton.Yes
             | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
