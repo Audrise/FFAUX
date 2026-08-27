@@ -543,6 +543,14 @@ class MainWindow(QMainWindow):
             )
             return
 
+        audio_files = [self._audio_files[file_id] for file_id in pending_ids]
+        if len(audio_files) == 1:
+            details = f"Preparing to convert {audio_files[0].filename}"
+        else:
+            details = f"Preparing to convert {len(audio_files)} files"
+
+        self._discord_presence.update(PresenceState(details=details, large_image=_DISCORD_LARGE_IMAGE))
+
         dialog = ConversionSettingsDialog(
             self._conversion_settings,
             default_output_dir=self._config_service.config.output_directory,
@@ -550,6 +558,7 @@ class MainWindow(QMainWindow):
             parent=self,
         )
         if not dialog.exec():
+            self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
             return
 
         settings = dialog.get_settings()
@@ -588,13 +597,13 @@ class MainWindow(QMainWindow):
         self._cancel_action.setEnabled(True)
         self._batch_convert_total = len(jobs)
         self._batch_convert_success = 0
-        self._discord_presence.update(
-            PresenceState(
-                details="Converting audio...",
-                state=f"{len(jobs)} file(s)",
-                large_image=_DISCORD_LARGE_IMAGE,
-            )
-        )
+
+        if len(audio_files) == 1:
+            details = f"Converting {audio_files[0].filename}..."
+        else:
+            details = f"Converting {len(audio_files)} files..."
+
+        self._discord_presence.update(PresenceState(details=details, large_image=_DISCORD_LARGE_IMAGE))
         self._job_manager.enqueue_many(jobs)
 
     def _on_cancel_clicked(self) -> None:
@@ -618,6 +627,9 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "File Not Found", f"'{audio_file.filename}' no longer exists on disk.")
             return
 
+        detail = f"Preparing spectrogram for {audio_file.filename}"
+        self._discord_presence.update(PresenceState(details=detail, large_image=_DISCORD_LARGE_IMAGE))
+
         config = self._config_service.config
         dialog = SpectrogramSettingsDialog(
             default_output_dir=config.output_directory,
@@ -626,6 +638,7 @@ class MainWindow(QMainWindow):
             parent=self,
         )
         if not dialog.exec():
+            self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
             return
 
         output_dir = dialog.output_dir() or config.output_directory
@@ -644,13 +657,8 @@ class MainWindow(QMainWindow):
         self._spectrogram_progress_dialog.cancelRequested.connect(self._on_cancel_clicked)
         self._spectrogram_progress_dialog.show()
 
-        self._discord_presence.update(
-            PresenceState(
-                details="Generating spectrogram...",
-                state=audio_file.filename,
-                large_image=_DISCORD_LARGE_IMAGE,
-            )
-        )
+        detail = f"Generating {audio_file.filename} spectrogram"
+        self._discord_presence.update(PresenceState(details=detail, large_image=_DISCORD_LARGE_IMAGE))
 
         self._job_manager.enqueue(job)
 
@@ -723,14 +731,12 @@ class MainWindow(QMainWindow):
         if len(audio_files) == 1:
             details = f"Editing {audio_files[0].filename} metadata"
         else:
-            details = f"Editing {len(audio_files)} audio metadata"
+            details = f"Editing {len(audio_files)} files metadata"
         self._discord_presence.update(PresenceState(details=details, large_image=_DISCORD_LARGE_IMAGE))
 
         dialog = MetadataEditorDialog(audio_files, self._metadata_service, self._template_service, self)
         if not dialog.exec():
-            self._discord_presence.update(
-                PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE)
-            )
+            self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
             return
 
         new_metadata, cover_path, cover_changed, deleted_keys, metadata_changed = dialog.get_result()
