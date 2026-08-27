@@ -1,10 +1,8 @@
 """
-# Widget for displaying & changing cover art.
+# Widget for displaying and changing cover art.
 
-This widget handles only the visual aspect and image file selection. Cover extraction
-from audio files (requiring FFmpeg) is delegated to `core.metadata_service`,
-invoked externally (via a dialog) through a callback rather than directly
-by the widget—keeping the widget agnostic regarding FFmpeg.
+Handles the image display and file selection only. Cover extraction is done
+by core.metadata_service through a callback, keeping FFmpeg out of this widget.
 """
 from __future__ import annotations
 
