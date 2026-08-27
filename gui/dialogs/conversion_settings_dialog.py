@@ -1,10 +1,9 @@
 """
-# Audio conversion settings dialog
+# Audio conversion settings dialog.
 
-Analogous to MetadataEditorDialog but for technical conversion parameters:
-output format, sample rate, bit depth, bitrate, SOXR resampler + precision
-(FLAC/WAV specific), compression level (FLAC specific), and custom output
-folder.
+Similar to MetadataEditorDialog, but for conversion options such as output
+format, sample rate, bit depth, bitrate, SOXR resampling, compression level,
+and output folder.
 """
 from __future__ import annotations
 
@@ -60,7 +59,7 @@ class ConversionSettingsDialog(QDialog):
                 STANDARD_SAMPLE_RATES.index(current_settings.sample_rate_hz)
             )
 
-        # Bit depth (lossless: FLAC/WAV/ALAC)
+        # Bit depth for lossless
         self._bit_depth_combo = QComboBox()
         for depth in (16, 24, 32):
             self._bit_depth_combo.addItem(f"{depth}-bit", userData=depth)
@@ -72,12 +71,12 @@ class ConversionSettingsDialog(QDialog):
         self._bitrate_spin.setSuffix(" kbps")
         self._bitrate_spin.setValue(current_settings.bitrate_kbps)
 
-        # FLAC compression level (FLAC only; WAV does not have this option)
+        # FLAC compression level
         self._flac_compression_spin = QSpinBox()
         self._flac_compression_spin.setRange(0, 12)
         self._flac_compression_spin.setValue(current_settings.flac_compression_level)
 
-        # SOXR: Relevant ONLY for FLAC & WAV
+        # SOXR: ONLY for FLAC & WAV
         self._use_soxr_check = QCheckBox("Use SOX Resampler for FLAC/WAV")
         self._use_soxr_check.setChecked(current_settings.use_soxr)
 
@@ -131,14 +130,14 @@ class ConversionSettingsDialog(QDialog):
         return OutputFormat(data)
 
     def _set_row_visible(self, field_widget, visible: bool) -> None:
-        # blank gaps stacked up for
-        # every hidden row (e.g. MP3 hides 4 rows -> 4 rows' worth of leftover spacing).
+        # Prevent hidden rows from leaving extra blank space.
+        # For example, MP3 hides 4 rows.
         self._form.setRowVisible(field_widget, visible)
 
     def _update_field_states(self) -> None:
         fmt = self._current_format()
         is_lossless = fmt in LOSSLESS_FORMATS  # FLAC, WAV, ALAC -> no bitrate
-        is_soxr_format = fmt in SOXR_FORMATS  # FLAC, WAV -> SOXR checkbox available.
+        is_soxr_format = fmt in SOXR_FORMATS  # FLAC, WAV -> SOXR available (checkbox).
         is_flac = fmt == OutputFormat.FLAC
 
         self._set_row_visible(self._bit_depth_combo, is_lossless)
