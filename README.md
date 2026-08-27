@@ -1,20 +1,17 @@
 <h1 align="center">
-    <strong>FFAUX</strong>
+  <strong>FFAUX</strong>
+  <br>
 </h1>
-
-<div align=center>
-    <strong>Python 3 based FFmpeg wrapper that uses PySide6 for the GUI</strong>
-</div>
-<br>
+<h3 align="center">Flexible Format Audio Utility eXchange</h3>
 
 <div align=center>
     <a href="https://www.python.org/downloads/">
         <img src="https://img.shields.io/badge/Python 3.10+-FFD43B?style=for-the-badge&logo=python&logoColor=blue"/>
     </a>
     <a href="https://github.com/Audrise/FFAUX">
-      <img src="https://img.shields.io/badge/FFAUX 1.o-FFD43B?style=for-the-badge&logo=python&logoColor=blue"/>
+      <img src="https://img.shields.io/badge/Release v1.0.0-FFD43B?style=for-the-badge&logo=python&logoColor=blue"/>
     </a>
-    <br>
+    <!-- <br> -->
     <a href="https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/index.html">
       <img src="https://img.shields.io/badge/PySide 6-neon?style=for-the-badge&logo=qt&logoColor=white"/>
     </a>
@@ -24,23 +21,17 @@
     <a href="https://github.com/Audrise/FFAUX?tab=GPL-3.0-1-ov-file">
     <img src="https://img.shields.io/badge/GPL--3.0-blue?style=for-the-badge"/>
     </a>
-    <br>
+    <!-- <br> -->
     <img src="https://img.shields.io/badge/windows%20GUI-blue?style=for-the-badge&logo=windows11&%20terminal&logoColor=white"/>
     <img src="https://img.shields.io/badge/windows%20terminal-blue?style=for-the-badge&logo=windows11&%20terminal&logoColor=white"/>
-    <br>
+    <!-- <br> -->
     <img src="https://img.shields.io/github/stars/Audrise/FFAUX?style=social"/>
     <img src="https://img.shields.io/github/forks/Audrise/FFAUX?style=social"/>
-    <br>
 </div>
-<br>
 
-<h1 align="center">DISCLAIMER!</h1>
- 
-**FFAUX** is developed strictly for **personal use**, **audio organization**, and **educational purposes**. 
-This tool is designed to help you **view, edit, and manage audio metadata and cover art** in a safe, local environment. 
-**it doesn't download, stream, or acquire audio content from any source.**
- 
 ## Description
+<p align="center">Python 3 based FFmpeg wrapper that uses PySide6 for the GUI</p>
+
 FFAUX is a desktop application I developed to address my own workflow requirements for managing digital audio. 
 It leverages FFmpeg and FFprobe to convert and tag audio files, and provides a graphical, playlist-style interface built with PySide6. 
 The application enables users to queue multiple audio files, configure conversion settings, and edit metadata without relying on the command line.
@@ -261,6 +252,14 @@ continues normally without showing a presence status.
 **The application window does not start / crashes on launch.**
 Confirm that the virtual environment is activated and that all
 dependencies from `requirements.txt` were installed successfully.
+
+<br>
+
+<h1 align="center">DISCLAIMER!</h1>
+
+**FFAUX** is developed strictly for **personal use**, **audio organization**, and **educational purposes**. 
+This tool is designed to help you **view, edit, and manage audio metadata and cover art** in a safe, local environment. 
+**it doesn't download, stream, or acquire audio content from any source.**
 
 ## Changelog
 
