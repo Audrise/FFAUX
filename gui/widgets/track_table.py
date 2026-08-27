@@ -1,8 +1,8 @@
 """
-# This table also serves as a drop area:
+# This table also acts as a drop area:
 
-audio files/folders can be directly dragged and dropped onto the table.
-It supports multi-selection for Edit/Convert/Delete actions.
+audio files and folders can be dragged and dropped directly onto it.
+Multiple items can be selected for Edit, Convert, or Delete actions.
 """
 from __future__ import annotations
 
@@ -80,9 +80,6 @@ class NumericTableWidgetItem(QTableWidgetItem):
             return super().__lt__(other)
 
 class TrackTable(QTableWidget):
-    # Table storing audio_file_id in row data (Qt.UserRole) to prevent stale indices.
-    # `_row_by_id` is rebuilt whenever the row structure changes.
-
     filesDropped = Signal(list)  # list[str] path of dropped audio files
 
     def __init__(self, parent=None):
@@ -121,7 +118,6 @@ class TrackTable(QTableWidget):
         for col in _DEFAULT_HIDDEN_COLUMNS:
             header.setSectionHidden(col, True)
 
-    # Persist column widths (see MainWindow.closeEvent).
     def column_widths(self) -> list[int]:
         header = self.horizontalHeader()
         return [header.sectionSize(col) for col in range(self.columnCount())]
@@ -144,8 +140,6 @@ class TrackTable(QTableWidget):
         # Reset column widths, visibility, and order to defaults in one call.
         header = self.horizontalHeader()
 
-        # Move each column back to its logical position, rechecking visualIndex()
-        # after each move so earlier moves don't leave positions stale.
         for logical in range(self.columnCount()):
             current_visual = header.visualIndex(logical)
             if current_visual != logical:
@@ -155,7 +149,6 @@ class TrackTable(QTableWidget):
         for col in range(self.columnCount()):
             header.setSectionHidden(col, col in _DEFAULT_HIDDEN_COLUMNS)
 
-        # Widths: back to the per-column defaults.
         self.reset_column_widths()
 
     def build_column_toggle_actions(self, parent) -> list[QAction]:
@@ -182,14 +175,14 @@ class TrackTable(QTableWidget):
         header.setSectionHidden(col, not visible)
 
         if visible:
-            # Keep hidden sections' slots by moving them to the far right.
+            # Keep hidden sections slots by moving them to the far right.
             last_visual = header.count() - 1
             current_visual = header.visualIndex(col)
             if current_visual != last_visual:
                 header.moveSection(current_visual, last_visual)
 
-    # Persist column order (see MainWindow.closeEvent). Order is a list of
-    # logical column indices, left to right, as currently arranged by drag.
+    # Save the current column order (see MainWindow.closeEvent).
+    # The order contains logical column indices from left to right.
     def column_order(self) -> list[int]:
         header = self.horizontalHeader()
         return [header.logicalIndex(visual) for visual in range(header.count())]
@@ -230,7 +223,7 @@ class TrackTable(QTableWidget):
             self.filesDropped.emit(audio_files)
         event.acceptProposedAction()
 
-    # At the top/bottom, further vertical scrolling switches to horizontal scrolling.
+    # Once vertical scrolling reaches the top or bottom, further scrolling moves horizontally.
     def wheelEvent(self, event: QWheelEvent) -> None:
         delta = event.pixelDelta().y() or event.angleDelta().y()
 
@@ -353,7 +346,8 @@ class TrackTable(QTableWidget):
         self._rebuild_row_index()
 
     def remove_selected_rows(self) -> list[str]:
-        # Delete all currently selected rows. Returns the IDs of the deleted rows.
+        # Delete all currently selected rows.
+        # Returns the IDs of the deleted rows.
         selected_ids = self.selected_row_ids()
         self.remove_ids(selected_ids)
         return selected_ids
@@ -421,8 +415,8 @@ class TrackTable(QTableWidget):
             self.setRowHidden(row, not match)
 
     def sort_by(self, key: str, ascending: bool = True) -> None:
-        # QTableWidget.sortItems() moves items, but not setCellWidget() widgets.
-        # Save progress bars by audio_file_id and re-attach them after sorting.
+        # Sorting moves the table items, but not the setCellWidget() widgets.
+        # Keep progress bars mapped by audio_file_id and re-attach them after sorting.
         col = _SORT_COLUMNS.get(key)
         if col is None:
             return
