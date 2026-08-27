@@ -12,7 +12,7 @@ from enum import Enum
 from core.models.metadata import Metadata
 
 class FileStatus(str, Enum):
-    # Status of a single audio file in the batch queue
+    # Status of a single audio file
     PENDING = "pending"
     QUEUED = "queued"
     RUNNING = "running"
