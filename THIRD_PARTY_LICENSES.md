@@ -1,14 +1,14 @@
-<h1 align="center">FFTool - Third-Party Licenses</H1>
+<h1 align="center">FFAUX - Third-Party Licenses</H1>
 
 <p align="center">
     This document contains licensing information for third-party software
-    distributed with FFTool.
+    distributed with FFAUX.
     The copyright and licenses for the following software remain the property
     of their respective copyright holders.
 </p>
 
 ## 1. FFmpeg
-FFTool bundles selected **FFmpeg** binaries for media processing.
+FFAUX bundles selected **FFmpeg** binaries for media processing.
 
 The bundled FFmpeg executables and shared libraries are redistributed
 without modification from the official **BtbN FFmpeg-Builds** release.
@@ -46,13 +46,13 @@ The following executable from the original distribution is **not included**:
 Copyright (c) the FFmpeg developers.
 
 ### Why This Matters (GPLv3 & Dynamic Linking)
-FFTool bundles FFmpeg's official **GPLv3-licensed** shared libraries
+FFAUX bundles FFmpeg's official **GPLv3-licensed** shared libraries
 (the `.dll` files listed above) and dynamically links against them at
-runtime. Because of this, FFTool as a whole is distributed under the
+runtime. Because of this, FFAUX as a whole is distributed under the
 terms of the **GPLv3** as well (see the `LICENSE` file). In practice,
 this means:
 
-- FFTool's own source code is available under GPL-compatible terms.
+- FFAUX's own source code is available under GPL-compatible terms.
 - You are free to swap the bundled FFmpeg binaries for your own
   ABI-compatible build/version if you prefer.
 - The corresponding source code for this exact FFmpeg build is
@@ -85,7 +85,7 @@ Copyright (C) The Qt Company Ltd.
 
 # License Texts
 The full text of the **GNU General Public License Version 3 (GPLv3)**
-is included in the <a href="https://github.com/Audrise/FFTool/blob/main/LICENSE">`LICENSE`</a> file distributed with FFTool.
+is included in the <a href="https://github.com/Audrise/FFAUX/blob/main/LICENSE">`LICENSE`</a> file distributed with FFAUX.
 Where required by the applicable license terms, the corresponding source
 code for bundled third-party software is available from the respective
 project websites listed above.
