@@ -45,7 +45,7 @@ logger = get_logger("gui.dialogs.settings_dialog")
 class SettingsDialog(QDialog):
     def __init__(self, config_service: ConfigService, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("FFTool Settings")
+        self.setWindowTitle("FFAUX Settings")
         self.resize(440, 320)
         self._config_service = config_service
         config = config_service.config
