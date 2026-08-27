@@ -1,5 +1,5 @@
 """
-# Widget log output FFmpeg (read-only, auto-scroll).
+# Widget log output FFmpeg (read-only and auto-scroll).
 """
 from __future__ import annotations
 
