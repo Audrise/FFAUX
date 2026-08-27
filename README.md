@@ -1,5 +1,5 @@
 <h1 align="center">
-    <strong>AudriseFFTool</strong>
+    <strong>FFAUX</strong>
 </h1>
 
 <div align=center>
@@ -11,8 +11,8 @@
     <a href="https://www.python.org/downloads/">
         <img src="https://img.shields.io/badge/Python 3.10+-FFD43B?style=for-the-badge&logo=python&logoColor=blue"/>
     </a>
-    <a href="https://github.com/Audrise/FFTool">
-      <img src="https://img.shields.io/badge/FFTool 1.o-FFD43B?style=for-the-badge&logo=python&logoColor=blue"/>
+    <a href="https://github.com/Audrise/FFAUX">
+      <img src="https://img.shields.io/badge/FFAUX 1.o-FFD43B?style=for-the-badge&logo=python&logoColor=blue"/>
     </a>
     <br>
     <a href="https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/index.html">
@@ -21,31 +21,31 @@
     <a href="https://docs.pytest.org/en/stable/">
     <img src="https://img.shields.io/badge/PyTest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white"/>
     </a>
-    <a href="https://github.com/Audrise/FFTool?tab=GPL-3.0-1-ov-file">
+    <a href="https://github.com/Audrise/FFAUX?tab=GPL-3.0-1-ov-file">
     <img src="https://img.shields.io/badge/GPL--3.0-blue?style=for-the-badge"/>
     </a>
     <br>
     <img src="https://img.shields.io/badge/windows%20GUI-blue?style=for-the-badge&logo=windows11&%20terminal&logoColor=white"/>
     <img src="https://img.shields.io/badge/windows%20terminal-blue?style=for-the-badge&logo=windows11&%20terminal&logoColor=white"/>
     <br>
-    <img src="https://img.shields.io/github/stars/Audrise/FFTool?style=social"/>
-    <img src="https://img.shields.io/github/forks/Audrise/FFTool?style=social"/>
+    <img src="https://img.shields.io/github/stars/Audrise/FFAUX?style=social"/>
+    <img src="https://img.shields.io/github/forks/Audrise/FFAUX?style=social"/>
     <br>
 </div>
 <br>
 
 <h1 align="center">DISCLAIMER!</h1>
  
-**FFTool** is developed strictly for **personal use**, **audio organization**, and **educational purposes**. 
+**FFAUX** is developed strictly for **personal use**, **audio organization**, and **educational purposes**. 
 This tool is designed to help you **view, edit, and manage audio metadata and cover art** in a safe, local environment. 
 **it doesn't download, stream, or acquire audio content from any source.**
  
 ## Description
-FFTool is a desktop application I developed to address my own workflow requirements for managing digital audio. 
+FFAUX is a desktop application I developed to address my own workflow requirements for managing digital audio. 
 It leverages FFmpeg and FFprobe to convert and tag audio files, and provides a graphical, playlist-style interface built with PySide6. 
 The application enables users to queue multiple audio files, configure conversion settings, and edit metadata without relying on the command line.
  
-FFTool invokes FFmpeg and FFprobe as external processes rather than reimplementing their functionality. 
+FFAUX invokes FFmpeg and FFprobe as external processes rather than reimplementing their functionality. 
 As a result, the application requires a working FFmpeg installation to perform audio conversion and media probing.
 
 ## Table of Contents
@@ -112,8 +112,8 @@ within the application's settings dialog.
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/Audrise/FFTool.git
-   cd FFTool
+   git clone https://github.com/Audrise/FFAUX.git
+   cd FFAUX
    ```
 
 2. Create a virtual environment:
@@ -167,7 +167,7 @@ within the application's settings dialog.
 
 ## Structure
 ```
-FFTool/
+FFAUX/
 ├── main.py                  # Application entry point
 ├── requirements.txt         # Python dependencies
 ├── bin/                     # Optional location for ffmpeg/ffprobe executables
