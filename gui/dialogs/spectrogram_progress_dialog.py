@@ -1,11 +1,8 @@
 """
-Dialog shown right after the user clicks "Generate" in Spectrogram Settings.
+# Dialog shown after clicking "Generate" in Spectrogram Settings.
 
-Structurally mirrors ConversionProgressDialog, simplified for exactly
-ONE job (spectrogram generation is always single-file) instead of a
-batch. Reuses ProgressPanel for the actual progress bar -- fed by the
-same real 0-100% progress mechanism as CONVERT jobs (see
-ffmpeg/progress_parser.py + command_builder._build_spectrogram).
+Similar to ConversionProgressDialog, but for a single job. Reuses
+ProgressPanel and the same 0-100% progress reporting used by CONVERT jobs.
 """
 
 from __future__ import annotations
