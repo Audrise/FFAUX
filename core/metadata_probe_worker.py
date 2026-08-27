@@ -1,12 +1,12 @@
 """
-# A worker that reads (ffprobe) metadata for a single file in a separate thread.
+# Reads metadata from a single file using ffprobe in a separate thread.
 
-Prevents UI freezing when adding many files: metadata probing now runs off
-the GUI thread instead of synchronously per file.
+Keeps the UI responsive when adding multiple files by running metadata
+probing off the GUI thread.
 
-Same pattern as core/ffmpeg_worker.py: QRunnable + QObject for signals,
-since QRunnable cannot emit signals directly. One of the few core/ modules
-intentionally allowed to import PySide6.
+Uses the same QRunnable + QObject pattern as core/ffmpeg_worker.py,
+since QRunnable can't emit signals directly. This is one of the few
+core/ modules that imports PySide6.
 """
 from __future__ import annotations
 
@@ -16,8 +16,8 @@ from core.metadata_service import MetadataService
 from core.models.audio_file import AudioFile
 
 class WorkerSignals(QObject):
-    # target_id = placeholder AudioFile ID in MainWindow._audio_files / TrackTable,
-    # not probed_audio_file.id (the probed object is a separate AudioFile).
+    # target_id is the placeholder AudioFile ID in MainWindow._audio_files / TrackTable,
+    # not probed_audio_file.id, since the probed file is a separate AudioFile.
     finished = Signal(object, str)
 
 class MetadataProbeWorker(QRunnable):
