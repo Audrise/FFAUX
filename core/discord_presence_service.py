@@ -1,14 +1,14 @@
 """
 # Discord Rich Presence integration
 
-Wraps the `pypresence` library so the rest of the app never has to deal
+Wraps the pypresence library so the rest of the app never has to deal
 with Discord IPC directly, and NEVER blocks the Qt GUI thread while
 doing so all work (connecting, updating, clearing, closing) happens
 on a single dedicated background thread via a simple work queue.
 
 Design notes:
-- Create an application at https://discord.com/developers/applications
-   (a plain "Application", not a bot) to get a client_id.
+Create an application at https://discord.com/developers/applications
+(a plain "Application", not a bot) to get a client_id.
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ try:
     from pypresence import Presence
     _PYPRESENCE_AVAILABLE = True
 
-except ImportError:  # pypresence is an OPTIONAL dependency
+except ImportError:
     Presence = None  # type: ignore[assignment]
     _PYPRESENCE_AVAILABLE = False
 
@@ -61,9 +61,7 @@ class DiscordPresenceService:
 
     def start(self) -> None:
         if not self.is_available:
-            logger.warning(
-                "Discord presence disabled (pypresence not installed or no client_id configured)"
-            )
+            logger.warning("Discord presence disabled (pypresence not installed or client_id not configured)")
             return
         if self._thread is not None:
             return  # already started
@@ -79,7 +77,7 @@ class DiscordPresenceService:
     def clear(self) -> None:
         if not self.is_available:
             return
-        self._queue.put(None)  # None on the queue means "clear_presence()"
+        self._queue.put(None)  # None on the queue means clear_presence()
 
     def stop(self) -> None:
         if self._thread is None:
@@ -89,8 +87,8 @@ class DiscordPresenceService:
         self._thread = None
 
     def _run(self) -> None:
-        # Worker thread: connects once, then processes queued updates sequentially.
-        # All `pypresence` calls stay off the GUI thread; failures are logged.
+        # Worker thread: handles queued updates in order
+        # Keeps pypresence calls off the GUI thread
         rpc = Presence(self._client_id)
         try:
             rpc.connect()
@@ -132,7 +130,7 @@ class DiscordPresenceService:
         self._connected = False
 
     def _drain_queue_quietly(self) -> None:
-        # If connect() fails, keep consuming the queue so stop()'s join() doesn't hang.
+        # Keep processing the queue if connect() fails so stop() doesn't hang
         while True:
             item = self._queue.get()
             if item is _STOP:
