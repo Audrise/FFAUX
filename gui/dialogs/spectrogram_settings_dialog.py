@@ -1,10 +1,11 @@
 """
 # Spectrogram generation settings dialog.
 
-Shown before a GENERATE_SPECTROGRAM job is enqueued (right-click on the
-track table, or Edit > Generate Spectrogram...). Analogous in structure
-to ConversionSettingsDialog, but much smaller: only output naming,
-image resolution, and output folder -- no audio-format-specific options.
+Shown before queuing a GENERATE_SPECTROGRAM job from the track table or
+Edit > Generate Spectrogram...
+
+Similar to ConversionSettingsDialog, but only has output naming,
+image resolution, and output folder options.
 """
 from __future__ import annotations
 
