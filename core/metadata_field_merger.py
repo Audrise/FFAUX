@@ -1,9 +1,8 @@
 """
-# A pure-Python utility for constructing the list of fields for the "Edit Metadata" form.
+# Builds the fields for the "Edit Metadata" GUI form.
 
-This module intentionally has no Qt dependencies (using only dataclasses and
-dicts) so that its logic can be tested directly with pytest, consistent with
-core/models/metadata.py.
+This module has no Qt dependencies, so it can be tested directly with pytest,
+just like core/models/metadata.py.
 """
 from __future__ import annotations
 
@@ -68,7 +67,7 @@ def build_field_views(audio_files: list[AudioFile]) -> list[FieldView]:
     views: list[FieldView] = []
     for key in ordered_keys:
         values = [str(d.get(key, "") or "") for d in per_file_dicts]
-        distinct_values = list(dict.fromkeys(values))  # unik, urutan kemunculan pertama
+        distinct_values = list(dict.fromkeys(values))
         if len(distinct_values) <= 1:
             views.append(
                 FieldView(
