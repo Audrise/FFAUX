@@ -1,11 +1,11 @@
 """
-# Dialog for editing metadata & cover art for one OR MULTIPLE AudioFiles simultaneously (multi-select).
+# Dialog for editing metadata and cover art for one or more AudioFiles.
 
-This dialog integrates the MetadataEditor, CoverArtViewer, and template controls,
-then returns the edited results to the caller via the get_result() method.
-The dialog does NOT execute FFmpeg directly; instead, the MainWindow creates
-a Job (APPLY_METADATA / SET_COVER) based on the results and sends it to the
-JobManager, adhering to the rule that "GUI actions always go through the JobManager."
+Combines the metadata, cover art, and template controls and returns the
+edited results through get_result().
+
+FFmpeg is not run here. MainWindow creates the appropriate Job from the
+results and sends it to JobManager.
 """
 from __future__ import annotations
 
@@ -86,7 +86,6 @@ class MetadataEditorDialog(QDialog):
         layout.addLayout(field_buttons_row)
         layout.addWidget(buttons)
 
-    # Template: select + preview content + apply/save
     def _build_template_row(self) -> QHBoxLayout:
         self._template_combo = QComboBox()
         self._template_combo.addItems(self._template_service.list_templates())
@@ -107,7 +106,7 @@ class MetadataEditorDialog(QDialog):
         return row
 
     def _on_preview_metadata_clicked(self) -> None:
-        # Open a new window showing the currently selected Template, replacing the old inline preview panel.
+        # Open a new window showing the currently selected Template
         name = self._template_combo.currentText()
         if not name:
             QMessageBox.information(self, "Select Metadata Template", "Select a template in the dropdown first.")
@@ -163,8 +162,8 @@ class MetadataEditorDialog(QDialog):
         self._template_combo.addItems(self._template_service.list_templates())
         QMessageBox.information(self, "Metadata Saved", f'Template "{name}" has been saved.')
 
-    # Add / Delete metadata field
     def _build_field_buttons_row(self) -> QHBoxLayout:
+        # Add / Delete metadata field
         add_btn = QPushButton("Add Metadata")
         delete_btn = QPushButton("Delete Selected Metadata")
         add_btn.clicked.connect(self._metadata_editor.add_empty_field)
@@ -197,8 +196,8 @@ class MetadataEditorDialog(QDialog):
             QMessageBox.information(self, "Cover Extracted", "Cover art has been extracted from the file.")
 
     def _extract_and_show_cover(self) -> bool:
-        # Extract and display cover art from the first file; return False if none exists.
-        temp_dir = Path(tempfile.gettempdir()) / "fftool_covers"
+        # Extract and display cover art from the first file and returning False if none exists.
+        temp_dir = Path(tempfile.gettempdir()) / "ffaux_covers"
         path = self._metadata_service.extract_cover_art_sync(self._primary_file, str(temp_dir))
         if path:
             self._cover_viewer.load_image(path)
