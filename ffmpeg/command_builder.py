@@ -1,10 +1,8 @@
 """
-# Constructing the FFmpeg CLI argument string from a Job.
+# Builds FFmpeg CLI arguments from a Job.
 
-Each operation has its own builder function. `build()` acts as a dispatcher
-(Strategy pattern), ensuring that adding a new operation does not require
-modifying existing code. All functions here are pure/deterministic,
-making them easy to test without any mocks.
+Each operation has its own builder, while build() picks the right one.
+This keeps adding new operations simple and makes everything easy to test.
 """
 from __future__ import annotations
 
@@ -22,7 +20,7 @@ def _build_convert(job: Job) -> list[str]:
         args += ["-map", "0", "-map_metadata", "0", "-c:v", "copy"]
 
     if params.get("use_soxr"):
-        # SOXR resampler (higher quality than the default FFmpeg/swresample resampler). Forced "FLAC/WAV only"
+        # SOXR resampler (higher quality than the default FFmpeg/swresample resampler). For "FLAC/WAV only"
         af = "aresample=resampler=soxr"
         precision = params.get("soxr_precision")
         if precision is not None:
@@ -59,8 +57,8 @@ def _build_convert(job: Job) -> list[str]:
     return args
 
 def _metadata_args(job: Job) -> list[str]:
-    # Build metadata args from the current in-memory metadata, including cleared keys.
-    # Shared by metadata and cover-art updates to keep tags consistent and up to date.
+    # Build metadata args from the current metadata, including cleared fields.
+    # Shared by metadata and cover-art updates to keep tags in sync.
     args: list[str] = []
     metadata = job.audio_file.metadata.to_dict()
     for key, value in metadata.items():
@@ -89,8 +87,8 @@ def _build_extract_cover(job: Job) -> list[str]:
     ]
 
 def _build_set_cover(job: Job) -> list[str]:
-    # BUGFIX: previously this only used `-map_metadata 0`, which copies
-    # tags from whatever is currently on disk in the source file.
+    # Fixed: this used to only add `-map_metadata 0`, which copied tags
+    # from the source file on disk instead of the current metadata.
     cover_path = job.params["cover_path"]
     args = [
         "-y",
@@ -127,10 +125,9 @@ def _build_trim(job: Job) -> list[str]:
     return args
 
 def _build_spectrogram(job: Job) -> list[str]:
-    # showspectrumpic reads the whole file from start to end (same as a
-    # normal convert), so the existing -progress pipe:1 mechanism in
-    # ffmpeg_worker.py produces a real 0-100% progress reading for this
-    # too, with no special-casing needed.
+    # showspectrumpic processes the whole file like a normal conversion,
+    # so ffmpeg_worker.py already gives us accurate 0-100% progress via
+    # -progress pipe:1 without any extra handling.
     resolution = job.params.get("resolution", "1920x1080")
     args = [
         "-y", "-i", job.audio_file.path,
@@ -150,11 +147,8 @@ _BUILDERS: dict[OperationType, Callable[[Job], list[str]]] = {
 }
 
 def build(job: Job) -> list[str]:
-    # Build FFmpeg CLI arguments (without 'ffmpeg' in front) for a Job.
-    # Raises:
-    #     ValueError: if the operation does not have a registered builder,
-    #     or job.output_path is not set.
-
+    # Build FFmpeg CLI arguments for a Job, without the 'ffmpeg' command.
+    # Raises ValueError if the operation has no builder or output_path is missing.
     if not job.output_path and job.operation != OperationType.EXTRACT_COVER:
         raise ValueError("job.output_path must be set before the build command!")
 
