@@ -1,9 +1,8 @@
 """
-# Parsing real-time FFmpeg output into progress percentage.
-
-FFmpeg is run with the `-progress pipe:1` flag, causing it to write
-`key=value` lines to stdout, for example:
-
+# Parse FFmpeg's real-time output to calculate progress percentage.
+#
+FFmpeg writes key=value lines to stdout when run with -progress pipe:1,
+for example:
     frame=120
     fps=25.00
     out_time_ms=4820000
