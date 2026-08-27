@@ -1,7 +1,5 @@
 """
-# File-related helpers:
-
-extension validation, collecting files from drag & drop.
+# File-related helpers for extension validation, collecting files from drag & drop.
 """
 from __future__ import annotations
 
@@ -40,7 +38,8 @@ def format_file_size(num_bytes: int | None) -> str:
     return f"{size:.1f} TB"
 
 def collect_audio_files(paths: list[str], recursive: bool = True) -> list[str]:
-    # Accept a mix of file/folder paths (drag-and-drop) and return a sorted, duplicate-free list of supported audio files.
+    # Accept file and folder paths from drag-and-drop, then return a sorted,
+    # duplicate-free list of supported audio files.
     found: set[str] = set()
 
     for raw_path in paths:
