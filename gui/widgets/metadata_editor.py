@@ -1,12 +1,6 @@
 """
-# Widget form for editing the metadata of one or multiple AudioFiles simultaneously.
-
-The displayed fields are DYNAMIC, based on the tags actually present in the
-selected files (see core/metadata_field_merger.py), rather than a fixed list
-of fields. When multiple files are selected and a field has differing values
-across them, the field is displayed as read-only, showing a combination of
-all those distinct values ​​(separated by " - "); it is ignored during the
-save operation if left unchanged, thereby preserving each track's original value.
+# Widget form for editing metadata for one or more AudioFiles.
+y
 """
 from __future__ import annotations
 
@@ -50,7 +44,7 @@ class MetadataEditor(QWidget):
         self._selected_edit: QLineEdit | None = None
 
     def load_metadata(self, metadata: Metadata) -> None:
-        # Backward-compatible: return a single Metadata field (also used internally for single file loading).
+        # Keep a single Metadata field for backward compatibility and single-file loading.
         dummy = AudioFile(path="")
         dummy.metadata = metadata
         self.load_for_files([dummy])
@@ -67,8 +61,8 @@ class MetadataEditor(QWidget):
             if not view.editable:
                 edit.setReadOnly(True)
                 edit.setToolTip(
-                    "Different values ​​between selected tracks cannot be edited. "
-                    "If saved without modification, each track retains its respective value.."
+                    "Can't edit this value because the selected tracks have different values. "
+                    "Saving without changes will keep each track's current value."
                 )
 
             else:
@@ -89,7 +83,7 @@ class MetadataEditor(QWidget):
         return bool(self._deleted_keys)
 
     def add_empty_field(self) -> None:
-        # Add a new empty row for a tag (key-value); becomes valid only if both are filled and saved.
+        # Add an empty tag row; it only becomes valid after both key and value are filled and saved.
         key_edit = _FocusTrackingLineEdit(self._on_field_focused)
         key_edit.setPlaceholderText("New Tag")
 
@@ -101,7 +95,7 @@ class MetadataEditor(QWidget):
         key_edit.setFocus()
 
     def delete_selected_field(self) -> bool:
-        # Remove the most recently focused field; return True if successful, False otherwise.
+        # Remove the last focused field and return True if successful.
         if self._selected_edit is None:
             return False
 
