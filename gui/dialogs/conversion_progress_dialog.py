@@ -1,8 +1,8 @@
 """
-# Dialog shown right after the user clicks "Save" in Conversion Settings.
+# Dialog shown after clicking "Save" in Conversion Settings.
 
-Reuses gui/widgets/progress_panel.py's ProgressPanel for the actual
-aggregate progress bar/counter logic instead of reimplementing it.
+Uses ProgressPanel from gui/widgets/progress_panel.py for the
+aggregate progress bar and counter.
 """
 from __future__ import annotations
 
@@ -37,15 +37,12 @@ class ConversionProgressDialog(QDialog):
         self._cancelled = False
         self._finished = False
 
-        # Status
         self._status_label = QLabel(f"Converting 1 of {self._total_jobs} files")
         self._status_label.setProperty("class", "dialog-title")
 
-        # Current file title
         current_file_label = QLabel("CURRENT FILE:")
         current_file_label.setProperty("class", "section-caption")
 
-        # Current source/target
         self._source_label = QLabel("-")
         self._source_label.setWordWrap(True)
 
@@ -67,11 +64,9 @@ class ConversionProgressDialog(QDialog):
         current_file_frame.setFrameShape(QFrame.Shape.StyledPanel)
         current_file_frame.setLayout(current_file_layout)
 
-        # Progress panel
         self._progress_panel = ProgressPanel()
         self._progress_panel.reset(total=self._total_jobs)
 
-        # Statistics
         self._stats_label = QLabel("+ 0 Completed     - 0 Failed")
 
         self._cancel_btn = self._buttons.addButton("Cancel", QDialogButtonBox.ButtonRole.RejectRole)
@@ -202,6 +197,7 @@ class ConversionProgressDialog(QDialog):
             open_folder_btn.clicked.connect(self._result_dialog.accept)
             open_folder_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(self._output_dir)))
 
+        # Completed layout
         layout = QVBoxLayout(self._result_dialog)
         layout.setSpacing(8)
         layout.addWidget(status_label)
