@@ -41,9 +41,9 @@ def _app_root() -> Path:
 RESOURCE_ROOT = _resource_root()
 APP_ROOT = _app_root()
 
-# FFTool
-APP_SPLASH_PATH = RESOURCE_ROOT / "assets" / "splash" / "FFTool.png"
-APP_ICON_PATH = RESOURCE_ROOT / "assets" / "icons" / "FFTool.ico"
+# FFAUX
+APP_SPLASH_PATH = RESOURCE_ROOT / "assets" / "splash" / "FFAUX.png"
+APP_ICON_PATH = RESOURCE_ROOT / "assets" / "icons" / "FFAUX.ico"
 
 # main_window assets
 UNDO_ICON_PATH = RESOURCE_ROOT / "assets" / "icons" / "Undo.ico"
@@ -63,7 +63,7 @@ def _missing_required_dirs() -> list[Path]:
 
 def main() -> int:
     app = QApplication(sys.argv)
-    app.setApplicationName("FFTool")
+    app.setApplicationName("FFAUX")
 
     # Mandatory folder validation
     missing = _missing_required_dirs()
@@ -72,17 +72,17 @@ def main() -> int:
         QMessageBox.critical(
             None,
             "Startup Failed",
-            "FFTool cannot start because required folders are missing:\n\n"
+            "FFAUX cannot start because required folders are missing:\n\n"
             f"{missing_list}\n\n"
-            "This usually happens when FFTool.exe is moved out of its "
-            "installation folder. Please reinstall FFTool using the "
+            "This usually happens when FFAUX.exe is moved out of its "
+            "installation folder. Please reinstall FFAUX using the "
             "official installer instead of moving the .exe by itself.",
         )
         return 1
 
     # Load logging
     try:
-        setup_logging(log_file=APP_ROOT / "config" / "fftool.log")
+        setup_logging(log_file=APP_ROOT / "config" / "ffaux.log")
     except Exception as exc:
         QMessageBox.critical(
             None,
@@ -99,9 +99,9 @@ def main() -> int:
         QMessageBox.critical(
             None,
             "Startup Failed",
-            "FFTool cannot start because the required stylesheet is missing:\n\n"
+            "FFAUX cannot start because the required stylesheet is missing:\n\n"
             f"{qss_path}\n\n"
-            "Please reinstall FFTool using the official installer."
+            "Please reinstall FFAUX using the official installer."
         )
         return 1
 
@@ -110,7 +110,7 @@ def main() -> int:
     # Load config
     try:
         config_service = ConfigService(
-            APP_ROOT / "config" / "fftool_config.json"
+            APP_ROOT / "config" / "ffaux.json"
         )
         config = config_service.load()
         logger.info("Configuration loaded successfully")
@@ -167,7 +167,7 @@ def main() -> int:
                 )
             )
 
-            app_title = QLabel("FFTool v1.0.0")
+            app_title = QLabel("FFAUX v1.0.0")
             app_title.setAlignment(Qt.AlignCenter)
             app_title.setObjectName("splashTitle")
 
@@ -242,7 +242,7 @@ def main() -> int:
     if splash:
         splash.close()
 
-    logger.info("FFTool started successfully")
+    logger.info("FFAUX started successfully")
 
     return app.exec()
 
