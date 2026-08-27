@@ -1,10 +1,9 @@
 """
-# The sole GUI entry point for running batch jobs.
+# The main GUI entry point for running batch jobs.
 
-The GUI NEVER calls subprocesses or FFmpeg directly—it always goes
-through JobManager.enqueue(). This allows the backend to be fully tested
-independently of the GUI and ensures the GUI does not need to know
-anything about FFmpeg commands.
+The GUI never calls subprocesses or FFmpeg directly. It always goes
+through JobManager.enqueue(), keeping the backend easy to test and
+the GUI independent of FFmpeg commands.
 """
 from __future__ import annotations
 
