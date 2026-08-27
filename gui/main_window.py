@@ -107,7 +107,7 @@ class MainWindow(QMainWindow):
             if session_paths:
                 self._on_files_added(session_paths, show_completion_message=False)
 
-        self._discord_presence.update(PresenceState(state="Managing audio library", large_image=_DISCORD_LARGE_IMAGE))
+        self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
 
         self._update_selection_dependent_actions()
 
@@ -729,7 +729,7 @@ class MainWindow(QMainWindow):
         dialog = MetadataEditorDialog(audio_files, self._metadata_service, self._template_service, self)
         if not dialog.exec():
             self._discord_presence.update(
-                PresenceState(state="Managing audio files", large_image=_DISCORD_LARGE_IMAGE)
+                PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE)
             )
             return
 
@@ -785,7 +785,7 @@ class MainWindow(QMainWindow):
 
         if job_count == 0:
             self._discord_presence.update(
-                PresenceState(state="Managing audio files", large_image=_DISCORD_LARGE_IMAGE)
+                PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE)
             )
 
     def _on_settings_clicked(self) -> None:
@@ -802,7 +802,7 @@ class MainWindow(QMainWindow):
             if self._config_service.config.enable_discord_presence:
                 self._discord_presence.start()
                 self._discord_presence.update(
-                    PresenceState(state="Managing audio library", large_image=_DISCORD_LARGE_IMAGE)
+                    PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE)
                 )
             else:
                 self._discord_presence.stop()
@@ -864,7 +864,7 @@ class MainWindow(QMainWindow):
         self._cancel_action.setEnabled(False)
         self._conversion_progress_dialog = None
         self._discord_presence.update(
-            PresenceState(state="Managing audio library", large_image=_DISCORD_LARGE_IMAGE)
+            PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE)
         )
         logger.info("Batch finished")
 
