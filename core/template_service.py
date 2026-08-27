@@ -1,7 +1,7 @@
 """
 # Metadata template management: save frequently used tag schemes.
 
-Templates are stored as individual JSON files in `assets/templates/`,
+Templates are stored as separate JSON files in `assets/templates/`,
 making them easy to share between users (simply copy the file).
 """
 from __future__ import annotations
