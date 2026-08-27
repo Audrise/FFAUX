@@ -2,7 +2,7 @@
 # Data model for audio metadata.
 
 This module is pure Python (no Qt dependencies),
-so it can be tested directly with pytest without needing a QApplication.
+so it can be tested directly with pytest without needing a QApplication
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from typing import Optional
 
 @dataclass
 class Metadata:
-    # A field with a value of `None` means "unknown" or "unchanged," not an empty string.
+    # None means the value is unknown or unchanged, not an empty string
     title: Optional[str] = None
     artist: Optional[str] = None
     album: Optional[str] = None
@@ -27,7 +27,7 @@ class Metadata:
     rating: Optional[str] = None
 
     extra: dict = field(default_factory=dict)
-    # Additional tags that do not have specific fields (e.g., ISRC, publisher).
+    # Additional tags that do not have specific fields (e.g., ISRC, rating)
 
     def to_dict(self, include_none: bool = False) -> dict:
         data = asdict(self)
