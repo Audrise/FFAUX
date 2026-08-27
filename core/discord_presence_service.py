@@ -7,8 +7,7 @@ doing so all work (connecting, updating, clearing, closing) happens
 on a single dedicated background thread via a simple work queue.
 
 Design notes:
-Create an application at https://discord.com/developers/applications
-(a plain "Application", not a bot) to get a client_id.
+Create an "application" at https://discord.com/developers/applications
 """
 from __future__ import annotations
 

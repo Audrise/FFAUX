@@ -790,9 +790,7 @@ class MainWindow(QMainWindow):
             logger.info("Applying metadata to %s", audio_file.filename)
 
         if job_count == 0:
-            self._discord_presence.update(
-                PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE)
-            )
+            self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
 
     def _on_settings_clicked(self) -> None:
         dialog = SettingsDialog(self._config_service, self)
@@ -807,9 +805,7 @@ class MainWindow(QMainWindow):
             # Apply live, start()/stop() are safe to call unconditionally.
             if self._config_service.config.enable_discord_presence:
                 self._discord_presence.start()
-                self._discord_presence.update(
-                    PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE)
-                )
+                self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
             else:
                 self._discord_presence.stop()
 
@@ -869,9 +865,7 @@ class MainWindow(QMainWindow):
         self._process_action.setEnabled(True)
         self._cancel_action.setEnabled(False)
         self._conversion_progress_dialog = None
-        self._discord_presence.update(
-            PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE)
-        )
+        self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
         logger.info("Batch finished")
 
         if self._batch_convert_total > 0:
