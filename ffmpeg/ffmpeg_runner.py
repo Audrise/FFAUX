@@ -1,10 +1,8 @@
 """
-# A pure subprocess wrapper for running FFmpeg.
+# A subprocess wrapper for running FFmpeg.
 
-This module is intentionally designed to have no dependency on Qt whatsoever,
-relying only on Python's built-in `subprocess` module. This allows it to be
-tested using `unittest.mock.patch("subprocess.Popen")` without requiring a
-`QApplication`.
+Keep this module independent from Qt so it can be tested with
+unittest.mock.patch("subprocess.Popen") without creating a QApplication.
 """
 from __future__ import annotations
 
@@ -89,7 +87,7 @@ class FFmpegRunner:
         )
 
 def _last_error_hint(output_lines: list[str], max_lines: int = 5) -> str:
-    # Take the last few lines as an error summary to display to the user.
+    # Show the last few lines as the error summary.
     tail = output_lines[-max_lines:] if output_lines else []
     return "\n".join(tail) or "FFmpeg failed without output."
 
