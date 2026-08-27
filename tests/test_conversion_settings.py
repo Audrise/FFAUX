@@ -110,7 +110,7 @@ def test_command_builder_bitrate_kbps_formats_as_kbps_string():
     args = build(job)
     assert "-b:a" in args
     assert "256k" in args
-    # MP3s should not have -map/-af soxr/-sample_fmt at all
+    # MP3 should not have -map/-af soxr/-sample_fmt at all
     assert "-map" not in args
     assert "-af" not in args
     assert "-sample_fmt" not in args
