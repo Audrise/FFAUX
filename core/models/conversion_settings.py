@@ -1,10 +1,11 @@
 """
 # Audio conversion configuration model
 
-Separated from `core.models.job.Job` to allow editing via a GUI dialog
-as a single unit (`ConversionSettingsDialog`), then converted into the
-`Job.params` dictionary when the batch job is actually created
-(see `to_job_params()`).
+Kept separate from core.models.job.Job so it can be edited as a single
+unit through the ConversionSettingsDialog. When a batch job is created,
+the settings are converted into the Job.params dictionary via
+to_job_params().
+
 """
 from __future__ import annotations
 
@@ -31,15 +32,15 @@ _CODEC_BY_FORMAT = {
     OutputFormat.OGG: "libvorbis",
     OutputFormat.OPUS: "libopus",
     OutputFormat.ALAC: "alac",
-    # WAV is intentionally not here because its codec is determined by bit depth.
+    # WAV is left out intentionally since its codec depends on the bit depth
 }
 
 _PCM_CODEC_BY_BIT_DEPTH = {16: "pcm_s16le", 24: "pcm_s24le", 32: "pcm_s32le"}
 
-# 24-bit sample_fmt—it is stored in a 32-bit container).
+# 24-bit depth is stored in a 32-bit container
 _SAMPLE_FMT_BY_BIT_DEPTH = {16: "s16", 24: "s32", 32: "s32"}
 
-# Standard sample rate valid in audio engineering. Intentionally limited.
+# Standard sampling rates
 STANDARD_SAMPLE_RATES = [44100, 48000, 88200, 96000, 176400, 192000]
 
 @dataclass
@@ -48,7 +49,7 @@ class ConversionSettings:
     sample_rate_hz: int = 44100
     bit_depth: int = 16
     bitrate_kbps: int = 320
-    use_soxr: bool = True  # user-toggleable; only takes effect for FLAC/WAV
+    use_soxr: bool = True  # Only takes effect for FLAC/WAV
     soxr_precision: int = 28  # 1-33
     flac_compression_level: int = 5  # 0-12
     custom_output_suffix: str = ""
@@ -72,7 +73,7 @@ class ConversionSettings:
         return f".{self.output_format.value}"
 
     def to_job_params(self) -> dict:
-        # Convert to a dict for Job.params, consumed by ffmpeg.command_builder._build_convert().
+        # Convert to a dict so Job.params can be used by _build_convert()
         params: dict = {
             "codec": self.codec_name(),
             "sample_rate_hz": self.sample_rate_hz,
