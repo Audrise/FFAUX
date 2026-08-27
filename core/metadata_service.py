@@ -1,14 +1,12 @@
 """
-# Service for reading and preparing metadata + cover art write operations.
+# Handles reading metadata and preparing metadata/cover art updates.
 
-Read metadata: directly via FFprobeRunner (synchronous, fast, suitable for calls
-when new files are added to the batch list).
+Metadata is read directly through FFprobeRunner, which is fast enough
+for synchronous calls when new files are added to the batch.
 
-Write metadata / cover art: this service does NOT execute FFmpeg itself.
-It merely prepares a Job (see core.models.job) to be executed later by the
-JobManager, ensuring the write operation remains asynchronous and its progress
-can be reported just like other operations. This maintains a single FFmpeg
-execution path.
+This service only creates a Job for JobManager to run later,
+keeping writes asynchronous and using the same
+FFmpeg execution path as other operations.
 """
 from __future__ import annotations
 
@@ -33,7 +31,7 @@ class MetadataService:
         self._ffmpeg = ffmpeg_runner
 
     def read_metadata(self, audio_file: AudioFile) -> AudioFile:
-        # Populate metadata and duration from `ffprobe`, then return the modified object.
+        # Load metadata and duration from ffprobe, then return the updated object.
         result = self._ffprobe.probe(audio_file.path)
         if not result.success:
             audio_file.error_message = result.error_message
@@ -62,8 +60,7 @@ class MetadataService:
             "rating": tags.get("rating"),
         }
 
-        # Iterate the ORIGINAL-CASE tags here (not the lowercased `tags` dict
-        # above) so extra/custom tag keys keep their original casing.
+        # Use the original tag keys here so custom fields keep their casing.
         for key, value in raw_tags.items():
             if key.lower() in _CONSUMED_TAG_KEYS:
                 continue
@@ -77,13 +74,20 @@ class MetadataService:
         return audio_file
 
     @staticmethod
-    def default_output_path(audio_file: AudioFile, output_dir: str, suffix: str, custom_suffix: str = "", extension: Optional[str] = None) -> str:
-        # Build the default output path from the output/source folder, stem, suffix, and extension.
-        # If provided, `extension` replaces the source extension for format conversions.
+    def default_output_path(
+        audio_file: AudioFile,
+        output_dir: str,
+        suffix: str,
+        custom_suffix: str = "",
+        extension: Optional[str] = None,
+    ) -> str:
+        # Build the default output path from the source folder, stem, suffix, and extension.
+        # Use `extension` instead of the source extension when converting formats.
         source = Path(audio_file.path)
         suffix = custom_suffix if custom_suffix else suffix
         target_dir = Path(output_dir) if output_dir else source.parent
         final_extension = extension if extension is not None else source.suffix
+
         return str(target_dir / f"{source.stem}{suffix}{final_extension}")
 
     def extract_cover_art_sync(self, audio_file: AudioFile, output_dir: str) -> Optional[str]:
