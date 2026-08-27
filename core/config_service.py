@@ -1,8 +1,8 @@
 """
-# Application configuration management (binary path, output preferences, etc.).
+# Application configuration management (binary paths, output preferences, etc.)
 
-Stored as JSON in config/app_config.json. The schema undergoes lightweight validation
-via a dataclass to ensure key typos do not go undetected.
+Stored as JSON in config/app_config.json.
+The schema is lightly validated with a dataclass to catch typos in config keys
 """
 from __future__ import annotations
 
