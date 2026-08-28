@@ -1,11 +1,9 @@
 """
 # Dialog shown after clicking "Save" in the Metadata Editor.
 
-Structurally mirrors ConversionProgressDialog (progress bar via
-ProgressPanel, real 0-100% per-job progress, Cancel, then close +
-show a separate result window) -- adapted for APPLY_METADATA/
-SET_COVER/REMOVE_COVER jobs instead of CONVERT. Since these jobs
-overwrite the source file in place (see ffmpeg_worker.py's
+Similar to ConversionProgressDialo. Reuses ProgressPanel and
+the same 0-100% progress reporting used by CONVERT jobs.
+Since these jobs overwrite the source file in place (see ffmpeg_worker.py's
 overwrite_source handling) rather than producing a differently-named
 output file, there's no source->target arrow here, just the filename
 currently being saved.
