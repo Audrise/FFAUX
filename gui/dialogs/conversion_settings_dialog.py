@@ -124,8 +124,6 @@ class ConversionSettingsDialog(QDialog):
         self._update_field_states()
 
     def _current_format(self) -> OutputFormat:
-        # PySide6 may flatten str-Enum values to plain strings via QVariant/userData().
-        # Calling OutputFormat(data) safely restores the correct enum member.
         data = self._format_combo.currentData()
         return OutputFormat(data)
 
@@ -152,9 +150,7 @@ class ConversionSettingsDialog(QDialog):
         self.adjustSize()
 
     def _on_browse_output_dir(self) -> None:
-        path = QFileDialog.getExistingDirectory(
-            self, "Select the output folder", self._output_dir_edit.text()
-        )
+        path = QFileDialog.getExistingDirectory(self, "Select the output folder", self._output_dir_edit.text())
         if path:
             self._output_dir_edit.setText(path)
 
