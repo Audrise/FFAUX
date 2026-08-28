@@ -10,7 +10,10 @@ can't emit signals directly
 """
 from __future__ import annotations
 
+import os
 import threading
+
+from pathlib import Path
 
 from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
@@ -62,6 +65,7 @@ class FFmpegWorker(QRunnable):
             state = parser.feed_line(line)
             if state is not None:
                 percent = parser.percent(state)
+
                 if percent is not None:
                     self.signals.progress.emit(job.id, percent)
 
@@ -73,23 +77,58 @@ class FFmpegWorker(QRunnable):
         )
 
         if result.cancelled:
+            self._cleanup_temporary_output()
             job.status = JobStatus.CANCELLED
-            job.audio_file.status = job.audio_file.status  # No forcing change
+            job.audio_file.status = job.audio_file.status
             self._finish(success=False, message="Cancelled by the user", cancelled=True)
+
         elif result.success:
+            if job.params.get("overwrite_source"):
+                source_path = Path(job.params.get("source_path", job.audio_file.path))
+                temporary_path = Path(job.output_path)
+
+                try:
+                    os.replace(temporary_path, source_path)
+                except OSError as exc:
+                    self._cleanup_temporary_output()
+                    self._finish(
+                        success=False,
+                        message=f"Failed to overwrite original file: {exc}",
+                    )
+                    return
+
+                job.output_path = str(source_path)
+
             self._finish(success=True, message="Success")
+
         else:
+            self._cleanup_temporary_output()
             self._finish(success=False, message=result.error_message or "FFmpeg Failed!")
 
     def _finish(self, success: bool, message: str, cancelled: bool = False) -> None:
         job = self.job
         if cancelled:
             job.status = JobStatus.CANCELLED
+
         elif success:
             job.status = JobStatus.DONE
             job.audio_file.mark_done(job.output_path)
+
         else:
             job.status = JobStatus.FAILED
             job.audio_file.mark_failed(message)
 
         self.signals.finished.emit(job.id, success, message)
+
+    def _cleanup_temporary_output(self) -> None:
+        if not self.job.params.get("overwrite_source"):
+            return
+
+        temporary_path = Path(self.job.output_path)
+
+        try:
+            if temporary_path.exists():
+                temporary_path.unlink()
+
+        except OSError:
+            pass
