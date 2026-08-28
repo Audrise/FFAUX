@@ -22,14 +22,8 @@ QMainWindow {
 
 #splashTitle {
     color: white;
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 600;
-}
-
-#splashSlogan {
-    color: white;
-    font-size: 14px;
-    font-weight: 500;
 }
 
 /* ============================================================
