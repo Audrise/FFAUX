@@ -29,6 +29,7 @@ from core.template_service import TemplateService
 
 from gui.dialogs.conversion_progress_dialog import ConversionProgressDialog
 from gui.dialogs.conversion_settings_dialog import ConversionSettingsDialog
+from gui.dialogs.metadata_progress_dialog import MetadataProgressDialog
 from gui.dialogs.metadata_editor_dialog import MetadataEditorDialog
 from gui.dialogs.settings_dialog import SettingsDialog
 from gui.dialogs.spectrogram_progress_dialog import SpectrogramProgressDialog
@@ -83,6 +84,11 @@ class MainWindow(QMainWindow):
         self._conversion_settings = self._make_default_conversion_settings()
         self._batch_convert_total = 0
         self._batch_convert_success = 0
+        self._metadata_batch_total = 0
+        self._metadata_batch_finished = 0
+        self._metadata_batch_success = 0
+        self._metadata_batch_kind: str | None = None
+        self._metadata_progress_dialog: MetadataProgressDialog | None = None
         self._conversion_progress_dialog: ConversionProgressDialog | None = None
         self._spectrogram_progress_dialog: SpectrogramProgressDialog | None = None
 
@@ -740,9 +746,19 @@ class MainWindow(QMainWindow):
             return
 
         new_metadata, cover_path, cover_changed, deleted_keys, metadata_changed = dialog.get_result()
-        config = self._config_service.config
+
         has_metadata_changes = metadata_changed or bool(deleted_keys)
-        job_count = 0
+
+        if has_metadata_changes and cover_changed:
+            operation_kind = "metadata_and_cover"
+        elif has_metadata_changes:
+            operation_kind = "metadata"
+        elif cover_changed:
+            operation_kind = "cover"
+        else:
+            operation_kind = None
+
+        jobs: list[Job] = []
 
         for audio_file in audio_files:
             audio_file.metadata = audio_file.metadata.merge(new_metadata)
@@ -754,43 +770,140 @@ class MainWindow(QMainWindow):
                 else:
                     audio_file.metadata.extra.pop(key, None)
 
-            if cover_changed and cover_path:
-                cover_output_path = self._metadata_service.default_output_path(
-                    audio_file, config.output_directory, "_changed_cover_art"
-                )
+            if cover_changed:
+                cover_output_path = self._metadata_service.temporary_output_path(audio_file)
+
+                if cover_path:
+                    operation = OperationType.SET_COVER
+                    params = {
+                        "cover_path": cover_path,
+                        "deleted_metadata_keys": list(deleted_keys),
+                        "overwrite_source": True,
+                        "source_path": audio_file.path,
+                    }
+                else:
+                    operation = OperationType.REMOVE_COVER
+                    params = {
+                        "deleted_metadata_keys": list(deleted_keys),
+                        "overwrite_source": True,
+                        "source_path": audio_file.path,
+                    }
 
                 cover_job = Job(
                     audio_file=audio_file,
-                    operation=OperationType.SET_COVER,
-                    params={
-                        "cover_path": cover_path,
-                        "deleted_metadata_keys": list(deleted_keys),
-                    },
+                    operation=operation,
+                    params=params,
                     output_path=cover_output_path,
                 )
 
-                self._job_manager.enqueue(cover_job)
-                job_count += 1
+                self._metadata_batch_total += 1
+                jobs.append(cover_job)
 
             elif has_metadata_changes:
-                output_path = self._metadata_service.default_output_path(
-                    audio_file, config.output_directory, "_tagged"
-                )
+                output_path = self._metadata_service.temporary_output_path(audio_file)
 
                 metadata_job = Job(
                     audio_file=audio_file,
                     operation=OperationType.APPLY_METADATA,
-                    params={"deleted_metadata_keys": list(deleted_keys)} if deleted_keys else {},
+                    params={
+                        "deleted_metadata_keys": list(deleted_keys),
+                        "overwrite_source": True,
+                        "source_path": audio_file.path,
+                    },
                     output_path=output_path,
                 )
 
-                self._job_manager.enqueue(metadata_job)
-                job_count += 1
+                self._metadata_batch_total += 1
+                jobs.append(metadata_job)
 
             logger.info("Applying metadata to %s", audio_file.filename)
 
-        if job_count == 0:
-            self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
+        if not jobs:
+            self._discord_presence.update(
+                PresenceState(
+                    state="Flexible Format Audio Utility eXchange",
+                    large_image=_DISCORD_LARGE_IMAGE,
+                )
+            )
+            return
+
+        self._metadata_progress_dialog = MetadataProgressDialog(
+            jobs,
+            operation_kind,
+            parent=self,
+        )
+
+        self._metadata_progress_dialog.cancelRequested.connect(
+            self._on_cancel_clicked
+        )
+
+        self._metadata_progress_dialog.show()
+
+        self._process_action.setEnabled(False)
+        self._cancel_action.setEnabled(True)
+
+        if operation_kind == "metadata":
+            details = f"Saving metadata for {len(jobs)} files..."
+        elif operation_kind == "cover":
+            details = f"Saving cover art for {len(jobs)} files..."
+        else:
+            details = f"Saving metadata and cover art for {len(jobs)} files..."
+
+        self._discord_presence.update(PresenceState(details=details, large_image=_DISCORD_LARGE_IMAGE))
+        self._job_manager.enqueue_many(jobs)
+
+        # if job_count == 0:
+        #     self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
+
+    def _show_metadata_batch_result(self) -> None:
+        all_success = (
+            self._metadata_batch_success == self._metadata_batch_total
+        )
+
+        if all_success:
+            if self._metadata_batch_kind == "metadata":
+                title = "Metadata Saved"
+                text = "Metadata has been saved successfully."
+
+            elif self._metadata_batch_kind == "cover":
+                title = "Cover Art Saved"
+                text = "Cover art has been saved successfully."
+
+            else:
+                title = "Metadata and Cover Art Saved"
+                text = (
+                    "Metadata and cover art have been saved successfully."
+                )
+
+            QMessageBox.information(self, title, text)
+
+        else:
+            failed = (
+                self._metadata_batch_total
+                - self._metadata_batch_success
+            )
+
+            QMessageBox.warning(
+                self,
+                "Saving Completed with Errors",
+                (
+                    f"{self._metadata_batch_success} of "
+                    f"{self._metadata_batch_total} file(s) were saved successfully.\n"
+                    f"{failed} file(s) failed."
+                ),
+            )
+
+        self._metadata_batch_total = 0
+        self._metadata_batch_finished = 0
+        self._metadata_batch_success = 0
+        self._metadata_batch_kind = None
+
+        self._discord_presence.update(
+            PresenceState(
+                state="Flexible Format Audio Utility eXchange",
+                large_image=_DISCORD_LARGE_IMAGE,
+            )
+        )
 
     def _on_settings_clicked(self) -> None:
         dialog = SettingsDialog(self._config_service, self)
@@ -821,14 +934,35 @@ class MainWindow(QMainWindow):
                 target_name = Path(job.output_path).name
                 self._conversion_progress_dialog.set_current_file(source_name, target_name)
 
+            elif (
+                job.operation in {
+                    OperationType.APPLY_METADATA,
+                    OperationType.SET_COVER,
+                    OperationType.REMOVE_COVER,
+                }
+                and self._metadata_progress_dialog is not None
+            ):
+                self._metadata_progress_dialog.set_current_file(job.audio_file.filename)
+
     def _on_job_progress(self, job_id: str, percent: float) -> None:
         job = self._job_manager.get_job(job_id)
         if job:
             self._track_table.update_progress(job.audio_file.id, percent)
             if job.operation == OperationType.CONVERT and self._conversion_progress_dialog is not None:
                 self._conversion_progress_dialog.update_job_progress(job_id, percent)
+
             elif job.operation == OperationType.GENERATE_SPECTROGRAM and self._spectrogram_progress_dialog is not None:
                 self._spectrogram_progress_dialog.update_job_progress(job_id, percent)
+
+            elif (
+                job.operation in {
+                    OperationType.APPLY_METADATA,
+                    OperationType.SET_COVER,
+                    OperationType.REMOVE_COVER,
+                }
+                and self._metadata_progress_dialog is not None
+            ):
+                self._metadata_progress_dialog.update_job_progress(job_id, percent)
 
     def _on_job_finished(self, job_id: str, success: bool, message: str) -> None:
         job = self._job_manager.get_job(job_id)
@@ -836,14 +970,24 @@ class MainWindow(QMainWindow):
             status = FileStatus.DONE if success else FileStatus.FAILED
             self._track_table.update_status(job.audio_file.id, status)
             self._track_table.update_progress(job.audio_file.id, 100 if success else job.audio_file.progress)
+
             if job.operation == OperationType.CONVERT:
                 if success:
                     self._batch_convert_success += 1
                 if self._conversion_progress_dialog is not None:
                     self._conversion_progress_dialog.mark_job_done()
+
             elif job.operation == OperationType.GENERATE_SPECTROGRAM and self._spectrogram_progress_dialog is not None:
                 self._spectrogram_progress_dialog.mark_job_done(failed=not success)
                 self._spectrogram_progress_dialog = None
+
+            elif job.operation in {
+                OperationType.APPLY_METADATA,
+                OperationType.SET_COVER,
+                OperationType.REMOVE_COVER,
+            }:
+                if self._metadata_progress_dialog is not None:
+                    self._metadata_progress_dialog.mark_job_done(failed=not success)
 
     def _on_toggle_log(self, checked: bool) -> None:
         self._log_viewer.setVisible(checked)
