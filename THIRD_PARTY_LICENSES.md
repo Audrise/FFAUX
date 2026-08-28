@@ -49,7 +49,7 @@ Copyright (c) the FFmpeg developers.
 FFAUX bundles FFmpeg's official **GPLv3-licensed** shared libraries
 (the `.dll` files listed above) and dynamically links against them at
 runtime. Because of this, FFAUX as a whole is distributed under the
-terms of the **GPLv3** as well (see the `LICENSE` file). In practice,
+terms of the **GPLv3** as well (see the <a href="https://github.com/Audrise/FFAUX/blob/main/LICENSE">`LICENSE`</a> file). In practice,
 this means:
 
 - FFAUX's own source code is available under GPL-compatible terms.
