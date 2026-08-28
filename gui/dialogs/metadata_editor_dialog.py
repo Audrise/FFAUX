@@ -55,7 +55,7 @@ class MetadataEditorDialog(QDialog):
 
         self._metadata_service = metadata_service
         self._template_service = template_service
-        self._cover_changed = False  # True if user changing/deleting the cover
+        self._cover_changed = False  # True if user are changing/deleting the cover
 
         self._metadata_editor = MetadataEditor()
         self._metadata_editor.load_for_files(self._audio_files)
