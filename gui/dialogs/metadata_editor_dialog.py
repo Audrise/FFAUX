@@ -86,6 +86,9 @@ class MetadataEditorDialog(QDialog):
         layout.addLayout(field_buttons_row)
         layout.addWidget(buttons)
 
+    def accept(self) -> None:
+        super().accept()
+
     def _build_template_row(self) -> QHBoxLayout:
         self._template_combo = QComboBox()
         self._template_combo.addItems(self._template_service.list_templates())
