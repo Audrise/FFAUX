@@ -15,6 +15,7 @@ class OperationType(str, Enum):
     # function in ffmpeg/command_builder.py
     CONVERT = "convert"
     APPLY_METADATA = "apply_metadata"
+    REMOVE_COVER = "remove_cover"
     EXTRACT_COVER = "extract_cover"
     SET_COVER = "set_cover"
     NORMALIZE = "normalize"
