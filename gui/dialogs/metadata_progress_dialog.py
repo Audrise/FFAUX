@@ -1,12 +1,8 @@
 """
 # Dialog shown after clicking "Save" in the Metadata Editor.
 
-Similar to ConversionProgressDialo. Reuses ProgressPanel and
+Similar to ConversionProgressDialog. Reuses ProgressPanel and
 the same 0-100% progress reporting used by CONVERT jobs.
-Since these jobs overwrite the source file in place (see ffmpeg_worker.py's
-overwrite_source handling) rather than producing a differently-named
-output file, there's no source->target arrow here, just the filename
-currently being saved.
 """
 from __future__ import annotations
 
@@ -133,9 +129,7 @@ class MetadataProgressDialog(QDialog):
             return
         self._finished = True
 
-        logger.info(
-            "Saving finished: %d completed, %d failed", self._completed_jobs, self._failed_jobs
-        )
+        logger.info("Saving finished: %d completed, %d failed", self._completed_jobs, self._failed_jobs)
 
         self.accept()
         self._show_result()
