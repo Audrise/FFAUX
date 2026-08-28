@@ -781,6 +781,7 @@ class MainWindow(QMainWindow):
                         "overwrite_source": True,
                         "source_path": audio_file.path,
                     }
+
                 else:
                     operation = OperationType.REMOVE_COVER
                     params = {
@@ -819,24 +820,11 @@ class MainWindow(QMainWindow):
             logger.info("Applying metadata to %s", audio_file.filename)
 
         if not jobs:
-            self._discord_presence.update(
-                PresenceState(
-                    state="Flexible Format Audio Utility eXchange",
-                    large_image=_DISCORD_LARGE_IMAGE,
-                )
-            )
+            self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
             return
 
-        self._metadata_progress_dialog = MetadataProgressDialog(
-            jobs,
-            operation_kind,
-            parent=self,
-        )
-
-        self._metadata_progress_dialog.cancelRequested.connect(
-            self._on_cancel_clicked
-        )
-
+        self._metadata_progress_dialog = MetadataProgressDialog(jobs, operation_kind, parent=self)
+        self._metadata_progress_dialog.cancelRequested.connect(self._on_cancel_clicked)
         self._metadata_progress_dialog.show()
 
         self._process_action.setEnabled(False)
@@ -851,9 +839,6 @@ class MainWindow(QMainWindow):
 
         self._discord_presence.update(PresenceState(details=details, large_image=_DISCORD_LARGE_IMAGE))
         self._job_manager.enqueue_many(jobs)
-
-        # if job_count == 0:
-        #     self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
 
     def _show_metadata_batch_result(self) -> None:
         all_success = (
@@ -871,17 +856,12 @@ class MainWindow(QMainWindow):
 
             else:
                 title = "Metadata and Cover Art Saved"
-                text = (
-                    "Metadata and cover art have been saved successfully."
-                )
+                text = "Metadata and cover art have been saved successfully."
 
             QMessageBox.information(self, title, text)
 
         else:
-            failed = (
-                self._metadata_batch_total
-                - self._metadata_batch_success
-            )
+            failed = self._metadata_batch_total - self._metadata_batch_success
 
             QMessageBox.warning(
                 self,
@@ -898,12 +878,7 @@ class MainWindow(QMainWindow):
         self._metadata_batch_success = 0
         self._metadata_batch_kind = None
 
-        self._discord_presence.update(
-            PresenceState(
-                state="Flexible Format Audio Utility eXchange",
-                large_image=_DISCORD_LARGE_IMAGE,
-            )
-        )
+        self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
 
     def _on_settings_clicked(self) -> None:
         dialog = SettingsDialog(self._config_service, self)
@@ -934,12 +909,7 @@ class MainWindow(QMainWindow):
                 target_name = Path(job.output_path).name
                 self._conversion_progress_dialog.set_current_file(source_name, target_name)
 
-            elif (
-                job.operation in {
-                    OperationType.APPLY_METADATA,
-                    OperationType.SET_COVER,
-                    OperationType.REMOVE_COVER,
-                }
+            elif (job.operation in {OperationType.APPLY_METADATA, OperationType.SET_COVER, OperationType.REMOVE_COVER}
                 and self._metadata_progress_dialog is not None
             ):
                 self._metadata_progress_dialog.set_current_file(job.audio_file.filename)
@@ -954,18 +924,14 @@ class MainWindow(QMainWindow):
             elif job.operation == OperationType.GENERATE_SPECTROGRAM and self._spectrogram_progress_dialog is not None:
                 self._spectrogram_progress_dialog.update_job_progress(job_id, percent)
 
-            elif (
-                job.operation in {
-                    OperationType.APPLY_METADATA,
-                    OperationType.SET_COVER,
-                    OperationType.REMOVE_COVER,
-                }
+            elif (job.operation in {OperationType.APPLY_METADATA, OperationType.SET_COVER, OperationType.REMOVE_COVER}
                 and self._metadata_progress_dialog is not None
             ):
                 self._metadata_progress_dialog.update_job_progress(job_id, percent)
 
     def _on_job_finished(self, job_id: str, success: bool, message: str) -> None:
         job = self._job_manager.get_job(job_id)
+
         if job:
             status = FileStatus.DONE if success else FileStatus.FAILED
             self._track_table.update_status(job.audio_file.id, status)
@@ -981,11 +947,7 @@ class MainWindow(QMainWindow):
                 self._spectrogram_progress_dialog.mark_job_done(failed=not success)
                 self._spectrogram_progress_dialog = None
 
-            elif job.operation in {
-                OperationType.APPLY_METADATA,
-                OperationType.SET_COVER,
-                OperationType.REMOVE_COVER,
-            }:
+            elif job.operation in {OperationType.APPLY_METADATA, OperationType.SET_COVER, OperationType.REMOVE_COVER}:
                 if self._metadata_progress_dialog is not None:
                     self._metadata_progress_dialog.mark_job_done(failed=not success)
 
@@ -1024,17 +986,23 @@ class MainWindow(QMainWindow):
         box.setText("""
             <div style="font-size: 10pt;">
 
-                <h2>FFAUX v1.0.0 [x64]</h2>
+                <h2 align="center">
+                    FFAUX v1.0.0 [x64]
+                </h2>
+
+                <h4 align="center">
+                    Flexible Format Audio Utility eXperience
+                </h4>
 
                 <p>
-                    A graphical audio processing application built with
-                    <b>Python 3</b>, <b>PySide6</b>, and <b>FFmpeg/FFprobe</b>,
-                    providing a simple and intuitive interface for common
-                    audio processing tasks.
-                </p>
-
-                <p>
-                    <b>© 2026 Audrise. All rights reserved.
+                    FFAUX is a personal project created and maintained by <b>Audrise</b>.
+                    It started from a simple idea of making everyday audio processing
+                    tasks less complicated and easier to work with. Instead of relying
+                    on command-line tools alone, FFAUX brings those capabilities into a
+                    simple graphical interface while still keeping the flexibility that
+                    makes FFmpeg so useful. The project is built with <b>Python</b> and
+                    <b>PySide6</b>, with <b>FFmpeg</b> and <b>FFprobe</b> doing the work
+                    behind the scenes.
                 </p>
 
                 <p>
@@ -1046,6 +1014,10 @@ class MainWindow(QMainWindow):
 
                     Source code:
                     <a href="https://github.com/Audrise/FFAUX">GitHub Repository</a>
+                </p>
+
+                <p>
+                    <b>© 2026 Audrise. All rights reserved.
                 </p>
 
             </div>
