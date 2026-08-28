@@ -106,6 +106,17 @@ def _build_set_cover(job: Job) -> list[str]:
     ]
     return args
 
+def _build_remove_cover(job: Job) -> list[str]:
+    args = [
+        "-y",
+        "-i", job.audio_file.path,
+        "-map", "0:a",
+        "-c", "copy",
+    ]
+    args += _metadata_args(job)
+    args += [job.output_path]
+    return args
+
 def _build_normalize(job: Job) -> list[str]:
     target_lufs = job.params.get("target_lufs", -14)
     args = [
@@ -141,6 +152,7 @@ _BUILDERS: dict[OperationType, Callable[[Job], list[str]]] = {
     OperationType.APPLY_METADATA: _build_apply_metadata,
     OperationType.EXTRACT_COVER: _build_extract_cover,
     OperationType.SET_COVER: _build_set_cover,
+    OperationType.REMOVE_COVER: _build_remove_cover,
     OperationType.NORMALIZE: _build_normalize,
     OperationType.TRIM: _build_trim,
     OperationType.GENERATE_SPECTROGRAM: _build_spectrogram,
