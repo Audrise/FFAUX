@@ -991,7 +991,7 @@ class MainWindow(QMainWindow):
                 </h2>
 
                 <h4 align="center">
-                    Flexible Format Audio Utility eXperience
+                    Flexible Format Audio Utility eXchange
                 </h4>
 
                 <p>
