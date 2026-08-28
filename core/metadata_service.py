@@ -10,6 +10,7 @@ FFmpeg execution path as other operations.
 """
 from __future__ import annotations
 
+from uuid import uuid4
 from pathlib import Path
 from typing import Optional
 
@@ -89,6 +90,12 @@ class MetadataService:
         final_extension = extension if extension is not None else source.suffix
 
         return str(target_dir / f"{source.stem}{suffix}{final_extension}")
+
+    @staticmethod
+    def temporary_output_path(audio_file: AudioFile) -> str:
+        source = Path(audio_file.path)
+
+        return str(source.with_name(f".{source.stem}.ffaux-{uuid4().hex}{source.suffix}"))
 
     def extract_cover_art_sync(self, audio_file: AudioFile, output_dir: str) -> Optional[str]:
         # Runs synchronously (blocking). Returns None if there's no cover art or ffmpeg_runner is unset.
