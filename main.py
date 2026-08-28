@@ -171,13 +171,8 @@ def main() -> int:
             app_title.setAlignment(Qt.AlignCenter)
             app_title.setObjectName("splashTitle")
 
-            title = QLabel("Format Whatever You Want.")
-            title.setAlignment(Qt.AlignCenter)
-            title.setObjectName("splashSlogan")
-
             inner.addWidget(logo)
             inner.addWidget(app_title)
-            inner.addWidget(title)
 
             splash.resize(320, 280)
 
