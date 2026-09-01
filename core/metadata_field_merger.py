@@ -40,10 +40,11 @@ class FieldView:
     key: str
     label: str
     value: str
-    editable: bool  # False if the values ​​differ across selected tracks
+    editable: bool  # kept for backward-compat; always True now (see is_multi_value)
+    per_file_values: list[str]  # this field's original value per file, IN FILE ORDER (not deduplicated)
+    is_multi_value: bool  # True if the selected tracks originally had differing values
 
 def build_field_views(audio_files: list[AudioFile]) -> list[FieldView]:
-    # Build a FieldView list for one or multiple selected AudioFiles.
     if not audio_files:
         return []
 
@@ -67,23 +68,19 @@ def build_field_views(audio_files: list[AudioFile]) -> list[FieldView]:
     views: list[FieldView] = []
     for key in ordered_keys:
         values = [str(d.get(key, "") or "") for d in per_file_dicts]
-        distinct_values = list(dict.fromkeys(values))
-        if len(distinct_values) <= 1:
-            views.append(
-                FieldView(
-                    key=key,
-                    label=field_label(key),
-                    value=distinct_values[0] if distinct_values else "",
-                    editable=True,
-                )
+        is_multi = len(set(values)) > 1
+        # Positional, one segment per file (NOT deduplicated) -- so an edit
+        # to segment i can be traced back to exactly file i on save.
+        display_value = VALUE_SEPARATOR.join(values) if is_multi else values[0]
+
+        views.append(
+            FieldView(
+                key=key,
+                label=field_label(key),
+                value=display_value,
+                editable=True,
+                per_file_values=values,
+                is_multi_value=is_multi,
             )
-        else:
-            views.append(
-                FieldView(
-                    key=key,
-                    label=field_label(key),
-                    value=VALUE_SEPARATOR.join(distinct_values),
-                    editable=False,
-                )
-            )
+        )
     return views
