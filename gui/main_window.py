@@ -40,6 +40,7 @@ from gui.widgets.track_table import TrackTable
 
 from utils.file_utils import collect_audio_files
 from utils.logger import get_logger
+from utils.paths import icons_path
 
 logger = get_logger("gui.main_window")
 
@@ -53,9 +54,6 @@ class MainWindow(QMainWindow):
         metadata_service: MetadataService,
         template_service: TemplateService,
         discord_presence_service: DiscordPresenceService | None = None,
-        undo_icon_path: Path | None = None,
-        redo_icon_path: Path | None = None,
-        search_icon_path: Path | None = None,
         parent=None,
     ):
         super().__init__(parent)
@@ -69,9 +67,7 @@ class MainWindow(QMainWindow):
         self._template_service = template_service
         self._discord_presence = discord_presence_service or DiscordPresenceService(client_id="")
         self._audio_files: dict[str, AudioFile] = {}
-        self._undo_icon = undo_icon_path
-        self._redo_icon = redo_icon_path
-        self._search_icon = search_icon_path
+        self._ffaux_icons = icons_path()
 
         self._metadata_pool = QThreadPool()
         self._metadata_pool.setMaxThreadCount(self._config_service.config.max_metadata_probe_threads)
@@ -151,26 +147,28 @@ class MainWindow(QMainWindow):
         self._discord_presence.stop()
         super().closeEvent(event)
 
+    def _custom_icon(self, action, icons_path: Path | None, icon_name: str) -> None:
+        if icons_path is not None and icons_path.exists():
+            action.setIcon(QIcon(str(icons_path / icon_name)))
+
     def _build_menu_bar(self) -> None:
         menu_bar = QMenuBar(self)
 
         # File
         file_menu = menu_bar.addMenu("&File")
         self._open_action = QAction("Add File...", self)
+        self._custom_icon(self._open_action, self._ffaux_icons, "Files.ico")
+
         self._open_action.setShortcut(QKeySequence.StandardKey.Open)
         self._open_action.triggered.connect(self._on_add_files_clicked)
         file_menu.addAction(self._open_action)
 
         self._add_folder_action = QAction("Add Folder...", self)
+        self._custom_icon(self._add_folder_action, self._ffaux_icons, "Directory.ico")
+
         self._add_folder_action.setShortcut("Ctrl+Shift+O")
         self._add_folder_action.triggered.connect(self._on_add_folder_clicked)
         file_menu.addAction(self._add_folder_action)
-
-        self._delete_action = QAction("Delete File", self)
-        self._delete_action.setShortcut("Ctrl+W")
-        self._delete_action.triggered.connect(self._on_delete_selected_file)
-        file_menu.addAction(self._delete_action)
-
         file_menu.addSeparator()
 
         self._conversion_settings_action = QAction("Convert Settings...", self)
@@ -185,13 +183,24 @@ class MainWindow(QMainWindow):
         file_menu.addAction(self._process_action)
 
         self._cancel_action = QAction("Cancel All", self)
+        self._custom_icon(self._cancel_action, self._ffaux_icons, "Cancel.ico")
+
         self._cancel_action.setShortcut("Ctrl+Shift+C")
         self._cancel_action.triggered.connect(self._on_cancel_clicked)
         file_menu.addAction(self._cancel_action)
 
+        self._delete_action = QAction("Delete File", self)
+        self._custom_icon(self._delete_action, self._ffaux_icons, "Delete.ico")
+
+        self._delete_action.setShortcut("Ctrl+W")
+        self._delete_action.triggered.connect(self._on_delete_selected_file)
+        file_menu.addAction(self._delete_action)
+
         file_menu.addSeparator()
 
         exit_action = QAction("Exit", self)
+        self._custom_icon(exit_action, self._ffaux_icons, "Exit.ico")
+
         exit_action.setShortcut("Ctrl+Q")
         exit_action.triggered.connect(self._confirm_exit)
         file_menu.addAction(exit_action)
@@ -201,8 +210,8 @@ class MainWindow(QMainWindow):
 
         # Undo
         self._undo_action = QAction("Undo", self)
-        if self._undo_icon is not None and self._undo_icon.exists():
-            self._undo_action.setIcon(QIcon(str(self._undo_icon)))
+        self._custom_icon(self._undo_action, self._ffaux_icons, "Undo.ico")
+
         self._undo_action.setShortcut("Ctrl+Z")
         self._undo_action.setEnabled(False)
         self._undo_action.triggered.connect(self._on_undo)
@@ -210,8 +219,8 @@ class MainWindow(QMainWindow):
 
         # Redo
         self._redo_action = QAction("Redo", self)
-        if self._redo_icon is not None and self._redo_icon.exists():
-            self._redo_action.setIcon(QIcon(str(self._redo_icon)))
+        self._custom_icon(self._redo_action, self._ffaux_icons, "Redo.ico")
+
         self._redo_action.setShortcut("Ctrl+Y")
         self._redo_action.setEnabled(False)
         self._redo_action.triggered.connect(self._on_redo)
@@ -221,6 +230,7 @@ class MainWindow(QMainWindow):
         self._columns_menu.aboutToShow.connect(self._on_columns_menu_about_to_show)
 
         sort_menu = edit_menu.addMenu("Sort By")
+        self._custom_icon(sort_menu, self._ffaux_icons, "Sort.ico")
         self._sort_menu = sort_menu
 
         self._sort_track_no_action = QAction("Track No", self)
@@ -240,6 +250,8 @@ class MainWindow(QMainWindow):
         sort_menu.addAction(self._sort_album_action)
 
         self._edit_metadata_action = QAction("Edit Selected Metadata...", self)
+        self._custom_icon(self._edit_metadata_action, self._ffaux_icons, "MetaEdit.ico")
+
         self._edit_metadata_action.setShortcut("Ctrl+E")
         self._edit_metadata_action.triggered.connect(self._on_edit_metadata_clicked)
         edit_menu.addAction(self._edit_metadata_action)
@@ -250,6 +262,7 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(self._spectrogram_action)
 
         self._settings_action = QAction("Settings...", self)
+        self._custom_icon(self._settings_action, self._ffaux_icons, "Settings.ico")
         self._settings_action.setShortcut("Ctrl+,")
         self._settings_action.triggered.connect(self._on_settings_clicked)
         edit_menu.addAction(self._settings_action)
@@ -272,6 +285,8 @@ class MainWindow(QMainWindow):
         # Help
         help_menu = menu_bar.addMenu("&Help")
         about_action = QAction("About FFAUX", self)
+        self._custom_icon(about_action, self._ffaux_icons, "FFAUX.ico")
+
         about_action.setShortcut("Ctrl+H")
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
@@ -287,10 +302,10 @@ class MainWindow(QMainWindow):
         self._search_bar.setClearButtonEnabled(True)
         self._search_bar.setFixedWidth(285)
         self._search_bar.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
-        if self._search_icon is not None and self._search_icon.exists():
+        if self._ffaux_icons is not None and self._ffaux_icons.exists():
             self._search_bar.addAction(
-                QIcon(str(self._search_icon)),
-                QLineEdit.ActionPosition.LeadingPosition,
+                QIcon(str(self._ffaux_icons / "Search.ico")),
+                QLineEdit.ActionPosition.LeadingPosition
             )
 
         menu_row = QWidget()
@@ -357,18 +372,21 @@ class MainWindow(QMainWindow):
             "Add File...",
             self._on_add_files_clicked
         )
+        self._custom_icon(add_file_action, self._ffaux_icons, "Files.ico")
         add_file_action.setShortcut("Ctrl+O")
 
         add_folder_action = menu.addAction(
             "Add Folder...",
             self._on_add_folder_clicked
         )
+        self._custom_icon(add_folder_action, self._ffaux_icons, "Directory.ico")
         add_folder_action.setShortcut("Ctrl+Shift+O")
 
         edit_metadata_action = menu.addAction(
             "Edit Metadata...",
             self._on_edit_metadata_clicked
         )
+        self._custom_icon(edit_metadata_action, self._ffaux_icons, "MetaEdit.ico")
         edit_metadata_action.setShortcut("Ctrl+E")
 
         convert_action = menu.addAction(
@@ -391,11 +409,13 @@ class MainWindow(QMainWindow):
             "Delete",
             self._on_delete_selected_file
         )
+        self._custom_icon(delete_action, self._ffaux_icons, "Delete.ico")
         delete_action.setShortcut("Ctrl+W")
 
         exit_action = menu.addAction(
             "Exit", self._confirm_exit
         )
+        self._custom_icon(exit_action, self._ffaux_icons, "Exit.ico")
         exit_action.setShortcut("Ctrl+Q")
 
         for action in (edit_metadata_action, convert_action, spectrogram_action, delete_action):
@@ -745,7 +765,7 @@ class MainWindow(QMainWindow):
             self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
             return
 
-        new_metadata, cover_path, cover_changed, deleted_keys, metadata_changed = dialog.get_result()
+        new_metadata, cover_path, cover_changed, deleted_keys, metadata_changed, per_file_overrides = dialog.get_result()
 
         has_metadata_changes = metadata_changed or bool(deleted_keys)
 
@@ -762,6 +782,10 @@ class MainWindow(QMainWindow):
 
         for audio_file in audio_files:
             audio_file.metadata = audio_file.metadata.merge(new_metadata)
+
+            overrides = per_file_overrides.get(audio_file.id)
+            if overrides:
+                audio_file.metadata = audio_file.metadata.merge(Metadata.from_dict(overrides))
 
             for key in deleted_keys:
                 if key in Metadata.__dataclass_fields__:
@@ -1006,14 +1030,14 @@ class MainWindow(QMainWindow):
                 </p>
 
                 <p>
-                    License:
+                    Licensed under:
                     <a href="LICENSE">GNU General Public License v3.0</a><br>
 
                     Third-party licenses:
                     <a href="THIRD_PARTY_LICENSES.html">View licenses</a><br>
 
-                    Source code:
-                    <a href="https://github.com/Audrise/FFAUX">GitHub Repository</a>
+                    GitHub:
+                    <a href="https://github.com/Audrise">Audrise</a>
                 </p>
 
                 <p>
