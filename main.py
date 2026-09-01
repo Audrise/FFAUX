@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import sys
 
-from pathlib import Path
-
 from PySide6.QtWidgets import (
     QApplication,
     QMessageBox,
@@ -25,48 +23,23 @@ from ffmpeg.ffmpeg_runner import FFmpegRunner
 from ffmpeg.ffprobe_runner import FFprobeRunner
 from gui.main_window import MainWindow
 from utils.logger import setup_logging, get_logger
+from utils.paths import (
+    app_root,
+    resolve_tool_path,
+    required_dir,
+    icons_path,
+    splash_path,
+    styles_path
+)
 
 logger = get_logger("main")
-
-def _resource_root() -> Path:
-    if getattr(sys, "frozen", False):
-        return Path(sys._MEIPASS)  # type: ignore[attr-defined]
-    return Path(__file__).resolve().parent
-
-def _app_root() -> Path:
-    if getattr(sys, "frozen", False):
-        return Path(sys.executable).resolve().parent
-    return Path(__file__).resolve().parent
-
-RESOURCE_ROOT = _resource_root()
-APP_ROOT = _app_root()
-
-# FFAUX
-APP_SPLASH_PATH = RESOURCE_ROOT / "assets" / "splash" / "FFAUX.png"
-APP_ICON_PATH = RESOURCE_ROOT / "assets" / "icons" / "FFAUX.ico"
-
-# main_window assets
-UNDO_ICON_PATH = RESOURCE_ROOT / "assets" / "icons" / "Undo.ico"
-REDO_ICON_PATH = RESOURCE_ROOT / "assets" / "icons" / "Redo.ico"
-SEARCH_ICON_PATH = RESOURCE_ROOT / "assets" / "icons" / "Search.ico"
-
-def _resolve_tool_path(path_str: str) -> str:
-    path = Path(path_str)
-    if path.is_absolute():
-        return str(path)
-    return str(APP_ROOT / path)
-
-REQUIRED_DIRS = ("config", "assets/templates")
-
-def _missing_required_dirs() -> list[Path]:
-    return [APP_ROOT / rel for rel in REQUIRED_DIRS if not (APP_ROOT / rel).is_dir()]
 
 def main() -> int:
     app = QApplication(sys.argv)
     app.setApplicationName("FFAUX")
 
     # Mandatory folder validation
-    missing = _missing_required_dirs()
+    missing = required_dir()
     if missing:
         missing_list = "\n".join(f"  - {p}" for p in missing)
         QMessageBox.critical(
@@ -82,7 +55,7 @@ def main() -> int:
 
     # Load logging
     try:
-        setup_logging(log_file=APP_ROOT / "config" / "ffaux.log")
+        setup_logging(log_file=app_root() / "config" / "ffaux.log")
     except Exception as exc:
         QMessageBox.critical(
             None,
@@ -92,7 +65,7 @@ def main() -> int:
         return 1
 
     # Load QT Stylesheet
-    qss_path = RESOURCE_ROOT / "assets" / "styles" / "main.qss"
+    qss_path = styles_path() / "main.qss"
     if not qss_path.exists():
         logger.error(f"Missing stylesheet: {qss_path}")
 
@@ -110,7 +83,7 @@ def main() -> int:
     # Load config
     try:
         config_service = ConfigService(
-            APP_ROOT / "config" / "ffaux.json"
+            app_root() / "config" / "ffaux.json"
         )
         config = config_service.load()
         logger.info("Configuration loaded successfully")
@@ -128,6 +101,7 @@ def main() -> int:
     splash = None
     fade_animation = None
 
+    APP_SPLASH_PATH = splash_path() / "FFAUX.png"
     if APP_SPLASH_PATH.exists():
         pixmap = QPixmap(str(APP_SPLASH_PATH))
 
@@ -193,14 +167,14 @@ def main() -> int:
             fade_animation.start()
             loop.exec()
 
-    ffprobe_runner = FFprobeRunner(ffprobe_path=_resolve_tool_path(config.ffprobe_path))
-    ffmpeg_runner = FFmpegRunner(ffmpeg_path=_resolve_tool_path(config.ffmpeg_path))
+    ffprobe_runner = FFprobeRunner(ffprobe_path=resolve_tool_path(config.ffprobe_path))
+    ffmpeg_runner = FFmpegRunner(ffmpeg_path=resolve_tool_path(config.ffmpeg_path))
 
     metadata_service = MetadataService(ffprobe_runner, ffmpeg_runner)
-    template_service = TemplateService(APP_ROOT / "assets" / "templates")
+    template_service = TemplateService(app_root() / "assets" / "templates")
 
     job_manager = JobManager(
-        ffmpeg_path=_resolve_tool_path(config.ffmpeg_path),
+        ffmpeg_path=resolve_tool_path(config.ffmpeg_path),
         max_parallel_jobs=config.max_parallel_jobs,
     )
 
@@ -208,6 +182,7 @@ def main() -> int:
     if config.enable_discord_presence:
         discord_presence.start()
 
+    APP_ICON_PATH = icons_path() / "FFAUX.ico"
     if APP_ICON_PATH.exists():
         app.setWindowIcon(QIcon(str(APP_ICON_PATH)))
 
@@ -217,9 +192,6 @@ def main() -> int:
         metadata_service=metadata_service,
         template_service=template_service,
         discord_presence_service=discord_presence,
-        undo_icon_path=UNDO_ICON_PATH,
-        redo_icon_path=REDO_ICON_PATH,
-        search_icon_path=SEARCH_ICON_PATH,
     )
 
     if config.window_maximized:
