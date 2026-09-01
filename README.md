@@ -1,7 +1,7 @@
 <h1 align="center">
   <strong>FFAUX</strong>
-  <br>
 </h1>
+
 <h3 align="center">Flexible Format Audio Utility eXchange</h3>
 
 <div align=center>
@@ -30,76 +30,69 @@
 </div>
 
 ## Description
-<p align="center">Python 3 based FFmpeg wrapper that uses PySide6 for the GUI</p>
 
-FFAUX is a desktop application I developed to address my own workflow requirements for managing digital audio. 
-It leverages FFmpeg and FFprobe to convert and tag audio files, and provides a graphical, playlist-style interface built with PySide6. 
-The application enables users to queue multiple audio files, configure conversion settings, and edit metadata without relying on the command line.
- 
-FFAUX invokes FFmpeg and FFprobe as external processes rather than reimplementing their functionality. 
-As a result, the application requires a working FFmpeg installation to perform audio conversion and media probing.
+<p align="center">Python 3 based FFmpeg wrapper with a PySide6 GUI</p>
+
+FFAUX is a desktop application I developed around my own workflow for managing digital audio.
+It uses FFmpeg and FFprobe to handle audio conversion and metadata, while PySide6 provides a graphical, playlist-style interface. You can queue multiple audio files, configure conversion settings, and edit metadata without having to work from the command line.
+
+FFAUX runs FFmpeg and FFprobe as external processes instead of reimplementing their functionality. Because of this, a working FFmpeg installation is required for audio conversion and media probing.
 
 ## Table of Contents
+
 * **[Description](#description)**
 * **[Features](#features)**
 * **[Requirements](#requirements)**
-* **[installation](#installation)**
+* **[Installation](#installation)**
 * **[Quick Start](#quick-start)**
 * **[Structure](#structure)**
 * **[Troubleshooting](#troubleshooting)**
 * **[Changelog](#changelog)**
 
 ## Features
-- Batch audio conversion via FFmpeg, with configurable:
-  - Output format
-  - Sample rate
-  - Bit depth
-  - Bitrate
-  - Resampling engine (SOXR)
-  - Compression level
-  - Custom output folder
-- Playlist-style track table supporting drag-and-drop and multi-select,
-  with resizable columns. Column widths are remembered across sessions,
-  and can be reset back to their defaults from View -> Reset Column
-  Widths.
-- Aggregate progress panel for batch conversion jobs, toggleable from
-  the View menu.
-- Real-time FFmpeg log viewer, toggleable from the View menu.
-- Metadata editor supporting both single-file and multi-file (batch)
-  editing:
-  - Dynamic fields based on the tags actually present in the selected
-    file(s), including non-standard tags (e.g. ISRC, publisher) --
-    not just a fixed list of common fields.
-  - Combined, read-only display for fields that differ across multiple
-    selected tracks, so saving without editing them never overwrites
-    each track's original value.
-  - Metadata templates that can be saved, applied, and previewed in a
-    separate window before applying.
-- Cover art viewer for previewing, replacing, and removing embedded
-  cover art.
-- Configurable FFmpeg/FFprobe executable paths via a settings dialog.
-- The "Convert Selected Audio" action is automatically disabled
-  whenever the track list is empty.
-- Window size, position, and maximized state are remembered across
-  sessions.
-- Optional Discord Rich Presence integration, showing the app's
-  current status (idle / converting) on Discord. Safe to leave
-  disabled, and fails silently if Discord isn't installed or running.
+
+* Batch audio conversion with FFmpeg, with options for:
+
+  * Output format
+  * Sample rate
+  * Bit depth
+  * Bitrate
+  * Resampling engine (SOXR)
+  * Compression level
+  * Custom output folder
+
+* Playlist-style track table with drag-and-drop, multi-select, and resizable columns. Column widths are remembered between sessions and can be restored to their defaults from View -> Reset Column Widths.
+
+* Aggregate progress panel for batch conversion jobs, which can be toggled from the View menu.
+
+* Real-time FFmpeg log viewer, which can also be toggled from the View menu.
+
+* Metadata editor for both single-file and multi-file (batch) editing:
+
+  * Fields are generated from the tags actually present in the selected file(s), including non-standard tags such as ISRC and publisher. The editor is not limited to a fixed list of common fields.
+  * When multiple selected tracks have different values for the same field, the editor shows a combined, read-only value. Saving without changing that field will not overwrite the original value in each track.
+  * Metadata templates can be saved, applied, and previewed in a separate window before being applied.
+
+* Cover art viewer for previewing, replacing, and removing embedded cover art.
+
+* Configurable FFmpeg and FFprobe executable paths through the settings dialog.
+
+* The "Convert Selected Audio" action is automatically disabled when the track list is empty.
+
+* Window size, position, and maximized state are remembered between sessions.
+
+* Discord Rich Presence integration that shows the app's current status (idle / converting) on Discord. It can be left disabled, and the application continues normally if Discord is not installed or running.
 
 ## Requirements
-- Python 3.10 or newer
-- pip
-- PySide6
-- FFmpeg and FFprobe executables
-- pypresence (optional -- only required for Discord Rich Presence; the
-  application runs normally without it)
 
-FFmpeg is not bundled with the application and must be installed
-separately. It must either be available on the system PATH, or placed
-in the `bin/` directory of the project, or configured manually from
-within the application's settings dialog.
+* Python 3.10 or newer
+* pip
+* PySide6
+* FFmpeg and FFprobe executables
+* pypresence (optional, only required for Discord Rich Presence. The application runs normally without it)
 
 ## Installation
+
 1. Clone the repository:
 
    ```bash
@@ -128,35 +121,32 @@ within the application's settings dialog.
 
 5. Install FFmpeg:
 
-   - [Download a FFmpeg build](https://ffmpeg.org/download.html) *(e.g. from gyan.dev or BtbN for Windows).*
-   - Place `ffmpeg` and `ffprobe` (or `ffmpeg.exe` / `ffprobe.exe` on
-     Windows) in the `bin/` directory, or ensure they are accessible
-     via the system PATH.
-   - Alternatively, configure their paths later from within the
-     application.
+   * [Download an FFmpeg build](https://ffmpeg.org/download.html), such as the builds provided by gyan.dev or BtbN for Windows.
+   * Place `ffmpeg` and `ffprobe` (or `ffmpeg.exe` / `ffprobe.exe` on Windows) in the `bin/` directory, or make sure they are available through the system PATH.
+   * You can also configure their paths later from within the application.
 
 ## Quick Start
+
 1. Launch the application:
 
    ```bash
    python main.py
    ```
-    The main window will open, showing an empty track list and the maintoolbar/menu.
 
-2. Add audio files to the track list by dragging and dropping them
-   into the main window, or by using the corresponding menu action.
+   The main window will open with an empty track list and the main toolbar and menu.
+
+2. Add audio files to the track list by dragging and dropping them into the main window, or use the corresponding menu action.
+
 3. Select one or more tracks in the track table.
-4. Open the conversion settings dialog to configure output format,
-   sample rate, bit depth, bitrate, and other conversion options.
-5. Start the conversion. Progress is displayed in the aggregate
-   progress panel, and detailed output is available in the log
-   viewer.
-6. To edit metadata, select one or more tracks and open the metadata
-   editor. Fields are generated dynamically based on the tags present
-   in the selected file(s). Apply a saved template, edit fields
-   directly, or preview a template's contents before applying it.
+
+4. Open the conversion settings dialog and configure the output format, sample rate, bit depth, bitrate, and other available options.
+
+5. Start the conversion. Progress is shown in the aggregate progress panel, while detailed FFmpeg output is available in the log viewer.
+
+6. To edit metadata, select one or more tracks and open the metadata editor. The available fields are generated from the tags found in the selected file(s). You can apply a saved template, edit fields directly, or preview a template before applying it.
 
 ## Structure
+
 ```
 FFAUX/
 ├── main.py                  # Application entry point
@@ -201,57 +191,36 @@ FFAUX/
 ```
 
 ## Troubleshooting
+
 **The application cannot find FFmpeg or FFprobe.**
-Verify that `ffmpeg` and `ffprobe` are either on the system PATH,
-placed inside the `bin/` directory, or configured with the correct
-path in the application's settings dialog.
+> Make sure `ffmpeg` and `ffprobe` are either available through the system PATH, placed inside the `bin/` directory, or configured with the correct paths in the application's settings dialog.
 
 **Conversion fails immediately after starting.**
-Check the log viewer for the underlying FFmpeg error message. Common
-causes include an invalid output path, unsupported input format, or
-an incorrect FFmpeg build for the target platform.
+> Check the log viewer for the FFmpeg error message. Common causes include an invalid output path, an unsupported input format, or an FFmpeg build that is not suitable for the target platform.
 
 **Metadata fields do not appear as expected.**
-The metadata editor generates fields dynamically based on the tags
-present in the selected file(s). If a field is missing, the source
-file may not contain that tag. If multiple files are selected and a
-field shows a combined, read-only value, this means the selected
-files have differing values for that field.
+> The metadata editor generates fields dynamically from the tags found in the selected file(s). If a field is missing, the source file may not contain that tag. When multiple files are selected, a combined, read-only value means that the selected files have different values for that field.
 
-**A tag name that used to be mixed/upper-case (e.g. `ISRC`,
-`REPLAYGAIN_TRACK_GAIN`) shows up in lowercase after editing
-metadata.**
-This was a known issue where non-standard tag names were
-force-lowercased when read from the file, and has since been fixed.
-Files that were already re-saved while the issue was present will keep
-their lowercased tag names; re-tag them manually if you need the
-original casing back.
+**A tag name that used to be mixed/upper-case (e.g. `ISRC`, `REPLAYGAIN_TRACK_GAIN`) shows up in lowercase after editing metadata.**
+> This was a known issue where non-standard tag names were converted to lowercase when read from the file. The issue has since been fixed.
 
-**The application crashed with a `UnicodeDecodeError` (e.g. `'charmap'
-codec can't decode byte...`) while adding files or converting.**
-This was caused by FFmpeg/FFprobe output being decoded using Windows'
-default codepage instead of UTF-8, and has since been fixed. If you
-still run into it, please note the exact file and error message when
-reporting it.
+> Files that were already re-saved while the issue was present will keep their lowercased tag names. Re-tag them manually if you need to restore the original casing.
 
-**Window size, position, or track table column widths don't persist
-between sessions.**
-These are saved to `config/app_config.json` when the application
-window is closed normally. Make sure the `config/` folder is writable
-(this can be an issue for a packaged `.exe` installed to a
-restricted/read-only location). Column widths can be reset to their
-defaults anytime from View -> Reset Column Widths.
+**The application crashed with a `UnicodeDecodeError` (e.g. `'charmap' codec can't decode byte...`) while adding files or converting.**
+> This was caused by FFmpeg/FFprobe output being decoded using Windows' default codepage instead of UTF-8. The issue has since been fixed. If you still encounter it, include the affected file and the exact error message when reporting the problem.
+
+**Window size, position, or track table column widths don't persist between sessions.**
+> These settings are saved to `config/app_config.json` when the application closes normally. Make sure the `config/` folder is writable, especially when using a packaged `.exe` installed in a restricted or read-only location.
+
+> Column widths can be restored to their defaults from View -> Reset Column Widths.
 
 **Discord Rich Presence doesn't show up.**
-This feature is optional and requires all of the following: the
-`pypresence` package installed, a valid Discord `client_id`
-configured, and the Discord desktop app (not the browser version)
-running locally. If any of these are missing, the application
-continues normally without showing a presence status.
+> Discord Rich Presence is optional and requires the `pypresence` package, a valid Discord `client_id`, and the Discord desktop application to be running locally. The browser version of Discord is not supported.
 
-**The application window does not start / crashes on launch.**
-Confirm that the virtual environment is activated and that all
-dependencies from `requirements.txt` were installed successfully.
+> If any of these requirements are missing, the application will continue running normally without showing a presence status.
+
+**The application window does not start or crashes on launch.**
+> Make sure the virtual environment is activated and that all dependencies from `requirements.txt` have been installed successfully.
 
 <br>
 
@@ -263,7 +232,7 @@ This tool is designed to help you **view, edit, and manage audio metadata and co
 
 ## Changelog
 
-### v1.0 - **Initial Release**
+### v1.0.0 - **Initial Release**
 
 <h1></h1>
-<h4 align="center">©2026 AUDRISE</h4>
+<h4 align="center">© 2026 Audrise. All rights reserved.</h4>
