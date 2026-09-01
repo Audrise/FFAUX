@@ -1,14 +1,16 @@
 """
 # Widget form for editing metadata for one or more AudioFiles.
-y
 """
 from __future__ import annotations
 
 from PySide6.QtWidgets import QFormLayout, QLineEdit, QScrollArea, QVBoxLayout, QWidget
 
-from core.metadata_field_merger import FieldView, build_field_views
+from core.metadata_field_merger import VALUE_SEPARATOR, FieldView, build_field_views
 from core.models.audio_file import AudioFile
 from core.models.metadata import Metadata
+from utils.logger import get_logger
+
+logger = get_logger("gui.widgets.metadata_editor")
 
 class _FocusTrackingLineEdit(QLineEdit):
     def __init__(self, on_focus, *args, **kwargs):
@@ -42,6 +44,7 @@ class MetadataEditor(QWidget):
 
         self._deleted_keys: set[str] = set()
         self._selected_edit: QLineEdit | None = None
+        self._audio_files: list[AudioFile] = []
 
     def load_metadata(self, metadata: Metadata) -> None:
         # Keep a single Metadata field for backward compatibility and single-file loading.
@@ -52,23 +55,24 @@ class MetadataEditor(QWidget):
     def load_for_files(self, audio_files: list[AudioFile]) -> None:
         # Rebuild the form based on dynamic fields from the selected file.
         self._clear_form()
+        self._audio_files = list(audio_files)
         self._field_views = build_field_views(audio_files)
         self._original_values: dict[str, str] = {}
 
         for view in self._field_views:
             edit = _FocusTrackingLineEdit(self._on_field_focused)
             edit.setText(view.value)
-            if not view.editable:
-                edit.setReadOnly(True)
+            if view.is_multi_value:
                 edit.setToolTip(
-                    "Can't edit this value because the selected tracks have different values. "
-                    "Saving without changes will keep each track's current value."
+                    "Values differ across the selected tracks, shown combined "
+                    "and separated by \" - \" in the same order as the selected "
+                    "tracks. Edit a single segment to change only that track, "
+                    "or replace the whole thing with one value to apply it to "
+                    "every selected track."
                 )
 
-            else:
-                self._edits[view.key] = edit
-                self._original_values[view.key] = view.value
-
+            self._edits[view.key] = edit
+            self._original_values[view.key] = view.value
             self._edit_to_key[edit] = view.key
             self._form.addRow(f"{view.label}:", edit)
 
@@ -133,14 +137,55 @@ class MetadataEditor(QWidget):
         self._selected_edit = None
 
     def get_metadata(self) -> Metadata:
-        # Return common metadata from editable fields plus newly added valid fields.
-        values = {name: edit.text().strip() or None for name, edit in self._edits.items()}
+        view_by_key = {v.key: v for v in self._field_views}
+        values = {}
+        for name, edit in self._edits.items():
+            view = view_by_key.get(name)
+            if view is not None and view.is_multi_value:
+                continue
+            values[name] = edit.text().strip() or None
+
         for key_edit, value_edit in self._new_rows:
             key = key_edit.text().strip()
             value = value_edit.text().strip()
             if key and value:
                 values[key] = value
         return Metadata.from_dict({k: v for k, v in values.items() if v is not None})
+
+    def get_per_file_overrides(self) -> dict[str, dict[str, str]]:
+        # Returns {audio_file.id: {field_key: new_value}}
+        overrides: dict[str, dict[str, str]] = {}
+        view_by_key = {v.key: v for v in self._field_views}
+
+        for key, edit in self._edits.items():
+            view = view_by_key.get(key)
+            if view is None or not view.is_multi_value:
+                continue
+
+            current_text = edit.text().strip()
+            if current_text == view.value:
+                continue
+
+            segments = current_text.split(VALUE_SEPARATOR)
+
+            if len(segments) == len(self._audio_files):
+                for audio_file, original, new_value in zip(
+                    self._audio_files, view.per_file_values, segments
+                ):
+                    new_value = new_value.strip()
+                    if new_value != original:
+                        overrides.setdefault(audio_file.id, {})[key] = new_value
+
+            elif len(segments) == 1:
+                new_value = segments[0].strip()
+                for audio_file, original in zip(self._audio_files, view.per_file_values):
+                    if new_value != original:
+                        overrides.setdefault(audio_file.id, {})[key] = new_value
+
+            else:
+                logger.warning(f"Ignoring edit to {key} {len(segments)} {len(self._audio_files)}")
+
+        return overrides
 
     def get_deleted_keys(self) -> set[str]:
         return set(self._deleted_keys)
