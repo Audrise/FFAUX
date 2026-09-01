@@ -210,12 +210,14 @@ class MetadataEditorDialog(QDialog):
     def _on_cover_path_changed(self, path) -> None:
         self._cover_changed = True
 
-    def get_result(self) -> tuple[Metadata, str | None, bool, set[str], bool]:
-        # Returns (new_metadata, new_cover_path_or_None, cover_changed, deleted_keys).
+    def get_result(self) -> tuple[Metadata, str | None, bool, set[str], bool, dict[str, dict[str, str]]]:
+        # Returns (new_metadata, new_cover_path_or_None, cover_changed, deleted_keys,
+        # metadata_changed, per_file_overrides).
         return (
             self._metadata_editor.get_metadata(),
             self._cover_viewer.current_path(),
             self._cover_changed,
             self._metadata_editor.get_deleted_keys(),
             self._metadata_editor.has_changes(),
+            self._metadata_editor.get_per_file_overrides(),
         )
