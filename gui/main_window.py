@@ -120,6 +120,7 @@ class MainWindow(QMainWindow):
 
     def _update_selection_dependent_actions(self) -> None:
         has_selection = bool(self._track_table.selected_row_ids())
+        self._process_action.setEnabled(has_selection)
         self._delete_action.setEnabled(has_selection)
         self._edit_metadata_action.setEnabled(has_selection)
         self._spectrogram_action.setEnabled(has_selection)
@@ -170,12 +171,6 @@ class MainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
-        self._conversion_settings_action = QAction("Convert Settings...", self)
-        self._custom_icon(self._conversion_settings_action, self._ffaux_icons, "ConvSet.ico")
-        self._conversion_settings_action.setShortcut("Ctrl+Shift+P")
-        self._conversion_settings_action.triggered.connect(self._on_conversion_settings_clicked)
-        file_menu.addAction(self._conversion_settings_action)
-
         self._process_action = QAction("Convert Selected Audio...", self)
         self._custom_icon(self._process_action, self._ffaux_icons, "Convert.ico")
         self._process_action.setShortcut("Ctrl+R")
@@ -186,6 +181,7 @@ class MainWindow(QMainWindow):
         self._cancel_action = QAction("Cancel All", self)
         self._custom_icon(self._cancel_action, self._ffaux_icons, "CancelAll.ico")
         self._cancel_action.setShortcut("Ctrl+Shift+C")
+        self._cancel_action.setEnabled(False)
         self._cancel_action.triggered.connect(self._on_cancel_clicked)
         file_menu.addAction(self._cancel_action)
 
@@ -437,6 +433,33 @@ class MainWindow(QMainWindow):
             flac_compression_level=config.default_flac_compression_level,
         )
 
+    def _get_conversion_source_limits(self, audio_files: list[AudioFile]) -> tuple[int | None, int | None]:
+        sample_rates = [
+            audio_file.sample_rate_hz
+            for audio_file in audio_files
+            if audio_file.sample_rate_hz is not None
+        ]
+
+        bitrates = [
+            audio_file.bitrate_kbps
+            for audio_file in audio_files
+            if audio_file.bitrate_kbps is not None
+        ]
+
+        max_sample_rate_hz = min(sample_rates) if sample_rates else None
+        max_bitrate_kbps = min(bitrates) if bitrates else None
+
+        return max_sample_rate_hz, max_bitrate_kbps
+
+    def _get_conversion_max_bit_depth(self, audio_files: list[AudioFile]) -> int | None:
+        bit_depths = [
+            32 if audio_file.bit_depth == 24 else audio_file.bit_depth
+            for audio_file in audio_files
+            if audio_file.bit_depth is not None
+        ]
+
+        return min(bit_depths) if bit_depths else None
+
     def _on_add_files_clicked(self) -> None:
         paths, _ = QFileDialog.getOpenFileNames(
             self, "Select audio", "", "Audio Files (*.mp3 *.wav *.flac *.m4a *.aac *.ogg *.wma *.opus)"
@@ -493,6 +516,7 @@ class MainWindow(QMainWindow):
             audio_file.duration_seconds = probed_audio_file.duration_seconds
             audio_file.bitrate_kbps = probed_audio_file.bitrate_kbps
             audio_file.sample_rate_hz = probed_audio_file.sample_rate_hz
+            audio_file.bit_depth = probed_audio_file.bit_depth
             audio_file.codec = probed_audio_file.codec
             audio_file.file_size_bytes = probed_audio_file.file_size_bytes
             audio_file.error_message = probed_audio_file.error_message
@@ -508,22 +532,6 @@ class MainWindow(QMainWindow):
                 )
             self._add_batch_total = 0
             self._add_batch_pending = 0
-
-    def _on_conversion_settings_clicked(self) -> None:
-        # Optional prefill only, the dialog is always shown again when Convert is clicked. This does not skip the dialog.
-        dialog = ConversionSettingsDialog(
-            self._conversion_settings,
-            default_output_dir=self._config_service.config.output_directory,
-            output_suffix=self._config_service.config.output_suffix,
-            parent=self,
-        )
-        if dialog.exec():
-            self._conversion_settings = dialog.get_settings()
-            logger.info(
-                "Updated default convert settings: format=%s, sample_rate=%s Hz",
-                self._conversion_settings.output_format.value,
-                self._conversion_settings.sample_rate_hz,
-            )
 
     def _on_process_clicked(self) -> None:
         if not self._audio_files:
@@ -579,10 +587,17 @@ class MainWindow(QMainWindow):
 
         self._discord_presence.update(PresenceState(details=details, large_image=_DISCORD_LARGE_IMAGE))
 
+        max_sample_rate_hz, max_bitrate_kbps = self._get_conversion_source_limits(audio_files)
+        max_bit_depth = self._get_conversion_max_bit_depth(audio_files)
+
         dialog = ConversionSettingsDialog(
             self._conversion_settings,
             default_output_dir=self._config_service.config.output_directory,
             output_suffix=self._config_service.config.output_suffix,
+            max_sample_rate_hz=max_sample_rate_hz,
+            max_bitrate_kbps=max_bitrate_kbps,
+            max_bit_depth=max_bit_depth,
+            prevent_upsampling=self._config_service.config.prevent_upsampling,
             parent=self,
         )
         if not dialog.exec():
