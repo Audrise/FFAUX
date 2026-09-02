@@ -38,6 +38,7 @@ class AppConfig:
     track_table_hidden_columns: Optional[list[int]] = None
     track_table_column_order: Optional[list[int]] = None
     session_paths: list[str] = field(default_factory=list)
+    prevent_upsampling: bool = True
     default_output_format: str = "mp3"
     default_sample_rate_hz: int = 44100
     default_bit_depth: int = 16
