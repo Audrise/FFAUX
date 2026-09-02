@@ -158,40 +158,39 @@ class MainWindow(QMainWindow):
         file_menu = menu_bar.addMenu("&File")
         self._open_action = QAction("Add File...", self)
         self._custom_icon(self._open_action, self._ffaux_icons, "Files.ico")
-
         self._open_action.setShortcut(QKeySequence.StandardKey.Open)
         self._open_action.triggered.connect(self._on_add_files_clicked)
         file_menu.addAction(self._open_action)
 
         self._add_folder_action = QAction("Add Folder...", self)
-        self._custom_icon(self._add_folder_action, self._ffaux_icons, "Directory.ico")
-
+        self._custom_icon(self._add_folder_action, self._ffaux_icons, "Folder.ico")
         self._add_folder_action.setShortcut("Ctrl+Shift+O")
         self._add_folder_action.triggered.connect(self._on_add_folder_clicked)
         file_menu.addAction(self._add_folder_action)
+
         file_menu.addSeparator()
 
         self._conversion_settings_action = QAction("Convert Settings...", self)
+        self._custom_icon(self._conversion_settings_action, self._ffaux_icons, "ConvSet.ico")
         self._conversion_settings_action.setShortcut("Ctrl+Shift+P")
         self._conversion_settings_action.triggered.connect(self._on_conversion_settings_clicked)
         file_menu.addAction(self._conversion_settings_action)
 
         self._process_action = QAction("Convert Selected Audio...", self)
+        self._custom_icon(self._process_action, self._ffaux_icons, "Convert.ico")
         self._process_action.setShortcut("Ctrl+R")
         self._process_action.setEnabled(False)
         self._process_action.triggered.connect(self._on_process_clicked)
         file_menu.addAction(self._process_action)
 
         self._cancel_action = QAction("Cancel All", self)
-        self._custom_icon(self._cancel_action, self._ffaux_icons, "Cancel.ico")
-
+        self._custom_icon(self._cancel_action, self._ffaux_icons, "CancelAll.ico")
         self._cancel_action.setShortcut("Ctrl+Shift+C")
         self._cancel_action.triggered.connect(self._on_cancel_clicked)
         file_menu.addAction(self._cancel_action)
 
         self._delete_action = QAction("Delete File", self)
         self._custom_icon(self._delete_action, self._ffaux_icons, "Delete.ico")
-
         self._delete_action.setShortcut("Ctrl+W")
         self._delete_action.triggered.connect(self._on_delete_selected_file)
         file_menu.addAction(self._delete_action)
@@ -200,7 +199,6 @@ class MainWindow(QMainWindow):
 
         exit_action = QAction("Exit", self)
         self._custom_icon(exit_action, self._ffaux_icons, "Exit.ico")
-
         exit_action.setShortcut("Ctrl+Q")
         exit_action.triggered.connect(self._confirm_exit)
         file_menu.addAction(exit_action)
@@ -211,7 +209,6 @@ class MainWindow(QMainWindow):
         # Undo
         self._undo_action = QAction("Undo", self)
         self._custom_icon(self._undo_action, self._ffaux_icons, "Undo.ico")
-
         self._undo_action.setShortcut("Ctrl+Z")
         self._undo_action.setEnabled(False)
         self._undo_action.triggered.connect(self._on_undo)
@@ -220,13 +217,13 @@ class MainWindow(QMainWindow):
         # Redo
         self._redo_action = QAction("Redo", self)
         self._custom_icon(self._redo_action, self._ffaux_icons, "Redo.ico")
-
         self._redo_action.setShortcut("Ctrl+Y")
         self._redo_action.setEnabled(False)
         self._redo_action.triggered.connect(self._on_redo)
         edit_menu.addAction(self._redo_action)
 
         self._columns_menu = edit_menu.addMenu("Columns")
+        self._custom_icon(self._columns_menu, self._ffaux_icons, "Columns.ico")
         self._columns_menu.aboutToShow.connect(self._on_columns_menu_about_to_show)
 
         sort_menu = edit_menu.addMenu("Sort By")
@@ -250,19 +247,19 @@ class MainWindow(QMainWindow):
         sort_menu.addAction(self._sort_album_action)
 
         self._edit_metadata_action = QAction("Edit Selected Metadata...", self)
-        self._custom_icon(self._edit_metadata_action, self._ffaux_icons, "MetaEdit.ico")
-
+        self._custom_icon(self._edit_metadata_action, self._ffaux_icons, "EditMeta.ico")
         self._edit_metadata_action.setShortcut("Ctrl+E")
         self._edit_metadata_action.triggered.connect(self._on_edit_metadata_clicked)
         edit_menu.addAction(self._edit_metadata_action)
 
         self._spectrogram_action = QAction("Generate Spectrogram...", self)
+        self._custom_icon(self._spectrogram_action, self._ffaux_icons, "GenSpect.ico")
         self._spectrogram_action.setShortcut("Ctrl+G")
         self._spectrogram_action.triggered.connect(self._on_generate_spectrogram_clicked)
         edit_menu.addAction(self._spectrogram_action)
 
         self._settings_action = QAction("Settings...", self)
-        self._custom_icon(self._settings_action, self._ffaux_icons, "Settings.ico")
+        self._custom_icon(self._settings_action, self._ffaux_icons, "Setting.ico")
         self._settings_action.setShortcut("Ctrl+,")
         self._settings_action.triggered.connect(self._on_settings_clicked)
         edit_menu.addAction(self._settings_action)
@@ -270,6 +267,7 @@ class MainWindow(QMainWindow):
         # View
         view_menu = menu_bar.addMenu("&View")
         self._toggle_log_action = QAction("Show Output Log", self)
+        self._custom_icon(self._toggle_log_action, self._ffaux_icons, "Output.ico")
         self._toggle_log_action.setShortcut("Ctrl+/")
         self._toggle_log_action.setCheckable(True)
         self._toggle_log_action.setChecked(False)
@@ -277,7 +275,9 @@ class MainWindow(QMainWindow):
         view_menu.addAction(self._toggle_log_action)
 
         view_menu.addSeparator()
+
         self._reset_columns_action = QAction("Reset Column Layouts", self)
+        self._custom_icon(self._reset_columns_action, self._ffaux_icons, "Reset.ico")
         self._reset_columns_action.setShortcut("Ctrl+>")
         self._reset_columns_action.triggered.connect(self._on_reset_column_layout_clicked)
         view_menu.addAction(self._reset_columns_action)
@@ -379,26 +379,28 @@ class MainWindow(QMainWindow):
             "Add Folder...",
             self._on_add_folder_clicked
         )
-        self._custom_icon(add_folder_action, self._ffaux_icons, "Directory.ico")
+        self._custom_icon(add_folder_action, self._ffaux_icons, "Folder.ico")
         add_folder_action.setShortcut("Ctrl+Shift+O")
 
         edit_metadata_action = menu.addAction(
             "Edit Metadata...",
             self._on_edit_metadata_clicked
         )
-        self._custom_icon(edit_metadata_action, self._ffaux_icons, "MetaEdit.ico")
+        self._custom_icon(edit_metadata_action, self._ffaux_icons, "EditMeta.ico")
         edit_metadata_action.setShortcut("Ctrl+E")
 
         convert_action = menu.addAction(
             "Convert Selected Audio...",
             self._on_process_clicked
         )
+        self._custom_icon(convert_action, self._ffaux_icons, "Convert.ico")
         convert_action.setShortcut("Ctrl+R")
 
         spectrogram_action = menu.addAction(
             "Generate Spectrogram...",
             self._on_generate_spectrogram_clicked
         )
+        self._custom_icon(spectrogram_action, self._ffaux_icons, "GenSpect.ico")
         spectrogram_action.setShortcut("Ctrl+G")
 
         menu.addAction(self._toggle_log_action)
