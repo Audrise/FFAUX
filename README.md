@@ -192,35 +192,32 @@ FFAUX/
 
 ## Troubleshooting
 
-**The application cannot find FFmpeg or FFprobe.**
-> Make sure `ffmpeg` and `ffprobe` are either available through the system PATH, placed inside the `bin/` directory, or configured with the correct paths in the application's settings dialog.
+### 1. The application cannot find FFmpeg or FFprobe.
+- Make sure `ffmpeg` and `ffprobe` are either available through the system PATH, placed inside the `bin/` directory, or configured with the correct paths in the application's settings dialog.
 
-**Conversion fails immediately after starting.**
-> Check the log viewer for the FFmpeg error message. Common causes include an invalid output path, an unsupported input format, or an FFmpeg build that is not suitable for the target platform.
+### 2. Conversion fails immediately after starting.
+- Check the log viewer for the FFmpeg error message. Common causes include an invalid output path, an unsupported input format, or an FFmpeg build that is not suitable for the target platform.
 
-**Metadata fields do not appear as expected.**
-> The metadata editor generates fields dynamically from the tags found in the selected file(s). If a field is missing, the source file may not contain that tag. When multiple files are selected, a combined, read-only value means that the selected files have different values for that field.
+### 3. Metadata fields do not appear as expected.
+- The metadata editor generates fields dynamically from the tags found in the selected file(s). If a field is missing, the source file may not contain that tag. When multiple files are selected, a combined, read-only value means that the selected files have different values for that field.
 
-**A tag name that used to be mixed/upper-case (e.g. `ISRC`, `REPLAYGAIN_TRACK_GAIN`) shows up in lowercase after editing metadata.**
-> This was a known issue where non-standard tag names were converted to lowercase when read from the file. The issue has since been fixed.
+### 4. A tag name that used to be mixed/upper-case (e.g. `ISRC`, `REPLAYGAIN_TRACK_GAIN`) shows up in lowercase after editing metadata.
+- This was a known issue where non-standard tag names were converted to lowercase when read from the file. The issue has since been fixed.
+- Files that were already re-saved while the issue was present will keep their lowercased tag names. Re-tag them manually if you need to restore the original casing.
 
-> Files that were already re-saved while the issue was present will keep their lowercased tag names. Re-tag them manually if you need to restore the original casing.
+### 5. The application crashed with a `UnicodeDecodeError` (e.g. `'charmap' codec can't decode byte...`) while adding files or converting.
+- This was caused by FFmpeg/FFprobe output being decoded using Windows' default codepage instead of UTF-8. The issue has since been fixed. If you still encounter it, include the affected file and the exact error message when reporting the problem.
 
-**The application crashed with a `UnicodeDecodeError` (e.g. `'charmap' codec can't decode byte...`) while adding files or converting.**
-> This was caused by FFmpeg/FFprobe output being decoded using Windows' default codepage instead of UTF-8. The issue has since been fixed. If you still encounter it, include the affected file and the exact error message when reporting the problem.
+### 6. Window size, position, or track table column widths don't persist between sessions.
+- These settings are saved to `config/app_config.json` when the application closes normally. Make sure the `config/` folder is writable, especially when using a packaged `.exe` installed in a restricted or read-only location.
+- Column widths can be restored to their defaults from View -> Reset Column Widths.
 
-**Window size, position, or track table column widths don't persist between sessions.**
-> These settings are saved to `config/app_config.json` when the application closes normally. Make sure the `config/` folder is writable, especially when using a packaged `.exe` installed in a restricted or read-only location.
+### 7. Discord Rich Presence doesn't show up.
+- Discord Rich Presence is optional and requires the `pypresence` package, a valid Discord `client_id`, and the Discord desktop application to be running locally. The browser version of Discord is not supported.
+- If any of these requirements are missing, the application will continue running normally without showing a presence status.
 
-> Column widths can be restored to their defaults from View -> Reset Column Widths.
-
-**Discord Rich Presence doesn't show up.**
-> Discord Rich Presence is optional and requires the `pypresence` package, a valid Discord `client_id`, and the Discord desktop application to be running locally. The browser version of Discord is not supported.
-
-> If any of these requirements are missing, the application will continue running normally without showing a presence status.
-
-**The application window does not start or crashes on launch.**
-> Make sure the virtual environment is activated and that all dependencies from `requirements.txt` have been installed successfully.
+### 8. The application window does not start or crashes on launch.
+- Make sure the virtual environment is activated and that all dependencies from `requirements.txt` have been installed successfully.
 
 <br>
 
