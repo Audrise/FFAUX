@@ -90,6 +90,9 @@ class SettingsDialog(QDialog):
         separator.setFrameShape(QFrame.Shape.HLine)
         separator.setFrameShadow(QFrame.Shadow.Sunken)
 
+        self._prevent_upsampling_check = QCheckBox("Prevent Upsampling")
+        self._prevent_upsampling_check.setChecked(config.prevent_upsampling)
+
         self._format_combo = QComboBox()
         for fmt in OutputFormat:
             self._format_combo.addItem(_FORMAT_LABELS[fmt], userData=fmt)
@@ -101,9 +104,7 @@ class SettingsDialog(QDialog):
         for hz in STANDARD_SAMPLE_RATES:
             self._sample_rate_combo.addItem(f"{hz} Hz", userData=hz)
         if config.default_sample_rate_hz in STANDARD_SAMPLE_RATES:
-            self._sample_rate_combo.setCurrentIndex(
-                STANDARD_SAMPLE_RATES.index(config.default_sample_rate_hz)
-            )
+            self._sample_rate_combo.setCurrentIndex(STANDARD_SAMPLE_RATES.index(config.default_sample_rate_hz))
 
         self._bit_depth_combo = QComboBox()
         for depth in (16, 24, 32):
@@ -127,6 +128,7 @@ class SettingsDialog(QDialog):
         self._soxr_precision_spin.setValue(config.default_soxr_precision)
 
         self._conversion_form = QFormLayout()
+        self._conversion_form.addRow("", self._prevent_upsampling_check)
         self._conversion_form.addRow("Output Format:", self._format_combo)
         self._conversion_form.addRow("Sample Rate:", self._sample_rate_combo)
         self._conversion_form.addRow("Bitrate:", self._bitrate_spin)
@@ -224,6 +226,7 @@ class SettingsDialog(QDialog):
         cfg.set("enable_discord_presence", self._enable_discord_check.isChecked())
         cfg.set("discord_client_id", self._set_presence_id.text())
 
+        cfg.set("prevent_upsampling", self._prevent_upsampling_check.isChecked())
         cfg.set("default_output_format", self._current_format().value)
         cfg.set("default_sample_rate_hz", self._sample_rate_combo.currentData())
         cfg.set("default_bit_depth", self._bit_depth_combo.currentData())
