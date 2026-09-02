@@ -64,6 +64,19 @@ class ProbeResult:
         return None
 
     @property
+    def bit_depth(self) -> Optional[int]:
+        for stream in self.raw.get("streams", []):
+            if stream.get("codec_type") == "audio":
+                bits = stream.get("bits_per_raw_sample")
+
+                try:
+                    return int(bits) if bits is not None else None
+                except (TypeError, ValueError):
+                    return None
+
+        return None
+
+    @property
     def has_cover_art(self) -> bool:
         for stream in self.raw.get("streams", []):
             if stream.get("codec_type") == "video":
