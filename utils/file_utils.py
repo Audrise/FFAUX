@@ -12,10 +12,20 @@ SUPPORTED_AUDIO_EXTENSIONS = {
 def is_supported_audio(path: str | Path) -> bool:
     return Path(path).suffix.lower() in SUPPORTED_AUDIO_EXTENSIONS
 
+def format_bit_depth(bits: int | None) -> str:
+    if not bits or bits <= 0:
+        return "-"
+    return f"{bits} Bits"
+
 def format_sample_rate(hz: int | None) -> str:
     if not hz or hz <= 0:
         return "-"
     return f"{hz} Hz"
+
+def format_bitrate(kbps: int | None) -> str:
+    if not kbps or kbps <= 0:
+        return "-"
+    return f"{kbps} Kbps"
 
 def format_duration(seconds: float | None) -> str:
     if not seconds or seconds < 0:
