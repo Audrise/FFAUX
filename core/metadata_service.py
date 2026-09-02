@@ -41,6 +41,7 @@ class MetadataService:
         audio_file.duration_seconds = result.duration_seconds
         audio_file.bitrate_kbps = result.bit_rate_kbps
         audio_file.sample_rate_hz = result.sample_rate_hz
+        audio_file.bit_depth = result.bit_depth
         audio_file.codec = result.audio_codec_name
         audio_file.file_size_bytes = result.size_bytes
 
