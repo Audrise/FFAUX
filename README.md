@@ -149,44 +149,34 @@ FFAUX runs FFmpeg and FFprobe as external processes instead of reimplementing th
 
 ```
 FFAUX/
-├── main.py                  # Application entry point
-├── requirements.txt         # Python dependencies
-├── bin/                     # Optional location for ffmpeg/ffprobe executables
+├── main.py                   # Application entry point
+|
+├── requirements.txt          # Python dependencies
+|
+├── bin/                      # Default location for ffmpeg.exe/ffprobe.exe
+|
 ├── assets/
 │   ├── icons/                # Application icons
-│   ├── styles/                # Qt stylesheets (QSS)
-│   └── templates/             # Saved metadata templates
-├── config/                  # Application configuration
+|   |
+│   ├── splash/               # Application splash screen
+|   |
+│   ├── styles/               # Qt stylesheets (QSS)
+|   |
+│   └── templates/            # Saved metadata templates
+|
+├── config/                   # Application configuration
+|
 ├── core/                     # Backend logic (no GUI dependencies)
-│   ├── config_service.py
-│   ├── discord_presence_service.py
-│   ├── ffmpeg_worker.py
-│   ├── filename_parser.py
-│   ├── job_manager.py
-│   ├── metadata_field_merger.py
-│   ├── metadata_service.py
-│   ├── template_service.py
-│   └── models/
+|
 ├── ffmpeg/                   # FFmpeg/FFprobe process wrappers
-│   ├── command_builder.py
-│   ├── ffmpeg_runner.py
-│   ├── ffprobe_runner.py
-│   └── progress_parser.py
-├── gui/                       # PySide6 presentation layer
-│   ├── main_window.py
+|
+├── gui/                      # PySide6 presentation layer
 │   ├── widgets/
-│   │   ├── track_table.py
-│   │   ├── progress_panel.py
-│   │   ├── log_viewer.py
-│   │   ├── metadata_editor.py
-│   │   └── cover_art_viewer.py
+|   |
 │   └── dialogs/
-│       ├── conversion_settings_dialog.py
-│       ├── metadata_editor_dialog.py
-│       └── settings_dialog.py
+|
 ├── utils/                    # Shared utility helpers
-│   ├── file_utils.py
-│   └── logger.py
+|
 └── tests/                    # Automated tests (backend, no GUI required)
 ```
 
@@ -209,7 +199,7 @@ FFAUX/
 - This was caused by FFmpeg/FFprobe output being decoded using Windows' default codepage instead of UTF-8. The issue has since been fixed. If you still encounter it, include the affected file and the exact error message when reporting the problem.
 
 ### 6. Window size, position, or track table column widths don't persist between sessions.
-- These settings are saved to `config/app_config.json` when the application closes normally. Make sure the `config/` folder is writable, especially when using a packaged `.exe` installed in a restricted or read-only location.
+- These settings are saved to `config/ffaux.json` when the application closes normally. Make sure the `config/` folder is writable, especially when using a packaged `.exe` installed in a restricted or read-only location.
 - Column widths can be restored to their defaults from View -> Reset Column Widths.
 
 ### 7. Discord Rich Presence doesn't show up.
