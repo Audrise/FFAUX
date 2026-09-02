@@ -7,11 +7,18 @@ Multiple items can be selected for Edit, Convert, or Delete actions.
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QAction, QDragEnterEvent, QDropEvent, QWheelEvent
-from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QMenu, QProgressBar, QTableWidget, QTableWidgetItem, QHBoxLayout, QWidget
+from PySide6.QtGui import QAction, QDragEnterEvent, QDropEvent, QWheelEvent, QIcon
+from PySide6.QtWidgets import (
+    QAbstractItemView, QHeaderView, QMenu, QProgressBar, QTableWidget,
+    QTableWidgetItem, QHBoxLayout, QWidget
+)
 
 from core.models.audio_file import AudioFile, FileStatus
-from utils.file_utils import collect_audio_files, format_duration, format_file_size, format_sample_rate
+from utils.file_utils import (
+    collect_audio_files, format_duration, format_file_size,
+    format_bit_depth, format_sample_rate, format_bitrate
+)
+from utils.paths import icons_path
 
 _STATUS_LABELS = {
     FileStatus.PENDING: "Pending",
@@ -24,13 +31,13 @@ _STATUS_LABELS = {
 
 (
     _COL_FILE_NAME, _COL_TRACK, _COL_DISC, _COL_TITLE, _COL_ARTIST, _COL_ALBUM_ARTIST, _COL_ALBUM,
-    _COL_YEAR, _COL_DURATION, _COL_SAMPLE_RATE, _COL_BITRATE, _COL_SIZE, _COL_CODEC, _COL_RATING,
-    _COL_STATUS, _COL_PROGRESS,
-) = range(16)
+    _COL_YEAR, _COL_DURATION, _COL_BIT_DEPTH, _COL_SAMPLE_RATE, _COL_BITRATE, _COL_SIZE, _COL_CODEC,
+    _COL_RATING, _COL_STATUS, _COL_PROGRESS,
+) = range(17)
 
 _HEADERS = [
     "File Name", "Track No", "Disc No", "Title", "Artist", "Album Artist", "Album",
-    "Year", "Duration", "Sample Rate", "Bitrate", "File size", "Codec", "Rating",
+    "Year", "Duration", "Bit Depth", "Sample Rate", "Bitrate", "File size", "Codec", "Rating",
     "Status", "Progress",
 ]
 
@@ -51,6 +58,7 @@ _DEFAULT_WIDTHS = {
     _COL_ALBUM: 420,
     _COL_YEAR: 90,
     _COL_DURATION: 85,
+    _COL_BIT_DEPTH: 75,
     _COL_SAMPLE_RATE: 90,
     _COL_BITRATE: 90,
     _COL_SIZE: 90,
@@ -87,6 +95,7 @@ class TrackTable(QTableWidget):
         self.setHorizontalHeaderLabels(_HEADERS)
         self.setAlternatingRowColors(True)
         self.setShowGrid(False)
+        self._ffaux_icons = icons_path()
 
         header = self.horizontalHeader()
         header.setHighlightSections(False)
@@ -166,6 +175,7 @@ class TrackTable(QTableWidget):
         header = self.horizontalHeader()
         menu = QMenu(self)
         columns_menu = menu.addMenu("Columns")
+        columns_menu.setIcon(QIcon(str(self._ffaux_icons / "Columns.ico")))
         for action in self.build_column_toggle_actions(columns_menu):
             columns_menu.addAction(action)
         menu.exec(header.mapToGlobal(pos))
@@ -263,8 +273,9 @@ class TrackTable(QTableWidget):
             _COL_ALBUM: meta.album or "",
             _COL_YEAR: meta.year or "",
             _COL_DURATION: format_duration(audio_file.duration_seconds),
+            _COL_BIT_DEPTH: format_bit_depth(audio_file.bit_depth),
             _COL_SAMPLE_RATE: format_sample_rate(audio_file.sample_rate_hz),
-            _COL_BITRATE: f"{audio_file.bitrate_kbps} kbps" if audio_file.bitrate_kbps else "-",
+            _COL_BITRATE: format_bitrate(audio_file.bitrate_kbps),
             _COL_SIZE: format_file_size(audio_file.file_size_bytes),
             _COL_CODEC: audio_file.codec or "-",
             _COL_RATING: meta.rating or "",
@@ -314,8 +325,9 @@ class TrackTable(QTableWidget):
             _COL_ALBUM: meta.album or "",
             _COL_YEAR: meta.year or "",
             _COL_DURATION: format_duration(audio_file.duration_seconds),
+            _COL_BIT_DEPTH: format_bit_depth(audio_file.bit_depth),
             _COL_SAMPLE_RATE: format_sample_rate(audio_file.sample_rate_hz),
-            _COL_BITRATE: f"{audio_file.bitrate_kbps} kbps" if audio_file.bitrate_kbps else "-",
+            _COL_BITRATE: format_bitrate(audio_file.bitrate_kbps),
             _COL_SIZE: format_file_size(audio_file.file_size_bytes),
             _COL_CODEC: audio_file.codec or "-",
             _COL_RATING: meta.rating or "",
