@@ -40,7 +40,17 @@ _FORMAT_LABELS = {
 }
 
 class ConversionSettingsDialog(QDialog):
-    def __init__(self, current_settings: ConversionSettings, default_output_dir: str = "", output_suffix: str = "" ,parent=None):
+    def __init__(
+        self,
+        current_settings: ConversionSettings,
+        default_output_dir: str = "",
+        output_suffix: str = "",
+        max_sample_rate_hz: int | None = None,
+        max_bitrate_kbps: int | None = None,
+        max_bit_depth: int | None = None,
+        prevent_upsampling: bool = True,
+        parent=None,
+    ):
         super().__init__(parent)
         self.setWindowTitle("Convert Settings")
         self.setMinimumSize(480, 330)
@@ -52,24 +62,64 @@ class ConversionSettingsDialog(QDialog):
         self._format_combo.setCurrentIndex(list(OutputFormat).index(current_settings.output_format))
 
         self._sample_rate_combo = QComboBox()
+
         for hz in STANDARD_SAMPLE_RATES:
+            if prevent_upsampling and max_sample_rate_hz is not None:
+                if hz > max_sample_rate_hz:
+                    continue
+
             self._sample_rate_combo.addItem(f"{hz} Hz", userData=hz)
-        if current_settings.sample_rate_hz in STANDARD_SAMPLE_RATES:
-            self._sample_rate_combo.setCurrentIndex(
-                STANDARD_SAMPLE_RATES.index(current_settings.sample_rate_hz)
+
+        if self._sample_rate_combo.count() > 0:
+            current_index = self._sample_rate_combo.findData(
+                current_settings.sample_rate_hz
             )
+
+            if current_index >= 0:
+                self._sample_rate_combo.setCurrentIndex(current_index)
+            else:
+                self._sample_rate_combo.setCurrentIndex(
+                    self._sample_rate_combo.count() - 1
+                )
 
         # Bit depth for lossless
         self._bit_depth_combo = QComboBox()
+
         for depth in (16, 24, 32):
+            if prevent_upsampling and max_bit_depth is not None:
+                effective_depth = 32 if depth == 24 else depth
+
+                if effective_depth > max_bit_depth:
+                    continue
+
             self._bit_depth_combo.addItem(f"{depth}-bit", userData=depth)
-        self._bit_depth_combo.setCurrentIndex((16, 24, 32).index(current_settings.bit_depth))
+
+        if self._bit_depth_combo.count() > 0:
+            current_index = self._bit_depth_combo.findData(
+                current_settings.bit_depth
+            )
+
+            if current_index >= 0:
+                self._bit_depth_combo.setCurrentIndex(current_index)
+            else:
+                self._bit_depth_combo.setCurrentIndex(
+                    self._bit_depth_combo.count() - 1
+                )
 
         # Bitrate in kbps (ONLY for formats other than FLAC/WAV)
         self._bitrate_spin = QSpinBox()
-        self._bitrate_spin.setRange(32, 320)
+        max_bitrate = 320
+
+        if prevent_upsampling and max_bitrate_kbps is not None:
+            max_bitrate = min(max_bitrate, max_bitrate_kbps)
+
+        max_bitrate = max(32, max_bitrate)
+
+        self._bitrate_spin.setRange(32, max_bitrate)
         self._bitrate_spin.setSuffix(" kbps")
-        self._bitrate_spin.setValue(current_settings.bitrate_kbps)
+        self._bitrate_spin.setValue(
+            min(current_settings.bitrate_kbps, max_bitrate)
+        )
 
         # FLAC compression level
         self._flac_compression_spin = QSpinBox()
