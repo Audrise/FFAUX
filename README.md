@@ -229,7 +229,13 @@ This tool is designed to help you **view, edit, and manage audio metadata and co
 
 ## Changelog
 
-### v1.0.0 - **Initial Release**
+### v1.0.0 - **Initial Release FFAUX**
 
 <h1></h1>
-<h4 align="center">© 2026 Audrise. All rights reserved.</h4>
+<h4 align="center">
+   © 2026 Audrise. All rights reserved.
+</h4>
+
+<div align="center">
+   <a href="#description">Back to top</a>
+</div>
