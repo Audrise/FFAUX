@@ -31,7 +31,7 @@
 
 ## Description
 
-<p align="center">Python 3 based FFmpeg wrapper with a PySide6 GUI</p>
+<p align="center"><b>Python 3 based FFmpeg wrapper with a PySide6 GUI</b></p>
 
 FFAUX is a desktop application I developed around my own workflow for managing digital audio.
 It uses FFmpeg and FFprobe to handle audio conversion and metadata, while PySide6 provides a graphical, playlist-style interface. You can queue multiple audio files, configure conversion settings, and edit metadata without having to work from the command line.
@@ -89,7 +89,7 @@ FFAUX runs FFmpeg and FFprobe as external processes instead of reimplementing th
 * pip
 * PySide6
 * FFmpeg and FFprobe executables
-* pypresence (optional, only required for Discord Rich Presence. The application runs normally without it)
+* pypresence (optional, only required for Discord Rich Presence. *The application runs normally without it*)
 
 ## Installation
 
@@ -121,7 +121,7 @@ FFAUX runs FFmpeg and FFprobe as external processes instead of reimplementing th
 
 5. Install FFmpeg:
 
-   * [Download an FFmpeg build](https://ffmpeg.org/download.html), such as the builds provided by gyan.dev or BtbN for Windows.
+   * [Download an FFmpeg build](https://ffmpeg.org/download.html), such as the builds provided by **gyan.dev** or **BtbN** for Windows.
    * Place `ffmpeg` and `ffprobe` (or `ffmpeg.exe` / `ffprobe.exe` on Windows) in the `bin/` directory, or make sure they are available through the system PATH.
    * You can also configure their paths later from within the application.
 
