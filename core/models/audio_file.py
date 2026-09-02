@@ -31,6 +31,7 @@ class AudioFile:
     bitrate_kbps: Optional[int] = None
     codec: Optional[str] = None
     sample_rate_hz: Optional[int] = None
+    bit_depth: Optional[int] = None
     file_size_bytes: Optional[int] = None
     output_path: Optional[str] = None
     error_message: Optional[str] = None
