@@ -26,6 +26,7 @@ class ProgressParser:
     def __init__(self, total_duration_seconds: Optional[float] = None):
         self.total_duration_seconds = total_duration_seconds
         self._pending: dict[str, str] = {}
+        self._last_out_time_seconds = 0.0
 
     def feed_line(self, line: str) -> Optional[ProgressState]:
         line = line.strip()
@@ -45,12 +46,15 @@ class ProgressParser:
 
     def _build_state(self, is_done: bool) -> ProgressState:
         out_time_ms = self._pending.get("out_time_ms")
-        out_time_seconds = 0.0
+
         if out_time_ms is not None:
             try:
                 out_time_seconds = max(0, int(out_time_ms)) / 1_000_000
+                self._last_out_time_seconds = out_time_seconds
             except ValueError:
-                out_time_seconds = 0.0
+                out_time_seconds = self._last_out_time_seconds
+        else:
+            out_time_seconds = self._last_out_time_seconds
 
         return ProgressState(
             out_time_seconds=out_time_seconds,
