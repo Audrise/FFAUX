@@ -22,6 +22,18 @@ def test_wav_settings_include_soxr_and_sample_fmt_but_no_compression_level():
     assert "flac_compression_level" not in params # WAV does not have this option
     assert "bitrate_kbps" not in params
 
+def test_aac_settings_use_m4a_and_preserve_streams():
+    settings = ConversionSettings(
+        output_format=OutputFormat.AAC,
+        bitrate_kbps=256,
+    )
+    params = settings.to_job_params()
+
+    assert settings.file_extension() == ".m4a"
+    assert params["codec"] == "aac"
+    assert params["bitrate_kbps"] == 256
+    assert params["preserve_streams"] is True
+
 def test_mp3_settings_use_bitrate_and_have_no_soxr():
     settings = ConversionSettings(output_format=OutputFormat.MP3, bitrate_kbps=256)
     params = settings.to_job_params()
@@ -126,3 +138,36 @@ def test_command_builder_legacy_bitrate_string_still_works():
     args = build(job)
     assert "-b:a" in args
     assert "192k" in args
+
+def test_command_builder_aac_preserves_streams_and_metadata():
+    audio_file = AudioFile(path="input.flac")
+    settings = ConversionSettings(
+        output_format=OutputFormat.AAC,
+        bitrate_kbps=256,
+    )
+
+    job = Job(
+        audio_file=audio_file,
+        operation=OperationType.CONVERT,
+        params=settings.to_job_params(),
+        output_path="output.m4a",
+    )
+
+    args = build(job)
+
+    assert "-map" in args
+    assert args[args.index("-map") + 1] == "0"
+
+    assert "-map_metadata" in args
+    assert args[args.index("-map_metadata") + 1] == "0"
+
+    assert "-c:v" in args
+    assert args[args.index("-c:v") + 1] == "copy"
+
+    assert "-c:a" in args
+    assert args[args.index("-c:a") + 1] == "aac"
+
+    assert "-b:a" in args
+    assert "256k" in args
+
+    assert args[-1] == "output.m4a"
