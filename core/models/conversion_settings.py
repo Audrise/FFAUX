@@ -70,6 +70,10 @@ class ConversionSettings:
         return _SAMPLE_FMT_BY_BIT_DEPTH.get(self.bit_depth, "s16")
 
     def file_extension(self) -> str:
+        if self.output_format == OutputFormat.AAC:
+            return ".m4a"
+        if self.output_format == OutputFormat.ALAC:
+            return ".m4a"
         return f".{self.output_format.value}"
 
     def to_job_params(self) -> dict:
@@ -85,9 +89,31 @@ class ConversionSettings:
             if self.use_soxr:
                 params["use_soxr"] = True
                 params["soxr_precision"] = self.soxr_precision
-            if self.output_format == OutputFormat.FLAC:
-                params["flac_compression_level"] = self.flac_compression_level
+
+        if self.output_format == OutputFormat.FLAC:
+            params["flac_compression_level"] = self.flac_compression_level
+            params["preserve_cover_art"] = True
+
+        if self.output_format == OutputFormat.ALAC:
+            params["audio_only"] = True
+            params["preserve_cover_art"] = True
+
         elif self.output_format in LOSSY_FORMATS:
             params["bitrate_kbps"] = self.bitrate_kbps
+
+            if self.output_format == OutputFormat.MP3:
+                params["audio_only"] = True
+                params["preserve_cover_art"] = True
+
+            if self.output_format == OutputFormat.AAC:
+                params["preserve_streams"] = True
+                params["preserve_cover_art"] = True
+
+            if self.output_format == OutputFormat.OPUS:
+                params["preserve_cover_art"] = True
+
+            if self.output_format == OutputFormat.OGG:
+                params["audio_only"] = True
+                params["preserve_metadata_args"] = True
 
         return params
