@@ -14,9 +14,16 @@ def _build_convert(job: Job) -> list[str]:
     params = job.params
     args = ["-y", "-i", job.audio_file.path]
 
+    if params.get("audio_only"):
+        args += ["-map", "0:a:0", "-map_metadata", "0"]
+
+    if params.get("preserve_metadata"):
+        args += ["-map_metadata", "0"]
+
+    if params.get("preserve_metadata_args"):
+        args += _metadata_args(job)
+
     if params.get("preserve_streams"):
-        # -map 0 -map_metadata 0 -c:v copy: include all streams (including
-        # cover art as a video stream) + metadata from the source without re-encoding the video/cover.
         args += ["-map", "0", "-map_metadata", "0", "-c:v", "copy"]
 
     if params.get("use_soxr"):
@@ -54,6 +61,11 @@ def _build_convert(job: Job) -> list[str]:
         args += ["-compression_level", str(compression_level)]
 
     args += [job.output_path]
+
+    """print("\nFFMPEG COMMAND:")
+    print(" ".join(f'"{arg}"' if " " in str(arg) else str(arg) for arg in args))
+    print()"""
+
     return args
 
 def _metadata_args(job: Job) -> list[str]:
