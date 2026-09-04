@@ -84,7 +84,9 @@ class ConversionSettings:
         }
 
         if self.output_format in SOXR_FORMATS:
-            params["preserve_streams"] = True
+            if self.output_format != OutputFormat.WAV:
+                params["preserve_streams"] = True
+
             params["sample_fmt"] = self.sample_fmt()
 
             if self.use_soxr:
