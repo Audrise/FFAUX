@@ -178,6 +178,11 @@ class TrackTable(QTableWidget):
         columns_menu.setIcon(QIcon(str(self._ffaux_icons / "Columns.ico")))
         for action in self.build_column_toggle_actions(columns_menu):
             columns_menu.addAction(action)
+
+        reset_col_menu = menu.addAction("Reset Column Layout", self.reset_layout)
+        reset_col_menu.setIcon(QIcon(str(self._ffaux_icons / "Reset.ico")))
+        reset_col_menu.setShortcut("Ctrl+>")
+
         menu.exec(header.mapToGlobal(pos))
 
     def _set_column_visible(self, col: int, visible: bool) -> None:
