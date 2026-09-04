@@ -1,9 +1,9 @@
 """
-# Centralize logging configuration here.
+# Centralized logging configuration.
 
-Other modules only need to use `logger = logging.getLogger(__name__)`.
-The GUI can add its own handlers (e.g. QtLogHandler) to display logs in a widget
-without requiring other modules to know how or where the logs are displayed.
+Other modules simply use: `logger = logging.getLogger(__name__)`.
+The GUI can attach additional handlers (e.g., QtLogHandler) to display
+logs in a widget, without other modules needing to know that the logs are being displayed in the GUI.
 """
 from __future__ import annotations
 
@@ -20,17 +20,18 @@ class DayFormatter(logging.Formatter):
         dt = datetime.fromtimestamp(record.created)
         return f"{self.DAYS[dt.weekday()]} {dt:%d-%m-%y %H:%M:%S}"
 
-def setup_logging(
-    log_file: str | Path | None = None,
-    level: int = logging.INFO,
-) -> logging.Logger:
+def get_formatter() -> DayFormatter:
+    return DayFormatter("[%(asctime)s] [%(levelname)s] %(message)s")
+    # return DayFormatter("[%(asctime)s] [%(levelname)s] %(name)s: %(message)s")
+
+def setup_logging(log_file: str | Path | None = None, level: int = logging.INFO) -> logging.Logger:
     logger = logging.getLogger(APP_LOGGER_NAME)
     logger.setLevel(level)
 
     if logger.handlers:
-        return logger
+        return logger  # already set up; avoid duplicate handlers
 
-    formatter = DayFormatter("[%(asctime)s] [%(levelname)s] %(name)s: %(message)s")
+    formatter = get_formatter()
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
