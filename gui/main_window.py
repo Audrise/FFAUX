@@ -27,10 +27,12 @@ from core.models.job import Job, OperationType
 from core.models.metadata import Metadata
 from core.template_service import TemplateService
 
+from gui.dialogs.about_dialog import AboutFFAUXDialog
 from gui.dialogs.conversion_progress_dialog import ConversionProgressDialog
 from gui.dialogs.conversion_settings_dialog import ConversionSettingsDialog
 from gui.dialogs.metadata_progress_dialog import MetadataProgressDialog
 from gui.dialogs.metadata_editor_dialog import MetadataEditorDialog
+from gui.dialogs.release_notes_dialog import ReleaseNotesDialog
 from gui.dialogs.settings_dialog import SettingsDialog
 from gui.dialogs.spectrogram_progress_dialog import SpectrogramProgressDialog
 from gui.dialogs.spectrogram_settings_dialog import SpectrogramSettingsDialog
@@ -158,13 +160,13 @@ class MainWindow(QMainWindow):
         # File
         file_menu = menu_bar.addMenu("&File")
         self._open_action = QAction("Add File...", self)
-        self._custom_icon(self._open_action, self._ffaux_icons, "Files.ico")
+        self._custom_icon(self._open_action, self._ffaux_icons, "AddFile.ico")
         self._open_action.setShortcut(QKeySequence.StandardKey.Open)
         self._open_action.triggered.connect(self._on_add_files_clicked)
         file_menu.addAction(self._open_action)
 
         self._add_folder_action = QAction("Add Folder...", self)
-        self._custom_icon(self._add_folder_action, self._ffaux_icons, "Folder.ico")
+        self._custom_icon(self._add_folder_action, self._ffaux_icons, "AddFolder.ico")
         self._add_folder_action.setShortcut("Ctrl+Shift+O")
         self._add_folder_action.triggered.connect(self._on_add_folder_clicked)
         file_menu.addAction(self._add_folder_action)
@@ -243,19 +245,19 @@ class MainWindow(QMainWindow):
         sort_menu.addAction(self._sort_album_action)
 
         self._edit_metadata_action = QAction("Edit Selected Metadata...", self)
-        self._custom_icon(self._edit_metadata_action, self._ffaux_icons, "EditMeta.ico")
+        self._custom_icon(self._edit_metadata_action, self._ffaux_icons, "MetaEdit.ico")
         self._edit_metadata_action.setShortcut("Ctrl+E")
         self._edit_metadata_action.triggered.connect(self._on_edit_metadata_clicked)
         edit_menu.addAction(self._edit_metadata_action)
 
         self._spectrogram_action = QAction("Generate Spectrogram...", self)
-        self._custom_icon(self._spectrogram_action, self._ffaux_icons, "GenSpect.ico")
+        self._custom_icon(self._spectrogram_action, self._ffaux_icons, "Spectro.ico")
         self._spectrogram_action.setShortcut("Ctrl+G")
         self._spectrogram_action.triggered.connect(self._on_generate_spectrogram_clicked)
         edit_menu.addAction(self._spectrogram_action)
 
         self._settings_action = QAction("Settings...", self)
-        self._custom_icon(self._settings_action, self._ffaux_icons, "Setting.ico")
+        self._custom_icon(self._settings_action, self._ffaux_icons, "Settings.ico")
         self._settings_action.setShortcut("Ctrl+,")
         self._settings_action.triggered.connect(self._on_settings_clicked)
         edit_menu.addAction(self._settings_action)
@@ -263,7 +265,7 @@ class MainWindow(QMainWindow):
         # View
         view_menu = menu_bar.addMenu("&View")
         self._toggle_log_action = QAction("Show Output Log", self)
-        self._custom_icon(self._toggle_log_action, self._ffaux_icons, "Output.ico")
+        self._custom_icon(self._toggle_log_action, self._ffaux_icons, "OutLog.ico")
         self._toggle_log_action.setShortcut("Ctrl+/")
         self._toggle_log_action.setCheckable(True)
         self._toggle_log_action.setChecked(False)
@@ -272,7 +274,7 @@ class MainWindow(QMainWindow):
 
         view_menu.addSeparator()
 
-        self._reset_columns_action = QAction("Reset Column Layouts", self)
+        self._reset_columns_action = QAction("Reset Column Layout", self)
         self._custom_icon(self._reset_columns_action, self._ffaux_icons, "Reset.ico")
         self._reset_columns_action.setShortcut("Ctrl+>")
         self._reset_columns_action.triggered.connect(self._on_reset_column_layout_clicked)
@@ -280,9 +282,15 @@ class MainWindow(QMainWindow):
 
         # Help
         help_menu = menu_bar.addMenu("&Help")
-        about_action = QAction("About FFAUX", self)
-        self._custom_icon(about_action, self._ffaux_icons, "FFAUX.ico")
 
+        release_action = QAction("Release Notes", self)
+        self._custom_icon(release_action, self._ffaux_icons, "Release.ico")
+        release_action.setShortcut("Ctrl+!")
+        release_action.triggered.connect(self._on_release_notes)
+        help_menu.addAction(release_action)
+
+        about_action = QAction("About FFAUX", self)
+        self._custom_icon(about_action, self._ffaux_icons, "About.ico")
         about_action.setShortcut("Ctrl+H")
         about_action.triggered.connect(self._on_about)
         help_menu.addAction(about_action)
@@ -368,21 +376,21 @@ class MainWindow(QMainWindow):
             "Add File...",
             self._on_add_files_clicked
         )
-        self._custom_icon(add_file_action, self._ffaux_icons, "Files.ico")
+        self._custom_icon(add_file_action, self._ffaux_icons, "AddFile.ico")
         add_file_action.setShortcut("Ctrl+O")
 
         add_folder_action = menu.addAction(
             "Add Folder...",
             self._on_add_folder_clicked
         )
-        self._custom_icon(add_folder_action, self._ffaux_icons, "Folder.ico")
+        self._custom_icon(add_folder_action, self._ffaux_icons, "AddFolder.ico")
         add_folder_action.setShortcut("Ctrl+Shift+O")
 
         edit_metadata_action = menu.addAction(
             "Edit Metadata...",
             self._on_edit_metadata_clicked
         )
-        self._custom_icon(edit_metadata_action, self._ffaux_icons, "EditMeta.ico")
+        self._custom_icon(edit_metadata_action, self._ffaux_icons, "MetaEdit.ico")
         edit_metadata_action.setShortcut("Ctrl+E")
 
         convert_action = menu.addAction(
@@ -396,7 +404,7 @@ class MainWindow(QMainWindow):
             "Generate Spectrogram...",
             self._on_generate_spectrogram_clicked
         )
-        self._custom_icon(spectrogram_action, self._ffaux_icons, "GenSpect.ico")
+        self._custom_icon(spectrogram_action, self._ffaux_icons, "Spectro.ico")
         spectrogram_action.setShortcut("Ctrl+G")
 
         menu.addAction(self._toggle_log_action)
@@ -1024,50 +1032,10 @@ class MainWindow(QMainWindow):
             self._batch_convert_success = 0
 
     def _on_about(self) -> None:
-        box = QMessageBox(self)
-        box.setWindowTitle("About")
-        box.setIcon(QMessageBox.Icon.NoIcon)
-        box.setTextFormat(Qt.TextFormat.RichText)
-        box.setText("""
-            <div style="font-size: 10pt;">
+        AboutFFAUXDialog(self)
 
-                <h2 align="center">
-                    FFAUX v1.0.0 [x64]
-                </h2>
-
-                <h4 align="center">
-                    Flexible Format Audio Utility eXchange
-                </h4>
-
-                <p>
-                    FFAUX is a personal project created and maintained by <b>Audrise</b>.
-                    It started from a simple idea of making everyday audio processing
-                    tasks less complicated and easier to work with. Instead of relying
-                    on command-line tools alone, FFAUX brings those capabilities into a
-                    simple graphical interface while still keeping the flexibility that
-                    makes FFmpeg so useful. The project is built with <b>Python</b> and
-                    <b>PySide6</b>, with <b>FFmpeg</b> and <b>FFprobe</b> doing the work
-                    behind the scenes.
-                </p>
-
-                <p>
-                    Licensed under:
-                    <a href="LICENSE">GNU General Public License v3.0</a><br>
-
-                    Third-party licenses:
-                    <a href="THIRD_PARTY_LICENSES.html">View licenses</a><br>
-
-                    GitHub:
-                    <a href="https://github.com/Audrise">Audrise</a>
-                </p>
-
-                <p>
-                    <b>© 2026 Audrise. All rights reserved.
-                </p>
-
-            </div>
-        """)
-        box.exec()
+    def _on_release_notes(self) -> None:
+        ReleaseNotesDialog(self)
 
     def _confirm_exit(self):
         confirm = QMessageBox.question(
