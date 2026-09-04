@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import logging
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -11,6 +12,7 @@ from PySide6.QtWidgets import (
     QGraphicsOpacityEffect,
     QGraphicsDropShadowEffect
 )
+
 from PySide6.QtGui import QIcon, QPixmap, QColor
 from PySide6.QtCore import Qt, QEventLoop, QPropertyAnimation
 
@@ -22,7 +24,16 @@ from core.template_service import TemplateService
 from ffmpeg.ffmpeg_runner import FFmpegRunner
 from ffmpeg.ffprobe_runner import FFprobeRunner
 from gui.main_window import MainWindow
+from gui.qt_log_handler import QtLogHandler
 from utils.logger import setup_logging, get_logger
+
+from utils.logger import (
+    APP_LOGGER_NAME,
+    setup_logging,
+    get_logger,
+    get_formatter
+)
+
 from utils.paths import (
     app_root,
     resolve_tool_path,
@@ -63,6 +74,11 @@ def main() -> int:
             f"Failed to initialize logging:\n\n{exc}"
         )
         return 1
+
+    qt_log_handler = QtLogHandler()
+    qt_log_handler.setFormatter(get_formatter())
+    logging.getLogger(APP_LOGGER_NAME).addHandler(qt_log_handler)
+    logger.info("Starting FFAUX")
 
     # Load QT Stylesheet
     qss_path = styles_path() / "main.qss"
@@ -194,6 +210,13 @@ def main() -> int:
         discord_presence_service=discord_presence,
     )
 
+    qt_log_handler.logRecordEmitted.connect(window.append_log_line)
+
+    for line in qt_log_handler.drain_buffered_lines():
+        window.append_log_line(line)
+
+    logger.info("FFAUX started successfully")
+
     if config.window_maximized:
         window.showMaximized()
 
@@ -208,8 +231,6 @@ def main() -> int:
 
     if splash:
         splash.close()
-
-    logger.info("FFAUX started successfully")
 
     return app.exec()
 
