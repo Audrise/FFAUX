@@ -995,6 +995,9 @@ class MainWindow(QMainWindow):
     def _on_toggle_log(self, checked: bool) -> None:
         self._log_viewer.setVisible(checked)
 
+    def append_log_line(self, message: str) -> None:
+        self._log_viewer.append_app_log(message)
+
     def _on_reset_column_layout_clicked(self) -> None:
         self._track_table.reset_layout()
         cfg = self._config_service
@@ -1012,6 +1015,7 @@ class MainWindow(QMainWindow):
         self._process_action.setEnabled(True)
         self._cancel_action.setEnabled(False)
         self._conversion_progress_dialog = None
+        self._metadata_progress_dialog = None
         self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
         logger.info("Batch finished")
 
