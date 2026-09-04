@@ -86,9 +86,13 @@ class ConversionSettings:
         if self.output_format in SOXR_FORMATS:
             params["preserve_streams"] = True
             params["sample_fmt"] = self.sample_fmt()
+
             if self.use_soxr:
                 params["use_soxr"] = True
                 params["soxr_precision"] = self.soxr_precision
+
+        if self.output_format == OutputFormat.WAV:
+            params["audio_only"] = True
 
         if self.output_format == OutputFormat.FLAC:
             params["flac_compression_level"] = self.flac_compression_level
@@ -106,7 +110,7 @@ class ConversionSettings:
                 params["preserve_cover_art"] = True
 
             if self.output_format == OutputFormat.AAC:
-                params["preserve_streams"] = True
+                params["audio_only"] = True
                 params["preserve_cover_art"] = True
 
             if self.output_format == OutputFormat.OPUS:
