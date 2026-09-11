@@ -10,7 +10,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QAction, QDragEnterEvent, QDropEvent, QWheelEvent, QIcon
 from PySide6.QtWidgets import (
     QAbstractItemView, QHeaderView, QMenu, QProgressBar, QTableWidget,
-    QTableWidgetItem, QHBoxLayout, QWidget
+    QTableWidgetItem, QHBoxLayout, QVBoxLayout, QWidget, QLabel
 )
 
 from core.models.audio_file import AudioFile, FileStatus
@@ -118,6 +118,7 @@ class TrackTable(QTableWidget):
         self.setCurrentCell(-1, -1)
         self.setAcceptDrops(True)
         self._row_by_id: dict[str, int] = {}
+        self._empty_state = self._build_empty_state()
 
         for col in range(len(_HEADERS)):
             header.setSectionResizeMode(col, QHeaderView.ResizeMode.Interactive)
@@ -126,6 +127,74 @@ class TrackTable(QTableWidget):
 
         for col in _DEFAULT_HIDDEN_COLUMNS:
             header.setSectionHidden(col, True)
+
+        self._update_header_visibility()
+
+    def _build_empty_state(self) -> QWidget:
+        empty_state = QWidget(self.viewport())
+        empty_state.setObjectName("emptyState")
+
+        outer_layout = QVBoxLayout(empty_state)
+        outer_layout.setContentsMargins(0, 0, 0, 0)
+        outer_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        content = QWidget()
+        content.setObjectName("emptyStateContent")
+        content.setFixedWidth(400)
+
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(8)
+
+        shortcuts = [
+            ("Open File", ["Ctrl", "O"]),
+            ("Open Folder", ["Ctrl", "Shift", "O"]),
+            ("Show FFAUX Log", ["Ctrl", "/"]),
+            ("Settings", ["Ctrl", ","]),
+        ]
+
+        for label_text, keys in shortcuts:
+            row = QHBoxLayout()
+            row.setContentsMargins(0, 0, 0, 0)
+            row.setSpacing(6)
+
+            label = QLabel(label_text)
+            label.setObjectName("shortcutLabel")
+            label.setFixedWidth(160)
+            label.setAlignment(
+                Qt.AlignmentFlag.AlignLeft |
+                Qt.AlignmentFlag.AlignVCenter
+            )
+            row.addWidget(label)
+
+            key_layout = QHBoxLayout()
+            key_layout.setContentsMargins(0, 0, 0, 0)
+            key_layout.setSpacing(6)
+            key_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+            for index, key in enumerate(keys):
+                if index > 0:
+                    plus_label = QLabel("+")
+                    plus_label.setObjectName("shortcutPlus")
+                    plus_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                    key_layout.addWidget(plus_label)
+
+                key_label = QLabel(key)
+                key_label.setObjectName("shortcutKey")
+                key_label.setFixedSize(30, 20)
+                key_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                key_layout.addWidget(key_label)
+
+            row.addLayout(key_layout)
+
+            layout.addLayout(row)
+
+        outer_layout.addWidget(content)
+
+        empty_state.setGeometry(self.viewport().rect())
+        empty_state.raise_()
+
+        return empty_state
 
     def column_widths(self) -> list[int]:
         header = self.horizontalHeader()
@@ -240,6 +309,10 @@ class TrackTable(QTableWidget):
 
     # Once vertical scrolling reaches the top or bottom, further scrolling moves horizontally.
     def wheelEvent(self, event: QWheelEvent) -> None:
+        if self.rowCount() == 0:
+            event.accept()
+            return
+
         delta = event.pixelDelta().y() or event.angleDelta().y()
 
         vbar = self.verticalScrollBar()
@@ -314,6 +387,7 @@ class TrackTable(QTableWidget):
         self.setCellWidget(row, _COL_PROGRESS, progress_container)
 
         self._row_by_id[audio_file.id] = row
+        self._update_header_visibility()
 
     def update_metadata(self, audio_file_id: str, audio_file: AudioFile) -> None:
         # Refresh only metadata-dependent columns after async ffprobe completes.
@@ -361,6 +435,30 @@ class TrackTable(QTableWidget):
         for row in rows_to_remove:
             self.removeRow(row)
         self._rebuild_row_index()
+        self._update_header_visibility()
+
+    # def _update_header_visibility(self) -> None:
+    #     self.horizontalHeader().setVisible(self.rowCount() > 0)
+
+    def _update_header_visibility(self) -> None:
+        has_rows = self.rowCount() > 0
+
+        self.horizontalHeader().setVisible(has_rows)
+        self.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+            if has_rows
+            else Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+
+        self._empty_state.setVisible(not has_rows)
+        self._empty_state.setGeometry(self.viewport().rect())
+        self._empty_state.raise_()
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+
+        if hasattr(self, "_empty_state"):
+            self._empty_state.setGeometry(self.viewport().rect())
 
     def remove_selected_rows(self) -> list[str]:
         # Delete all currently selected rows.
@@ -397,6 +495,7 @@ class TrackTable(QTableWidget):
     def clear_all(self) -> None:
         self.setRowCount(0)
         self._row_by_id.clear()
+        self._update_header_visibility()
 
     # Selection
     def selected_row_id(self) -> str | None:
