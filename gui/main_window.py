@@ -109,19 +109,25 @@ class MainWindow(QMainWindow):
         if self._config_service.config.restore_session_on_launch:
             session_paths = self._config_service.config.session_paths
             if session_paths:
-                self._on_files_added(session_paths, show_completion_message=False)
+                self._on_files_added(session_paths, show_completion_message=False, record_undo=False)
 
         self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
 
+        self._update_file_dependent_actions()
         self._update_selection_dependent_actions()
 
     def _update_file_dependent_actions(self) -> None:
         has_files = bool(self._audio_files)
+
         self._process_action.setEnabled(has_files)
         self._sort_menu.setEnabled(has_files)
+        self._columns_menu.setEnabled(has_files)
+        self._reset_columns_action.setEnabled(has_files)
+        self._search_bar.setVisible(has_files)
 
     def _update_selection_dependent_actions(self) -> None:
         has_selection = bool(self._track_table.selected_row_ids())
+
         self._process_action.setEnabled(has_selection)
         self._delete_action.setEnabled(has_selection)
         self._edit_metadata_action.setEnabled(has_selection)
@@ -264,7 +270,7 @@ class MainWindow(QMainWindow):
 
         # View
         view_menu = menu_bar.addMenu("&View")
-        self._toggle_log_action = QAction("Show Output Log", self)
+        self._toggle_log_action = QAction("Show FFAUX Log", self)
         self._custom_icon(self._toggle_log_action, self._ffaux_icons, "OutLog.ico")
         self._toggle_log_action.setShortcut("Ctrl+/")
         self._toggle_log_action.setCheckable(True)
@@ -304,6 +310,7 @@ class MainWindow(QMainWindow):
         self._search_bar.setObjectName("SearchBar")
         self._search_bar.setPlaceholderText("Search for track no, title, artist, album, year...")
         self._search_bar.setClearButtonEnabled(True)
+        self._search_bar.setVisible(False)
         self._search_bar.setFixedWidth(285)
         self._search_bar.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         if self._ffaux_icons is not None and self._ffaux_icons.exists():
@@ -489,7 +496,13 @@ class MainWindow(QMainWindow):
 
         self._on_files_added(found)
 
-    def _on_files_added(self, paths: list[str], show_completion_message: bool = True) -> None:
+    def _on_files_added(
+        self,
+        paths: list[str],
+        show_completion_message: bool = True,
+        record_undo: bool = True,
+    ) -> None:
+    # def _on_files_added(self, paths: list[str], show_completion_message: bool = True) -> None:
         # Add the row with placeholder metadata and let ffprobe fill it in asynchronously.
         # This keeps the UI responsive when adding or restoring many files.
         added_files: list[AudioFile] = []
@@ -509,7 +522,7 @@ class MainWindow(QMainWindow):
         logger.info("Adding %d files to the batch", len(paths))
         self._update_file_dependent_actions()
 
-        if added_files:
+        if added_files and record_undo:
             self._undo_stack.append(("add", added_files))
             self._redo_stack.clear()
             self._update_undo_redo_actions()
@@ -731,6 +744,7 @@ class MainWindow(QMainWindow):
             logger.info("Deleted %d tracks", len(removed_files))
             self._redo_stack.clear()
             self._update_undo_redo_actions()
+        self._update_file_dependent_actions()
 
     def _on_edit_metadata_clicked(self) -> None:
         audio_file_ids = self._track_table.selected_row_ids()
