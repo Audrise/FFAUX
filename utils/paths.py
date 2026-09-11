@@ -47,8 +47,5 @@ def assets_path() -> Path:
 def icons_path() -> Path:
     return assets_path() / "icons"
 
-def splash_path() -> Path:
-    return assets_path() / "splash"
-
 def styles_path() -> Path:
     return assets_path() / "styles"
