@@ -248,6 +248,49 @@ QLabel[class="section-caption"] {
 }
 
 /* ============================================================
+   TRACK TABLE - SHORTCUT INFO CONTAINER
+   ============================================================
+*/
+QWidget#emptyState,
+QWidget#emptyStateContent {
+    background: transparent;
+}
+
+QLabel#shortcutLabel {
+    background: none;
+    color: #e0e0e0;
+    font-size: 10px;
+    min-width: 150px;
+}
+
+QLabel#shortcutKey {
+    font-size: 10px;
+    border: 1px solid #555555;
+    border-radius: 3px;
+    background: #1c1c1c;
+    color: #e0e0e0;
+}
+
+QLabel#shortcutPlus {
+    background: transparent;
+    color: #e0e0e0;
+    padding: 0;
+}
+
+/* ============================================================
+   SETTINGS DIALOG - HEADING
+   ============================================================
+*/
+QLabel#sectionHeading {
+    background: transparent;
+    color: #e0e0e0;
+    font-size: 16px;
+    font-weight: 600;
+    padding-top: 6px;
+    padding-bottom: 2px;
+}
+
+/* ============================================================
    PROGRESS BAR
    ============================================================
 */
