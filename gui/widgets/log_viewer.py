@@ -3,6 +3,8 @@
 """
 from __future__ import annotations
 
+import re
+
 from PySide6.QtGui import QTextCharFormat, QTextCursor, QColor
 from PySide6.QtWidgets import QPlainTextEdit
 
@@ -20,19 +22,37 @@ class LogViewer(QPlainTextEdit):
     def append_app_log(self, message: str) -> None:
         self.moveCursor(QTextCursor.MoveOperation.End)
 
-        format = QTextCharFormat()
+        match = re.match(r"(\[[^\]]+\])\s+(\[[A-Z]+\])\s+(.*)", message)
+
+        timestamp_format = QTextCharFormat()
+        timestamp_format.setForeground(QColor("#808080"))
+
+        level_format = QTextCharFormat()
+        message_format = QTextCharFormat()
+
+        message_format.setForeground(QColor("#D4D4D4"))
 
         if "[INFO]" in message:
-            format.setForeground(QColor("#00FF00"))
+            level_format.setForeground(QColor("#6A9955"))
         elif "[WARNING]" in message:
-            format.setForeground(QColor("#FFB700"))
+            level_format.setForeground(QColor("#D7BA7D"))
         elif "[ERROR]" in message:
-            format.setForeground(QColor("#F14C4C"))
+            level_format.setForeground(QColor("#F14C4C"))
         elif "[CRITICAL]" in message:
-            format.setForeground(QColor("#FF0000"))
+            level_format.setForeground(QColor("#FF5555"))
+        else:
+            level_format.setForeground(QColor("#D4D4D4"))
 
         cursor = self.textCursor()
-        cursor.insertText(message + "\n", format)
+
+        if match:
+            timestamp, level, text = match.groups()
+
+            cursor.insertText(f"{timestamp} ", timestamp_format)
+            cursor.insertText(f"{level} ", level_format)
+            cursor.insertText(f"{text}\n", message_format)
+        else:
+            cursor.insertText(f"{message}\n", message_format)
 
         self.setTextCursor(cursor)
         self.ensureCursorVisible()
