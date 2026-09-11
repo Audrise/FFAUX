@@ -12,6 +12,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
+from PySide6.QtGui import QColor, QTextCharFormat, QFont
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -22,7 +23,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
-    QVBoxLayout,
+    QVBoxLayout
 )
 
 from core.metadata_service import MetadataService
@@ -51,7 +52,7 @@ class MetadataEditorDialog(QDialog):
             self.setWindowTitle(f"Edit Metadata - {len(self._audio_files)} Selected Files")
         else:
             self.setWindowTitle(f"Edit Metadata - {self._primary_file.filename}")
-        self.resize(760, 480)
+        self.resize(820, 520)
 
         self._metadata_service = metadata_service
         self._template_service = template_service
@@ -128,11 +129,29 @@ class MetadataEditorDialog(QDialog):
 
         preview_window = QDialog(self)
         preview_window.setWindowTitle(f"Preview Metadata - {name}")
-        preview_window.resize(480, 320)
+        preview_window.resize(650, 400)
 
         text_area = QPlainTextEdit()
         text_area.setReadOnly(True)
-        text_area.setPlainText(preview_text)
+
+        key_format = QTextCharFormat()
+        key_format.setForeground(QColor("#569CD6"))
+        key_format.setFontWeight(QFont.Weight.DemiBold)
+
+        separator_format = QTextCharFormat()
+        separator_format.setForeground(QColor("#808080"))
+
+        value_format = QTextCharFormat()
+        value_format.setForeground(QColor("#D4D4D4"))
+
+        cursor = text_area.textCursor()
+
+        for key, value in data.items():
+            cursor.insertText(f"{key}", key_format)
+            cursor.insertText(" - ", separator_format)
+            cursor.insertText(f"{value}\n", value_format)
+
+        text_area.setTextCursor(cursor)
 
         close_btn = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         close_btn.rejected.connect(preview_window.reject)
