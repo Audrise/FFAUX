@@ -3,18 +3,8 @@ from __future__ import annotations
 import sys
 import logging
 
-from PySide6.QtWidgets import (
-    QApplication,
-    QMessageBox,
-    QWidget,
-    QLabel,
-    QVBoxLayout,
-    QGraphicsOpacityEffect,
-    QGraphicsDropShadowEffect
-)
-
-from PySide6.QtGui import QIcon, QPixmap, QColor
-from PySide6.QtCore import Qt, QEventLoop, QPropertyAnimation
+from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtGui import QIcon
 
 from core.config_service import ConfigService
 from core.discord_presence_service import DiscordPresenceService
@@ -39,7 +29,6 @@ from utils.paths import (
     resolve_tool_path,
     required_dir,
     icons_path,
-    splash_path,
     styles_path
 )
 
@@ -114,75 +103,6 @@ def main() -> int:
         )
         return 1
 
-    splash = None
-    fade_animation = None
-
-    APP_SPLASH_PATH = splash_path() / "FFAUX.png"
-    if APP_SPLASH_PATH.exists():
-        pixmap = QPixmap(str(APP_SPLASH_PATH))
-
-        if not pixmap.isNull():
-            splash = QWidget()
-            splash.setWindowFlags(
-                Qt.FramelessWindowHint |
-                Qt.WindowStaysOnTopHint
-            )
-            splash.setAttribute(Qt.WA_TranslucentBackground)
-
-            container = QWidget()
-            container.setObjectName("splashContainer")
-
-            shadow = QGraphicsDropShadowEffect()
-            shadow.setBlurRadius(35)
-            shadow.setOffset(0, 0)
-            shadow.setColor(QColor(0, 0, 0, 120))
-            container.setGraphicsEffect(shadow)
-
-            layout = QVBoxLayout(splash)
-            layout.setContentsMargins(30, 15, 30, 15)
-            layout.addWidget(container)
-
-            inner = QVBoxLayout(container)
-            inner.setContentsMargins(30, 30, 30, 30)
-            inner.setSpacing(4)
-
-            logo = QLabel()
-            logo.setAlignment(Qt.AlignCenter)
-            logo.setPixmap(
-                pixmap.scaled(
-                    170,
-                    170,
-                    Qt.KeepAspectRatio,
-                    Qt.SmoothTransformation,
-                )
-            )
-
-            app_title = QLabel("FFAUX v1.0.0")
-            app_title.setAlignment(Qt.AlignCenter)
-            app_title.setObjectName("splashTitle")
-
-            inner.addWidget(logo)
-            inner.addWidget(app_title)
-
-            splash.resize(320, 280)
-
-            opacity_effect = QGraphicsOpacityEffect()
-            opacity_effect.setOpacity(0)
-            splash.setGraphicsEffect(opacity_effect)
-
-            fade_animation = QPropertyAnimation(opacity_effect, b"opacity", splash)
-            fade_animation.setDuration(150)
-            fade_animation.setStartValue(0.0)
-            fade_animation.setEndValue(1.0)
-
-            splash.show()
-
-            loop = QEventLoop()
-            fade_animation.finished.connect(loop.quit)
-
-            fade_animation.start()
-            loop.exec()
-
     ffprobe_runner = FFprobeRunner(ffprobe_path=resolve_tool_path(config.ffprobe_path))
     ffmpeg_runner = FFmpegRunner(ffmpeg_path=resolve_tool_path(config.ffmpeg_path))
 
@@ -228,9 +148,6 @@ def main() -> int:
             window.move(config.window_x, config.window_y)
 
         window.show()
-
-    if splash:
-        splash.close()
 
     return app.exec()
 
