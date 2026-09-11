@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QFormLayout,
     QFrame,
+    QLabel,
     QHBoxLayout,
     QLineEdit,
     QPushButton,
@@ -46,7 +47,7 @@ class SettingsDialog(QDialog):
     def __init__(self, config_service: ConfigService, parent=None):
         super().__init__(parent)
         self.setWindowTitle("FFAUX Settings")
-        self.resize(440, 320)
+        self.resize(650, 520)
         self._config_service = config_service
         config = config_service.config
 
@@ -128,7 +129,6 @@ class SettingsDialog(QDialog):
         self._soxr_precision_spin.setValue(config.default_soxr_precision)
 
         self._conversion_form = QFormLayout()
-        self._conversion_form.addRow("", self._prevent_upsampling_check)
         self._conversion_form.addRow("Output Format:", self._format_combo)
         self._conversion_form.addRow("Sample Rate:", self._sample_rate_combo)
         self._conversion_form.addRow("Bitrate:", self._bitrate_spin)
@@ -136,6 +136,7 @@ class SettingsDialog(QDialog):
         self._conversion_form.addRow("FLAC Compression (0-12):", self._flac_compression_spin)
         self._conversion_form.addRow("", self._use_soxr_check)
         self._conversion_form.addRow("SOXR Precision (1-33):", self._soxr_precision_spin)
+        self._conversion_form.addRow("", self._prevent_upsampling_check)
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -144,7 +145,11 @@ class SettingsDialog(QDialog):
         buttons.rejected.connect(self.reject)
 
         layout = QVBoxLayout(self)
+        self._add_section_heading(layout, "General")
+        layout.addWidget(separator)
         layout.addLayout(self._form)
+        layout.addWidget(separator)
+        self._add_section_heading(layout, "Convert")
         layout.addWidget(separator)
         layout.addLayout(self._conversion_form)
         layout.addWidget(buttons)
@@ -153,6 +158,11 @@ class SettingsDialog(QDialog):
         self._use_soxr_check.toggled.connect(self._update_conversion_field_states)
         self._enable_discord_check.toggled.connect(self._update_conversion_field_states)
         self._update_conversion_field_states()
+
+    def _add_section_heading(self, layout: QVBoxLayout, text: str) -> None:
+        heading = QLabel(text)
+        heading.setObjectName("sectionHeading")
+        layout.addWidget(heading)
 
     def _make_path_field(self, value: str, is_dir: bool = False) -> QLineEdit:
         edit = QLineEdit(value)
@@ -211,7 +221,6 @@ class SettingsDialog(QDialog):
 
         self._conversion_form.activate()
         self._form.activate()
-        self.adjustSize()
 
     def _on_save(self) -> None:
         cfg = self._config_service
@@ -226,14 +235,14 @@ class SettingsDialog(QDialog):
         cfg.set("enable_discord_presence", self._enable_discord_check.isChecked())
         cfg.set("discord_client_id", self._set_presence_id.text())
 
-        cfg.set("prevent_upsampling", self._prevent_upsampling_check.isChecked())
         cfg.set("default_output_format", self._current_format().value)
         cfg.set("default_sample_rate_hz", self._sample_rate_combo.currentData())
         cfg.set("default_bit_depth", self._bit_depth_combo.currentData())
         cfg.set("default_bitrate_kbps", self._bitrate_spin.value())
+        cfg.set("default_flac_compression_level", self._flac_compression_spin.value())
         cfg.set("default_use_soxr", self._use_soxr_check.isChecked())
         cfg.set("default_soxr_precision", self._soxr_precision_spin.value())
-        cfg.set("default_flac_compression_level", self._flac_compression_spin.value())
+        cfg.set("prevent_upsampling", self._prevent_upsampling_check.isChecked())
 
         logger.info("Settings successfully saved")
 
