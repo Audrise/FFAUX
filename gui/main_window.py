@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
     QMessageBox, QSplitter, QVBoxLayout, QWidget
 )
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QIcon
-from PySide6.QtCore import Qt, QThreadPool
+from PySide6.QtCore import Qt, QThreadPool, QTimer
 
 from core.discord_presence_service import DiscordPresenceService, PresenceState
 from core.config_service import ConfigService
@@ -70,6 +70,7 @@ class MainWindow(QMainWindow):
         self._discord_presence = discord_presence_service or DiscordPresenceService(client_id="")
         self._audio_files: dict[str, AudioFile] = {}
         self._ffaux_icons = icons_path()
+        self._release_notes_checked = False
 
         self._metadata_pool = QThreadPool()
         self._metadata_pool.setMaxThreadCount(self._config_service.config.max_metadata_probe_threads)
@@ -115,6 +116,7 @@ class MainWindow(QMainWindow):
 
         self._update_file_dependent_actions()
         self._update_selection_dependent_actions()
+        QTimer.singleShot(1000, self._on_first_start_notes)
 
     def _update_file_dependent_actions(self) -> None:
         has_files = bool(self._audio_files)
@@ -496,13 +498,7 @@ class MainWindow(QMainWindow):
 
         self._on_files_added(found)
 
-    def _on_files_added(
-        self,
-        paths: list[str],
-        show_completion_message: bool = True,
-        record_undo: bool = True,
-    ) -> None:
-    # def _on_files_added(self, paths: list[str], show_completion_message: bool = True) -> None:
+    def _on_files_added(self, paths: list[str], show_completion_message: bool = True, record_undo: bool = True) -> None:
         # Add the row with placeholder metadata and let ffprobe fill it in asynchronously.
         # This keeps the UI responsive when adding or restoring many files.
         added_files: list[AudioFile] = []
@@ -1022,11 +1018,11 @@ class MainWindow(QMainWindow):
 
     def _on_reset_column_layout_clicked(self) -> None:
         self._track_table.reset_layout()
-        cfg = self._config_service
-        cfg.set("track_table_column_widths", [])
-        cfg.set("track_table_hidden_columns", None)
-        cfg.set("track_table_column_order", None)
-        cfg.save()
+        config = self._config_service
+        config.set("track_table_column_widths", [])
+        config.set("track_table_hidden_columns", None)
+        config.set("track_table_column_order", None)
+        config.save()
 
     def _on_columns_menu_about_to_show(self) -> None:
         self._columns_menu.clear()
@@ -1050,6 +1046,12 @@ class MainWindow(QMainWindow):
 
     def _on_release_notes(self) -> None:
         ReleaseNotesDialog(self)
+
+    def _on_first_start_notes(self) -> None:
+        if not self._config_service.config.hide_release_notes:
+            ReleaseNotesDialog(self)
+            self._config_service.set("hide_release_notes", True)
+            self._config_service.save()
 
     def _confirm_exit(self):
         confirm = QMessageBox.question(

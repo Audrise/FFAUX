@@ -26,7 +26,7 @@ class ReleaseNotesDialog(QDialog):
 
                 <p><b>Released:</b> September 2026</p>
 
-                <h3>Highlights</h3>
+                <h3>What's New</h3>
                 <ul>
                     <li>Audio format conversion with FFmpeg.</li>
                     <li>Metadata editing and management.</li>

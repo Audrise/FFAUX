@@ -12,14 +12,15 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QFileDialog,
     QFormLayout,
-    QFrame,
     QLabel,
     QHBoxLayout,
     QLineEdit,
     QPushButton,
     QSpinBox,
-    QVBoxLayout,
+    QVBoxLayout
 )
+
+from PySide6.QtCore import Qt
 
 from core.config_service import ConfigService
 from core.models.conversion_settings import (
@@ -87,19 +88,13 @@ class SettingsDialog(QDialog):
         self._form.addRow("", self._enable_discord_check)
         self._form.addRow("Discord client id:", self._set_presence_id)
 
-        separator = QFrame()
-        separator.setFrameShape(QFrame.Shape.HLine)
-        separator.setFrameShadow(QFrame.Shadow.Sunken)
-
         self._prevent_upsampling_check = QCheckBox("Prevent Upsampling")
         self._prevent_upsampling_check.setChecked(config.prevent_upsampling)
 
         self._format_combo = QComboBox()
         for fmt in OutputFormat:
             self._format_combo.addItem(_FORMAT_LABELS[fmt], userData=fmt)
-        self._format_combo.setCurrentIndex(
-            list(OutputFormat).index(OutputFormat(config.default_output_format))
-        )
+        self._format_combo.setCurrentIndex(list(OutputFormat).index(OutputFormat(config.default_output_format)))
 
         self._sample_rate_combo = QComboBox()
         for hz in STANDARD_SAMPLE_RATES:
@@ -139,18 +134,16 @@ class SettingsDialog(QDialog):
         self._conversion_form.addRow("", self._prevent_upsampling_check)
 
         buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
         )
         buttons.accepted.connect(self._on_save)
         buttons.rejected.connect(self.reject)
 
         layout = QVBoxLayout(self)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self._add_section_heading(layout, "General")
-        layout.addWidget(separator)
         layout.addLayout(self._form)
-        layout.addWidget(separator)
         self._add_section_heading(layout, "Convert")
-        layout.addWidget(separator)
         layout.addLayout(self._conversion_form)
         layout.addWidget(buttons)
 
@@ -213,10 +206,7 @@ class SettingsDialog(QDialog):
         self._set_row_visible(self._bit_depth_combo, is_lossless)
         self._set_row_visible(self._bitrate_spin, not is_lossless)
         self._set_row_visible(self._use_soxr_check, is_soxr_format)
-        self._set_row_visible(
-            self._soxr_precision_spin,
-            is_soxr_format and self._use_soxr_check.isChecked(),
-        )
+        self._set_row_visible(self._soxr_precision_spin, is_soxr_format and self._use_soxr_check.isChecked())
         self._set_row_visible(self._flac_compression_spin, is_flac)
 
         self._conversion_form.activate()
