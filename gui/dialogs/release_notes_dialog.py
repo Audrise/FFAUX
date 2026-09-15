@@ -1,63 +1,108 @@
 """
-# About FFAUX Release (see main_window.py)
-"""
+# Release notes window, shown once on first launch (see main_window.py).
 
-from PySide6.QtWidgets import QMessageBox, QDialog
+Built from real widgets instead of a rich-text QMessageBox, so everything
+is styled from assets/styles/main.qss via setObjectName() like the rest
+of the app.
+"""
+from __future__ import annotations
+
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QDialog,
+    QDialogButtonBox,
+    QLabel,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
+
+_VERSION = "FFAUX v1.0.0 [x64]"
+_SUBTITLE = "Flexible Format Audio Utility eXchange"
+_RELEASED = "Released: September 2026"
+
+_SECTIONS: list[tuple[str, list[str]]] = [
+    ("What's New", [
+        "Audio format conversion with FFmpeg.",
+        "Metadata editing and management.",
+        "Cover art management.",
+        "Batch audio processing.",
+        "Support for MP3, AAC/M4A, FLAC, WAV, OGG, OPUS, and ALAC/M4A.",
+        "Dark mode support.",
+    ]),
+    ("Improvements", [
+        "Improved conversion progress reporting.",
+        "Improved metadata and cover art handling.",
+        "Improved conversion reliability.",
+        "Improved application startup and resource handling.",
+    ]),
+    ("Bug Fixes", [
+        "Fixed corrupted output in certain WAV conversions.",
+        "Fixed conversion progress issues involving M4A cover art streams.",
+        "Fixed unwanted video streams being included in audio-only conversions.",
+    ]),
+    ("Notes", [
+        "FFmpeg and FFprobe are required to use FFAUX.",
+        "Metadata and cover art support may vary by output format.",
+        "OGG and OPUS metadata and cover art handling is currently limited.",
+    ]),
+]
 
 class ReleaseNotesDialog(QDialog):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+        self.setWindowTitle("Release Notes")
+        self.setObjectName("releaseNotesDialog")
+        self.resize(1200, 600)
 
-        box = QMessageBox(self)
-        box.setWindowTitle("Release Notes")
-        box.setIcon(QMessageBox.Icon.NoIcon)
-        box.setTextFormat(Qt.TextFormat.RichText)
-        box.setText("""
-            <div style="font-size: 10pt;">
+        content = QWidget()
+        content.setObjectName("releaseNotesContent")
+        content_layout = QVBoxLayout(content)
+        content_layout.setSpacing(6)
 
-                <h2 align="center">
-                    FFAUX v1.0.0 [x64]
-                </h2>
+        title = QLabel(_VERSION)
+        title.setObjectName("releaseNotesTitle")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-                <h4 align="center">
-                    Flexible Format Audio Utility eXchange
-                </h4>
+        subtitle = QLabel(_SUBTITLE)
+        subtitle.setObjectName("releaseNotesSubtitle")
+        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-                <p><b>Released:</b> September 2026</p>
+        released = QLabel(_RELEASED)
+        released.setObjectName("releaseNotesReleased")
 
-                <h3>What's New</h3>
-                <ul>
-                    <li>Audio format conversion with FFmpeg.</li>
-                    <li>Metadata editing and management.</li>
-                    <li>Cover art management.</li>
-                    <li>Batch audio processing.</li>
-                    <li>Support for MP3, AAC/M4A, FLAC, WAV, OGG, OPUS, and ALAC/M4A.</li>
-                    <li>Dark mode support.</li>
-                </ul>
+        content_layout.addWidget(title)
+        content_layout.addWidget(subtitle)
+        content_layout.addSpacing(8)
+        content_layout.addWidget(released)
 
-                <h3>Improvements</h3>
-                <ul>
-                    <li>Improved conversion progress reporting.</li>
-                    <li>Improved metadata and cover art handling.</li>
-                    <li>Improved conversion reliability.</li>
-                    <li>Improved application startup and resource handling.</li>
-                </ul>
+        for heading, items in _SECTIONS:
+            section_label = QLabel(heading)
+            section_label.setObjectName("releaseNotesSection")
+            content_layout.addSpacing(10)
+            content_layout.addWidget(section_label)
 
-                <h3>Bug Fixes</h3>
-                <ul>
-                    <li>Fixed corrupted output in certain WAV conversions.</li>
-                    <li>Fixed conversion progress issues involving M4A cover art streams.</li>
-                    <li>Fixed unwanted video streams being included in audio-only conversions.</li>
-                </ul>
+            for item in items:
+                # Bullet is part of the text (not a rich-text <li>) so the
+                # label stays plain text and fully QSS-styleable.
+                item_label = QLabel(f"•  {item}")
+                item_label.setObjectName("releaseNotesItem")
+                item_label.setWordWrap(True)
+                content_layout.addWidget(item_label)
 
-                <h3>Notes</h3>
-                <ul>
-                    <li>FFmpeg and FFprobe are required to use FFAUX.</li>
-                    <li>Metadata and cover art support may vary by output format.</li>
-                    <li>OGG and OPUS metadata and cover art handling is currently limited.</li>
-                </ul>
+        content_layout.addStretch(1)
 
-            </div>
-        """)
-        box.exec()
+        scroll = QScrollArea()
+        scroll.setObjectName("releaseNotesScroll")
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(content)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        buttons.rejected.connect(self.reject)
+        buttons.accepted.connect(self.accept)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(scroll)
+        layout.addWidget(buttons)
+
+        self.show()
