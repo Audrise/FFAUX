@@ -7,7 +7,7 @@ Multiple items can be selected for Edit, Convert, or Delete actions.
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QAction, QDragEnterEvent, QDropEvent, QWheelEvent, QIcon
+from PySide6.QtGui import QAction, QDragEnterEvent, QDropEvent, QWheelEvent, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QAbstractItemView, QHeaderView, QMenu, QProgressBar, QTableWidget,
     QTableWidgetItem, QHBoxLayout, QVBoxLayout, QWidget, QLabel
@@ -30,18 +30,23 @@ _STATUS_LABELS = {
 }
 
 (
-    _COL_FILE_NAME, _COL_TRACK, _COL_DISC, _COL_TITLE, _COL_ARTIST, _COL_ALBUM_ARTIST, _COL_ALBUM,
-    _COL_YEAR, _COL_DURATION, _COL_BIT_DEPTH, _COL_SAMPLE_RATE, _COL_BITRATE, _COL_SIZE, _COL_CODEC,
-    _COL_RATING, _COL_STATUS, _COL_PROGRESS,
-) = range(17)
+    _COL_COVER, _COL_FILE_NAME, _COL_TRACK, _COL_DISC, _COL_TITLE, _COL_ARTIST, _COL_ALBUM_ARTIST,
+    _COL_ALBUM, _COL_YEAR, _COL_DURATION, _COL_BIT_DEPTH, _COL_SAMPLE_RATE, _COL_BITRATE, _COL_SIZE,
+    _COL_CODEC, _COL_RATING, _COL_STATUS, _COL_PROGRESS,
+) = range(18)
 
 _HEADERS = [
-    "File Name", "Track No", "Disc No", "Title", "Artist", "Album Artist", "Album",
-    "Year", "Duration", "Bit Depth", "Sample Rate", "Bitrate", "File size", "Codec", "Rating",
-    "Status", "Progress",
+    "Cover", "File Name", "Track", "Disc No", "Title", "Artist", "Album Artist",
+    "Album", "Year", "Duration", "Bit Depth", "Sample Rate", "Bitrate", "File size",
+    "Codec", "Rating", "Status", "Progress",
 ]
 
+_COVER_SIZE = 28
+_ROW_HEIGHT_WITH_COVER = 40
+_ROW_HEIGHT_DEFAULT = 35
+
 _DEFAULT_HIDDEN_COLUMNS = {
+    _COL_COVER,
     _COL_FILE_NAME,
     _COL_RATING,
     _COL_DISC,
@@ -49,6 +54,7 @@ _DEFAULT_HIDDEN_COLUMNS = {
 }
 
 _DEFAULT_WIDTHS = {
+    _COL_COVER: 48,
     _COL_FILE_NAME: 240,
     _COL_TRACK: 65,
     _COL_DISC: 65,
@@ -228,6 +234,7 @@ class TrackTable(QTableWidget):
             header.setSectionHidden(col, col in _DEFAULT_HIDDEN_COLUMNS)
 
         self.reset_column_widths()
+        self._update_row_heights()
 
     def build_column_toggle_actions(self, parent) -> list[QAction]:
         header = self.horizontalHeader()
@@ -265,6 +272,9 @@ class TrackTable(QTableWidget):
             if current_visual != last_visual:
                 header.moveSection(current_visual, last_visual)
 
+        if col == _COL_COVER:
+            self._update_row_heights()
+
     # Save the current column order (see MainWindow.closeEvent).
     # The order contains logical column indices from left to right.
     def column_order(self) -> list[int]:
@@ -290,6 +300,7 @@ class TrackTable(QTableWidget):
         hidden_set = set(hidden_columns)
         for col in range(self.columnCount()):
             header.setSectionHidden(col, col in hidden_set)
+        self._update_row_heights()
 
     # Drag and drop directly within the table.
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
@@ -343,20 +354,20 @@ class TrackTable(QTableWidget):
 
         values = {
             _COL_FILE_NAME: audio_file.filename,
-            _COL_TRACK: meta.track_number or "",
-            _COL_DISC: meta.disc_number or "",
-            _COL_TITLE: meta.title or audio_file.filename,
+            _COL_TRACK: meta.track_number or "-",
+            _COL_DISC: meta.disc_number or "-",
+            _COL_TITLE: meta.title or "-",
             _COL_ARTIST: meta.artist or "",
-            _COL_ALBUM_ARTIST: meta.album_artist or "",
-            _COL_ALBUM: meta.album or "",
-            _COL_YEAR: meta.year or "",
+            _COL_ALBUM_ARTIST: meta.album_artist or "-",
+            _COL_ALBUM: meta.album or "-",
+            _COL_YEAR: meta.year or "-",
             _COL_DURATION: format_duration(audio_file.duration_seconds),
             _COL_BIT_DEPTH: format_bit_depth(audio_file.bit_depth),
             _COL_SAMPLE_RATE: format_sample_rate(audio_file.sample_rate_hz),
             _COL_BITRATE: format_bitrate(audio_file.bitrate_kbps),
             _COL_SIZE: format_file_size(audio_file.file_size_bytes),
             _COL_CODEC: audio_file.codec or "-",
-            _COL_RATING: meta.rating or "",
+            _COL_RATING: meta.rating or "-",
             _COL_STATUS: _STATUS_LABELS[audio_file.status],
         }
         for col, text in values.items():
@@ -385,9 +396,65 @@ class TrackTable(QTableWidget):
         progress_layout.addWidget(progress_bar)
         progress_container.progress_bar = progress_bar
         self.setCellWidget(row, _COL_PROGRESS, progress_container)
+        self.setCellWidget(row, _COL_COVER, self._build_cover_cell())
+        self.setRowHeight(row, self._current_row_height())
 
         self._row_by_id[audio_file.id] = row
         self._update_header_visibility()
+
+    def _build_cover_cell(self) -> QWidget:
+        cover_label = QLabel()
+        cover_label.setObjectName("coverThumbnail")
+        cover_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        cover_label.setFixedSize(_COVER_SIZE, _COVER_SIZE)
+
+        container = QWidget()
+        container.setObjectName("coverContainer")
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(cover_label)
+        container.cover_label = cover_label
+        return container
+
+    def set_cover_art(self, audio_file_id: str, image_path: str | None) -> None:
+        # Show a cover thumbnail for a row. Pass None (or a path that
+        # fails to load) to leave the cell blank, for tracks with no
+        # embedded artwork.
+        row = self._row_by_id.get(audio_file_id)
+        if row is None:
+            return  # row was removed before the extraction finished
+
+        container = self.cellWidget(row, _COL_COVER)
+        label = getattr(container, "cover_label", None)
+        if label is None:
+            return
+
+        if not image_path:
+            label.clear()
+            return
+
+        pixmap = QPixmap(image_path)
+        if pixmap.isNull():
+            label.clear()
+            return
+
+        label.setPixmap(
+            pixmap.scaled(
+                _COVER_SIZE, _COVER_SIZE,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+        )
+
+    def _current_row_height(self) -> int:
+        cover_visible = not self.horizontalHeader().isSectionHidden(_COL_COVER)
+        return _ROW_HEIGHT_WITH_COVER if cover_visible else _ROW_HEIGHT_DEFAULT
+
+    def _update_row_heights(self) -> None:
+        height = self._current_row_height()
+        for row in range(self.rowCount()):
+            self.setRowHeight(row, height)
 
     def update_metadata(self, audio_file_id: str, audio_file: AudioFile) -> None:
         # Refresh only metadata-dependent columns after async ffprobe completes.
@@ -398,18 +465,18 @@ class TrackTable(QTableWidget):
         meta = audio_file.metadata
         values = {
             _COL_FILE_NAME: audio_file.filename,
-            _COL_TRACK: meta.track_number or "",
-            _COL_TITLE: meta.title or audio_file.filename,
-            _COL_ARTIST: meta.artist or "",
-            _COL_ALBUM: meta.album or "",
-            _COL_YEAR: meta.year or "",
+            _COL_TRACK: meta.track_number or "-",
+            _COL_TITLE: meta.title or "-",
+            _COL_ARTIST: meta.artist or "-",
+            _COL_ALBUM: meta.album or "-",
+            _COL_YEAR: meta.year or "-",
             _COL_DURATION: format_duration(audio_file.duration_seconds),
             _COL_BIT_DEPTH: format_bit_depth(audio_file.bit_depth),
             _COL_SAMPLE_RATE: format_sample_rate(audio_file.sample_rate_hz),
             _COL_BITRATE: format_bitrate(audio_file.bitrate_kbps),
             _COL_SIZE: format_file_size(audio_file.file_size_bytes),
             _COL_CODEC: audio_file.codec or "-",
-            _COL_RATING: meta.rating or "",
+            _COL_RATING: meta.rating or "-",
         }
         for col, text in values.items():
             item = self.item(row, col)
@@ -537,13 +604,16 @@ class TrackTable(QTableWidget):
         if col is None:
             return
 
-        progress_widgets: dict[str, QWidget] = {}
+        widgets_by_id: dict[str, dict[int, QWidget]] = {}
         for row in range(self.rowCount()):
             item = self.item(row, _COL_TITLE)
             file_id = item.data(_ID_ROLE) if item else None
-            widget = self.cellWidget(row, _COL_PROGRESS)
-            if file_id and widget is not None:
-                progress_widgets[file_id] = widget
+            if not file_id:
+                continue
+            for widget_col in (_COL_PROGRESS, _COL_COVER):
+                widget = self.cellWidget(row, widget_col)
+                if widget is not None:
+                    widgets_by_id.setdefault(file_id, {})[widget_col] = widget
 
         order = Qt.SortOrder.AscendingOrder if ascending else Qt.SortOrder.DescendingOrder
         self.sortItems(col, order)
@@ -551,8 +621,9 @@ class TrackTable(QTableWidget):
         for row in range(self.rowCount()):
             item = self.item(row, _COL_TITLE)
             file_id = item.data(_ID_ROLE) if item else None
-            widget = progress_widgets.get(file_id) if file_id else None
-            if widget is not None:
-                self.setCellWidget(row, _COL_PROGRESS, widget)
+            for widget_col, widget in widgets_by_id.get(file_id, {}).items():
+                self.setCellWidget(row, widget_col, widget)
 
+        # sortItems() resets row heights back to the default.
+        self._update_row_heights()
         self._rebuild_row_index()
