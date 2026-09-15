@@ -25,6 +25,7 @@ class AudioFile:
     path: str
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     metadata: Metadata = field(default_factory=Metadata)
+    cover_thumbnail_path: Optional[str] = None
     status: FileStatus = FileStatus.PENDING
     progress: float = 0.0
     duration_seconds: Optional[float] = None
