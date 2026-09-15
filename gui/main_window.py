@@ -1,11 +1,14 @@
 """
 # MainWindow is responsible for:
 
-assembling the UI, forwarding user actions
+Assembling the UI, forwarding user actions
 to the backend (core), and updating widgets based on JobManager signals.
 FFmpeg, parsing, and metadata logic are handled outside this file.
 """
 from __future__ import annotations
+
+import shutil
+import tempfile
 
 from pathlib import Path
 
@@ -13,12 +16,14 @@ from PySide6.QtWidgets import (
     QFileDialog, QHBoxLayout, QLineEdit, QMainWindow, QMenu, QMenuBar,
     QMessageBox, QSplitter, QVBoxLayout, QWidget
 )
+
 from PySide6.QtGui import QShortcut, QKeySequence, QAction, QIcon
 from PySide6.QtCore import Qt, QThreadPool, QTimer
 
 from core.discord_presence_service import DiscordPresenceService, PresenceState
 from core.config_service import ConfigService
 from core.job_manager import JobManager
+from core.cover_probe_worker import CoverProbeWorker
 from core.metadata_probe_worker import MetadataProbeWorker
 from core.metadata_service import MetadataService
 from core.models.audio_file import AudioFile, FileStatus
@@ -74,6 +79,7 @@ class MainWindow(QMainWindow):
 
         self._metadata_pool = QThreadPool()
         self._metadata_pool.setMaxThreadCount(self._config_service.config.max_metadata_probe_threads)
+        self._cover_cache_dir = Path(tempfile.gettempdir()) / "ffaux_thumbnails"
         self._add_batch_total = 0
         self._add_batch_pending = 0
         self._add_batch_show_message = True
@@ -139,6 +145,12 @@ class MainWindow(QMainWindow):
         # Drop queued metadata probes so closing doesn't wait for them.
         # Running workers finish and clean themselves up.
         self._metadata_pool.clear()
+
+        # Wipe the extracted cover thumbnail cache.
+        try:
+            shutil.rmtree(self._cover_cache_dir, ignore_errors=True)
+        except OSError:
+            pass
 
         # Save window state so the next launch can restore it. (see main.py)
         config = self._config_service.config
@@ -540,6 +552,14 @@ class MainWindow(QMainWindow):
 
             self._track_table.update_metadata(target_id, audio_file)
 
+            # Only files that actually have embedded artwork are worth spawning
+            if audio_file.metadata.cover_art_path == "<embedded>":
+                cover_worker = CoverProbeWorker(
+                    target_id, audio_file, self._metadata_service, self._cover_cache_dir
+                )
+                cover_worker.signals.finished.connect(self._on_cover_ready)
+                self._metadata_pool.start(cover_worker)
+
         if self._add_batch_pending <= 0 and self._add_batch_total > 0:
             if self._add_batch_show_message:
                 QMessageBox.information(
@@ -549,6 +569,17 @@ class MainWindow(QMainWindow):
                 )
             self._add_batch_total = 0
             self._add_batch_pending = 0
+
+    def _on_cover_ready(self, cover_path: str, target_id: str) -> None:
+        audio_file = self._audio_files.get(target_id)
+        if audio_file is None:
+            return  # row was removed before extraction finished
+
+        # Cached on the AudioFile itself (not just the widget) so undo/redo
+        # re-adding this same object can restore the thumbnail instantly
+        # instead of leaving it blank until the app restarts.
+        audio_file.cover_thumbnail_path = cover_path or None
+        self._track_table.set_cover_art(target_id, audio_file.cover_thumbnail_path)
 
     def _on_process_clicked(self) -> None:
         if not self._audio_files:
@@ -766,8 +797,11 @@ class MainWindow(QMainWindow):
             for af in audio_files:
                 self._audio_files[af.id] = af
                 self._track_table.add_file(af)
+                if af.cover_thumbnail_path:
+                    self._track_table.set_cover_art(af.id, af.cover_thumbnail_path)
         self._redo_stack.append((kind, audio_files))
         self._update_undo_redo_actions()
+        self._update_file_dependent_actions()
 
     def _on_redo(self) -> None:
         if not self._redo_stack:
@@ -777,12 +811,17 @@ class MainWindow(QMainWindow):
             for af in audio_files:
                 self._audio_files[af.id] = af
                 self._track_table.add_file(af)
+
         else:  # "delete"
             self._track_table.remove_ids([af.id for af in audio_files])
             for af in audio_files:
                 self._audio_files.pop(af.id, None)
+                if af.cover_thumbnail_path:
+                    self._track_table.set_cover_art(af.id, af.cover_thumbnail_path)
+
         self._undo_stack.append((kind, audio_files))
         self._update_undo_redo_actions()
+        self._update_file_dependent_actions()
 
     def _update_undo_redo_actions(self) -> None:
         self._undo_action.setEnabled(bool(self._undo_stack))
