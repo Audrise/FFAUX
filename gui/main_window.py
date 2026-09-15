@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
         parent=None,
     ):
         super().__init__(parent)
-        self.setWindowTitle("FFAUX v1.0.0")
+        self.setWindowTitle("FFAUX v1.0.0 [x64]")
         self.resize(1200, 600)
 
         self._track_table = TrackTable()

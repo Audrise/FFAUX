@@ -385,6 +385,53 @@ QScrollBar::sub-page:horizontal {
 }
 
 /* ============================================================
+   ABOUT DIALOG
+   ============================================================
+*/
+
+#aboutDialog,
+#aboutContent {
+    background-color: #1e1e1e;
+}
+
+#aboutTitle {
+    background-color: transparent;
+    font-size: 20px;
+    font-weight: bold;
+    color: #f0f0f0;
+}
+
+#aboutSubtitle {
+    background-color: transparent;
+    font-size: 13px;
+    color: #9a9a9a;
+}
+
+#aboutDescription {
+    background-color: transparent;
+    font-size: 12px;
+    color: #d4d4d4;
+}
+
+#aboutSection {
+    background-color: transparent;
+    font-size: 15px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+#aboutCopyright {
+    background-color: transparent;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #9a9a9a;
+}
+
+#aboutScroll {
+    border: none;
+}
+
+/* ============================================================
    RELEASE NOTES
    ============================================================
 */
