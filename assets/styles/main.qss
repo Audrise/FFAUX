@@ -225,6 +225,15 @@ QLabel[class="section-caption"] {
     font-size: 12px;
 }
 
+#coverContainer {
+    background-color: transparent;
+}
+
+#coverThumbnail {
+    background-color: transparent;
+    border: none;
+}
+
 /* ============================================================
    TRACK TABLE - PROGRESS CELL CONTAINER
    ============================================================
@@ -373,4 +382,50 @@ QScrollBar::sub-line:horizontal {
 QScrollBar::add-page:horizontal,
 QScrollBar::sub-page:horizontal {
     background: none;
+}
+
+/* ============================================================
+   RELEASE NOTES
+   ============================================================
+*/
+#releaseNotesDialog,
+#releaseNotesContent {
+    background-color: #1e1e1e;
+}
+
+#releaseNotesScroll {
+    border: none;
+}
+
+#releaseNotesTitle {
+    background-color: transparent;
+    font-size: 20px;
+    font-weight: bold;
+    color: #f0f0f0;
+}
+
+#releaseNotesSubtitle {
+    background-color: transparent;
+    font-size: 13px;
+    color: #9a9a9a;
+}
+
+#releaseNotesReleased {
+    background-color: transparent;
+    font-size: 12px;
+    color: #9a9a9a;
+}
+
+#releaseNotesSection {
+    background-color: transparent;
+    font-size: 15px;
+    font-weight: bold;
+    color: #f0f0f0;
+}
+
+#releaseNotesItem {
+    background-color: transparent;
+    font-size: 12px;
+    color: #d4d4d4;
+    padding-left: 8px;
 }
