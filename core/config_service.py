@@ -16,7 +16,7 @@ CONFIG_SCHEMA_VERSION = 1
 @dataclass
 class AppConfig:
     version: int = CONFIG_SCHEMA_VERSION
-    hide_release_notes: bool = True
+    hide_release_notes: bool = False
     ffmpeg_path: str = "bin/ffmpeg.exe"
     ffprobe_path: str = "bin/ffprobe.exe"
     output_directory: str = ""
