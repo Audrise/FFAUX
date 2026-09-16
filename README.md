@@ -4,32 +4,34 @@
 
 <h3 align="center">Flexible Format Audio Utility eXchange</h3>
 
-<div align=center>
-    <a href="https://www.python.org/downloads/">
-        <img src="https://img.shields.io/badge/Python 3.10+-FFD43B?style=for-the-badge&logo=python&logoColor=blue"/>
-    </a>
-    <a href="https://github.com/Audrise/FFAUX">
-      <img src="https://img.shields.io/badge/Release v1.0.0-FFD43B?style=for-the-badge&logo=python&logoColor=blue"/>
-    </a>
-    <!-- <br> -->
-    <a href="https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/index.html">
-      <img src="https://img.shields.io/badge/PySide 6-neon?style=for-the-badge&logo=qt&logoColor=white"/>
-    </a>
-    <a href="https://docs.pytest.org/en/stable/">
+<div align="center">
+
+  <a href="https://www.python.org/downloads/">
+    <img src="https://img.shields.io/badge/Python%203.10+-FFD43B?style=for-the-badge&logo=python&logoColor=3776AB"/>
+  </a>
+  <!-- <br> -->
+  <a href="https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/index.html">
+    <img src="https://img.shields.io/badge/PySide6-41CD52?style=for-the-badge&logo=qt&logoColor=white"/>
+  </a>
+  <a href="https://docs.pytest.org/en/stable/">
     <img src="https://img.shields.io/badge/PyTest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white"/>
-    </a>
-    <a href="https://github.com/Audrise/FFAUX?tab=GPL-3.0-1-ov-file">
-    <img src="https://img.shields.io/badge/GPL--3.0-blue?style=for-the-badge"/>
-    </a>
-    <!-- <br> -->
-    <img src="https://img.shields.io/badge/windows%20GUI-blue?style=for-the-badge&logo=windows11&%20terminal&logoColor=white"/>
-    <img src="https://img.shields.io/badge/windows%20terminal-blue?style=for-the-badge&logo=windows11&%20terminal&logoColor=white"/>
-    <!-- <br> -->
-    <img src="https://img.shields.io/github/stars/Audrise/FFAUX?style=social"/>
-    <img src="https://img.shields.io/github/forks/Audrise/FFAUX?style=social"/>
+  </a>
+  <!-- <br> -->
+  <img src="https://img.shields.io/badge/Windows%20GUI-0078D4?style=for-the-badge&logo=windows11&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Windows%20Terminal-0C0C0C?style=for-the-badge&logo=windows-terminal&logoColor=white"/>
+  <a href="https://github.com/Audrise/FFAUX">
+    <img src="https://img.shields.io/badge/FFAUX-1.0.0-0078D4?style=for-the-badge"/>
+  </a>
+  <a href="https://github.com/Audrise/FFAUX?tab=GPL-3.0-1-ov-file">
+    <img src="https://img.shields.io/badge/LICENSE-GPL%203.0-6B7280?style=for-the-badge"/>
+  </a>
+  <br>
+  <img src="https://img.shields.io/github/stars/Audrise/FFAUX?style=social"/>
+  <img src="https://img.shields.io/github/forks/Audrise/FFAUX?style=social"/>
+
 </div>
 
-## Description
+## 📖 Description
 
 <p align="center"><b>Python 3 based FFmpeg wrapper with a PySide6 GUI</b></p>
 
@@ -38,18 +40,17 @@ It uses FFmpeg and FFprobe to handle audio conversion and metadata, while PySide
 
 FFAUX runs FFmpeg and FFprobe as external processes instead of reimplementing their functionality. Because of this, a working FFmpeg installation is required for audio conversion and media probing.
 
-## Table of Contents
+## 📑 Table of Contents
 
-* **[Description](#description)**
-* **[Features](#features)**
-* **[Requirements](#requirements)**
-* **[Installation](#installation)**
-* **[Quick Start](#quick-start)**
-* **[Structure](#structure)**
-* **[Troubleshooting](#troubleshooting)**
-* **[Changelog](#changelog)**
+* **[📖 Description](#description)**
+* **[✨ Features](#features)**
+* **[📋 Requirements](#requirements)**
+* **[📦 Installation](#installation)**
+* **[🗂️ Structure](#structure)**
+* **[🛠️ Troubleshooting](#troubleshooting)**
+* **[📝 Changelog](#changelog)**
 
-## Features
+## 📌 Features
 
 * Batch audio conversion with FFmpeg, with options for:
 
@@ -83,69 +84,84 @@ FFAUX runs FFmpeg and FFprobe as external processes instead of reimplementing th
 
 * Discord Rich Presence integration that shows the app's current status (idle / converting) on Discord. It can be left disabled, and the application continues normally if Discord is not installed or running.
 
-## Requirements
+## 📋 Requirements
 
 * Python 3.10 or newer
 * pip
 * PySide6
 * FFmpeg and FFprobe executables
-* pypresence (optional, only required for Discord Rich Presence. *The application runs normally without it*)
+* pypresence
 
-## Installation
+## 📦Installation
+
+### 🖥️ Desktop Application
+
+The desktop application is distributed as a Windows installer with FFmpeg and FFprobe bundled with the application.
+
+1. Download the latest release from the [FFAUX Releases](https://github.com/Audrise/FFAUX/releases) page.
+
+2. Run the FFAUX installer and follow the setup instructions until the installation is complete.
+
+3. Launch FFAUX from the Start Menu or the desktop shortcut if one was created during installation.
+
+4. Configure the application according to your preferences. You can customize the available application settings, conversion options, metadata settings, and other preferences from within FFAUX.
+
+5. Add your audio files by dragging and dropping them into the main window, or use the corresponding menu action.
+
+6. Select one or more tracks and configure the desired conversion settings.
+
+7. Start the conversion. Progress is shown in the aggregate progress panel, while detailed FFmpeg output is available in the log viewer.
+
+> **Note:** The desktop release includes FFmpeg and FFprobe. No separate FFmpeg installation is required.
+
+### ⌨️ CLI / From Source
+
+For developers or users who want to run FFAUX directly from the source code:
 
 1. Clone the repository:
-
    ```bash
    git clone https://github.com/Audrise/FFAUX.git
    cd FFAUX
    ```
 
 2. Create a virtual environment:
-
    ```bash
    python -m venv .venv
    ```
 
 3. Activate the virtual environment:
-
    ```bash
    # Windows
    .venv\Scripts\activate
    ```
 
 4. Install the required dependencies:
-
    ```bash
    pip install -r requirements.txt
    ```
 
 5. Install FFmpeg:
-
    * [Download an FFmpeg build](https://ffmpeg.org/download.html), such as the builds provided by **gyan.dev** or **BtbN** for Windows.
-   * Place `ffmpeg` and `ffprobe` (or `ffmpeg.exe` / `ffprobe.exe` on Windows) in the `bin/` directory, or make sure they are available through the system PATH.
+   * Place `ffmpeg.exe` / `ffprobe.exe` in the `bin/` directory, or make sure they are available through the system PATH.
    * You can also configure their paths later from within the application.
 
-## Quick Start
-
-1. Launch the application:
-
+6. Launch the FFAUX:
    ```bash
    python main.py
    ```
+   - The main window will open with an empty track list and the main toolbar and menu.
 
-   The main window will open with an empty track list and the main toolbar and menu.
+   - Add audio files to the track list by dragging and dropping them into the main window, or use the corresponding menu action.
 
-2. Add audio files to the track list by dragging and dropping them into the main window, or use the corresponding menu action.
+   - Select one or more tracks in the track table.
 
-3. Select one or more tracks in the track table.
+   - Open the conversion settings dialog and configure the output format, sample rate, bit depth, bitrate, and other available options.
 
-4. Open the conversion settings dialog and configure the output format, sample rate, bit depth, bitrate, and other available options.
+   - Start the conversion. Progress is shown in the aggregate progress panel, while detailed FFmpeg output is available in the log viewer.
 
-5. Start the conversion. Progress is shown in the aggregate progress panel, while detailed FFmpeg output is available in the log viewer.
+   - To edit metadata, select one or more tracks and open the metadata editor. The available fields are generated from the tags found in the selected file(s). You can apply a saved template, edit fields directly, or preview a template before applying it.
 
-6. To edit metadata, select one or more tracks and open the metadata editor. The available fields are generated from the tags found in the selected file(s). You can apply a saved template, edit fields directly, or preview a template before applying it.
-
-## Structure
+## 🗂️ Structure
 
 ```
 FFAUX/
@@ -180,7 +196,7 @@ FFAUX/
 └── tests/                    # Automated tests (backend, no GUI required)
 ```
 
-## Troubleshooting
+## 🛠️ Troubleshooting
 
 ### 1. The application cannot find FFmpeg or FFprobe.
 - Make sure `ffmpeg` and `ffprobe` are either available through the system PATH, placed inside the `bin/` directory, or configured with the correct paths in the application's settings dialog.
@@ -217,7 +233,7 @@ FFAUX/
 This tool is designed to help you **view, edit, and manage audio metadata and cover art** in a safe, local environment. 
 **it doesn't download, stream, or acquire audio content from any source.**
 
-## Changelog
+## 📜 Changelog
 
 ### v1.0.0 - **Initial Release FFAUX**
 
