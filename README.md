@@ -19,6 +19,7 @@
   <!-- <br> -->
   <img src="https://img.shields.io/badge/Windows%20GUI-0078D4?style=for-the-badge&logo=windows11&logoColor=white"/>
   <img src="https://img.shields.io/badge/Windows%20Terminal-0C0C0C?style=for-the-badge&logo=windows-terminal&logoColor=white"/>
+  <br>
   <a href="https://github.com/Audrise/FFAUX">
     <img src="https://img.shields.io/badge/FFAUX-1.0.0-0078D4?style=for-the-badge"/>
   </a>
