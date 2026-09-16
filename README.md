@@ -150,33 +150,33 @@ FFAUX runs FFmpeg and FFprobe as external processes instead of reimplementing th
 ```
 FFAUX/
 ├── main.py                   # Application entry point
-|
+│
 ├── requirements.txt          # Python dependencies
-|
+│
 ├── bin/                      # Default location for ffmpeg.exe/ffprobe.exe
-|
+│
 ├── assets/
 │   ├── icons/                # Application icons
-|   |
+│   │
 │   ├── splash/               # Application splash screen
-|   |
+│   │
 │   ├── styles/               # Qt stylesheets (QSS)
-|   |
+│   │
 │   └── templates/            # Saved metadata templates
-|
+│
 ├── config/                   # Application configuration
-|
+│
 ├── core/                     # Backend logic (no GUI dependencies)
-|
+│
 ├── ffmpeg/                   # FFmpeg/FFprobe process wrappers
-|
+│
 ├── gui/                      # PySide6 presentation layer
 │   ├── widgets/
-|   |
+│   │
 │   └── dialogs/
-|
+│
 ├── utils/                    # Shared utility helpers
-|
+│
 └── tests/                    # Automated tests (backend, no GUI required)
 ```
 
