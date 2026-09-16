@@ -577,7 +577,6 @@ class MainWindow(QMainWindow):
 
         # Cached on the AudioFile itself (not just the widget) so undo/redo
         # re-adding this same object can restore the thumbnail instantly
-        # instead of leaving it blank until the app restarts.
         audio_file.cover_thumbnail_path = cover_path or None
         self._track_table.set_cover_art(target_id, audio_file.cover_thumbnail_path)
 
@@ -793,12 +792,14 @@ class MainWindow(QMainWindow):
             self._track_table.remove_ids([af.id for af in audio_files])
             for af in audio_files:
                 self._audio_files.pop(af.id, None)
+
         else:  # "delete"
             for af in audio_files:
                 self._audio_files[af.id] = af
                 self._track_table.add_file(af)
                 if af.cover_thumbnail_path:
                     self._track_table.set_cover_art(af.id, af.cover_thumbnail_path)
+
         self._redo_stack.append((kind, audio_files))
         self._update_undo_redo_actions()
         self._update_file_dependent_actions()
@@ -811,6 +812,8 @@ class MainWindow(QMainWindow):
             for af in audio_files:
                 self._audio_files[af.id] = af
                 self._track_table.add_file(af)
+                if af.cover_thumbnail_path:
+                    self._track_table.set_cover_art(af.id, af.cover_thumbnail_path)
 
         else:  # "delete"
             self._track_table.remove_ids([af.id for af in audio_files])
@@ -975,7 +978,6 @@ class MainWindow(QMainWindow):
         self._metadata_batch_finished = 0
         self._metadata_batch_success = 0
         self._metadata_batch_kind = None
-
         self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
 
     def _on_settings_clicked(self) -> None:
