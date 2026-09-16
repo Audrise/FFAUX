@@ -43,7 +43,7 @@ FFAUX runs FFmpeg and FFprobe as external processes instead of reimplementing th
 ## 📑 Table of Contents
 
 * **[📖 Description](#description)**
-* **[✨ Features](#features)**
+* **[📌 Features](#features)**
 * **[📋 Requirements](#requirements)**
 * **[📦 Installation](#installation)**
 * **[🗂️ Structure](#structure)**
@@ -62,7 +62,7 @@ FFAUX runs FFmpeg and FFprobe as external processes instead of reimplementing th
   * Compression level
   * Custom output folder
 
-* Playlist-style track table with drag-and-drop, multi-select, and resizable columns. Column widths are remembered between sessions and can be restored to their defaults from View -> Reset Column Widths.
+* Playlist-style with drag-and-drop, multi-select, and resizable columns. Column widths are remembered between sessions and can be restored to their defaults from View -> Reset Column Widths.
 
 * Aggregate progress panel for batch conversion jobs, which can be toggled from the View menu.
 
@@ -71,14 +71,11 @@ FFAUX runs FFmpeg and FFprobe as external processes instead of reimplementing th
 * Metadata editor for both single-file and multi-file (batch) editing:
 
   * Fields are generated from the tags actually present in the selected file(s), including non-standard tags such as ISRC and publisher. The editor is not limited to a fixed list of common fields.
-  * When multiple selected tracks have different values for the same field, the editor shows a combined, read-only value. Saving without changing that field will not overwrite the original value in each track.
   * Metadata templates can be saved, applied, and previewed in a separate window before being applied.
 
 * Cover art viewer for previewing, replacing, and removing embedded cover art.
 
 * Configurable FFmpeg and FFprobe executable paths through the settings dialog.
-
-* The "Convert Selected Audio" action is automatically disabled when the track list is empty.
 
 * Window size, position, and maximized state are remembered between sessions.
 
@@ -233,7 +230,7 @@ FFAUX/
 This tool is designed to help you **view, edit, and manage audio metadata and cover art** in a safe, local environment. 
 **it doesn't download, stream, or acquire audio content from any source.**
 
-## 📜 Changelog
+## 📝 Changelog
 
 ### v1.0.0 - **Initial Release FFAUX**
 
