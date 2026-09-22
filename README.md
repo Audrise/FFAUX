@@ -41,16 +41,6 @@ It uses FFmpeg and FFprobe to handle audio conversion and metadata, while PySide
 
 FFAUX runs FFmpeg and FFprobe as external processes instead of reimplementing their functionality. Because of this, a working FFmpeg installation is required for audio conversion and media probing.
 
-## 📑 Table of Contents
-
-* **[📖 Description](#description)**
-* **[📌 Features](#features)**
-* **[📋 Requirements](#requirements)**
-* **[📦 Installation](#installation)**
-* **[🗂️ Structure](#structure)**
-* **[🛠️ Troubleshooting](#troubleshooting)**
-* **[📝 Changelog](#changelog)**
-
 ## 📌 Features
 
 * Batch audio conversion with FFmpeg, with options for:
