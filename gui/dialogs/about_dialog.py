@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-_VERSION = "FFAUX v1.0.0 [x64]"
+_VERSION = "FFAUX v1.0.1 [x64]"
 _SUBTITLE = "Flexible Format Audio Utility eXchange"
 
 _DESCRIPTION = (

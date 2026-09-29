@@ -21,7 +21,7 @@
   <img src="https://img.shields.io/badge/Windows%20Terminal-0C0C0C?style=for-the-badge&logo=windows-terminal&logoColor=white"/>
   <br>
   <a href="https://github.com/Audrise/FFAUX">
-    <img src="https://img.shields.io/badge/FFAUX-1.0.0-0078D4?style=for-the-badge"/>
+    <img src="https://img.shields.io/badge/FFAUX-1.0.1-0078D4?style=for-the-badge"/>
   </a>
   <a href="https://github.com/Audrise/FFAUX?tab=GPL-3.0-1-ov-file">
     <img src="https://img.shields.io/badge/LICENSE-GPL%203.0-6B7280?style=for-the-badge"/>
@@ -223,7 +223,8 @@ This tool is designed to help you **view, edit, and manage audio metadata and co
 
 ## 📝 Changelog
 
-### v1.0.0 - **Initial Release FFAUX**
+### v1.0.1 - Spectrogram Update
+- Generating Spectrogram now support multiple file
 
 <h1></h1>
 <h4 align="center">

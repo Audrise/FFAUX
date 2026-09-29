@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-_VERSION = "Initial Release FFAUX v1.0.0 [x64]"
+_VERSION = "Update FFAUX v1.0.1 [x64]"
 _SUBTITLE = "Flexible Format Audio Utility eXchange"
 _RELEASED = "Released: September 2026"
 
@@ -31,6 +31,7 @@ _SECTIONS: list[tuple[str, list[str]]] = [
         "Dark mode support.",
     ]),
     ("Improvements", [
+        "Spectrogram generator now support multiple files.",
         "Improved conversion progress reporting.",
         "Improved metadata and cover art handling.",
         "Improved conversion reliability.",
