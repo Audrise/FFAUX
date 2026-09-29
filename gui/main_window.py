@@ -701,56 +701,107 @@ class MainWindow(QMainWindow):
 
     def _on_generate_spectrogram_clicked(self) -> None:
         selected_ids = self._track_table.selected_row_ids()
-        if len(selected_ids) != 1:
+        if not selected_ids:
             QMessageBox.information(
                 self,
-                "Select One File",
-                "Please select exactly one audio file to generate a spectrogram for.",
+                "Select Files",
+                "Please select files to generate spectrograms for.",
             )
             return
 
-        audio_file = self._audio_files.get(selected_ids[0])
-        if audio_file is None:
+        audio_files = [
+            self._audio_files[file_id]
+            for file_id in selected_ids
+            if file_id in self._audio_files
+        ]
+
+        if not audio_files:
             return
 
-        if not Path(audio_file.path).is_file():
-            QMessageBox.warning(self, "File Not Found", f"'{audio_file.filename}' no longer exists on disk.")
+        missing_files = [
+            audio_file
+            for audio_file in audio_files
+            if not Path(audio_file.path).is_file()
+        ]
+
+        if missing_files:
+            QMessageBox.warning(
+                self,
+                "File Not Found",
+                f"'{missing_files[0].filename}' no longer exists on disk.",
+            )
             return
 
-        detail = f"Preparing spectrogram for {audio_file.filename}"
-        self._discord_presence.update(PresenceState(details=detail, large_image=_DISCORD_LARGE_IMAGE))
+        detail = (
+            f"Preparing {len(audio_files)} spectrogram"
+            f"{'s' if len(audio_files) != 1 else ''}"
+        )
+        self._discord_presence.update(
+            PresenceState(
+                details=detail,
+                large_image=_DISCORD_LARGE_IMAGE,
+            )
+        )
 
         config = self._config_service.config
+
         dialog = SpectrogramSettingsDialog(
             default_output_dir=config.output_directory,
             default_spectrogram_suffix=config.spectrogram_suffix,
-            source_filename=audio_file.filename,
+            source_filename=audio_files[0].filename,
             parent=self,
         )
+
         if not dialog.exec():
-            self._discord_presence.update(PresenceState(state="Flexible Format Audio Utility eXchange", large_image=_DISCORD_LARGE_IMAGE))
+            self._discord_presence.update(
+                PresenceState(
+                    state="Flexible Format Audio Utility eXchange",
+                    large_image=_DISCORD_LARGE_IMAGE,
+                )
+            )
             return
 
         output_dir = dialog.output_dir() or config.output_directory
-        output_name = dialog.output_name() or f"{Path(audio_file.path).stem}_scanned"
-        target_dir = Path(output_dir) if output_dir else Path(audio_file.path).parent
-        output_path = str(target_dir / f"{output_name}.png")
+        target_dir = Path(output_dir) if output_dir else Path(audio_files[0].path).parent
 
-        job = Job(
-            audio_file=audio_file,
-            operation=OperationType.GENERATE_SPECTROGRAM,
-            params={"resolution": dialog.resolution()},
-            output_path=output_path,
-        )
+        output_name = dialog.output_name()
+        resolution = dialog.resolution()
 
-        self._spectrogram_progress_dialog = SpectrogramProgressDialog(job, parent=self)
+        jobs: list[Job] = []
+
+        for audio_file in audio_files:
+            if output_name:
+                if len(audio_files) == 1:
+                    filename = f"{output_name}.png"
+                else:
+                    filename = f"{output_name}_{Path(audio_file.path).stem}.png"
+            else:
+                filename = f"{Path(audio_file.path).stem}_scanned.png"
+
+            output_path = str(target_dir / filename)
+
+            jobs.append(
+                Job(
+                    audio_file=audio_file,
+                    operation=OperationType.GENERATE_SPECTROGRAM,
+                    params={"resolution": resolution},
+                    output_path=output_path,
+                )
+            )
+
+        self._spectrogram_progress_dialog = SpectrogramProgressDialog(jobs, parent=self)
         self._spectrogram_progress_dialog.cancelRequested.connect(self._on_cancel_clicked)
         self._spectrogram_progress_dialog.show()
 
-        detail = f"Generating {audio_file.filename} spectrogram"
-        self._discord_presence.update(PresenceState(details=detail, large_image=_DISCORD_LARGE_IMAGE))
+        self._discord_presence.update(
+            PresenceState(
+                details=f"Generating {len(jobs)} spectrogram"
+                f"{'s' if len(jobs) != 1 else ''}",
+                large_image=_DISCORD_LARGE_IMAGE,
+            )
+        )
 
-        self._job_manager.enqueue(job)
+        self._job_manager.enqueue_many(jobs)
 
     def _on_delete_selected_file(self) -> None:
         audio_file_ids = self._track_table.selected_row_ids()
@@ -1009,9 +1060,10 @@ class MainWindow(QMainWindow):
                 target_name = Path(job.output_path).name
                 self._conversion_progress_dialog.set_current_file(source_name, target_name)
 
-            elif (job.operation in {OperationType.APPLY_METADATA, OperationType.SET_COVER, OperationType.REMOVE_COVER}
-                and self._metadata_progress_dialog is not None
-            ):
+            elif (job.operation == OperationType.GENERATE_SPECTROGRAM and self._spectrogram_progress_dialog is not None):
+                self._spectrogram_progress_dialog.set_current_file(job.audio_file.filename)
+
+            elif (job.operation in {OperationType.APPLY_METADATA, OperationType.SET_COVER, OperationType.REMOVE_COVER} and self._metadata_progress_dialog is not None):
                 self._metadata_progress_dialog.set_current_file(job.audio_file.filename)
 
     def _on_job_progress(self, job_id: str, percent: float) -> None:
@@ -1043,9 +1095,11 @@ class MainWindow(QMainWindow):
                 if self._conversion_progress_dialog is not None:
                     self._conversion_progress_dialog.mark_job_done()
 
-            elif job.operation == OperationType.GENERATE_SPECTROGRAM and self._spectrogram_progress_dialog is not None:
+            elif (job.operation == OperationType.GENERATE_SPECTROGRAM and self._spectrogram_progress_dialog is not None):
                 self._spectrogram_progress_dialog.mark_job_done(failed=not success)
-                self._spectrogram_progress_dialog = None
+
+                if self._spectrogram_progress_dialog.is_finished():
+                    self._spectrogram_progress_dialog = None
 
             elif job.operation in {OperationType.APPLY_METADATA, OperationType.SET_COVER, OperationType.REMOVE_COVER}:
                 if self._metadata_progress_dialog is not None:

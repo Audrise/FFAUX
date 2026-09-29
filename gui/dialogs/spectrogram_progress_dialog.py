@@ -28,22 +28,27 @@ logger = get_logger("gui.dialogs.spectrogram_progress")
 class SpectrogramProgressDialog(QDialog):
     cancelRequested = Signal()
 
-    def __init__(self, job: Job, parent=None):
+    def __init__(self, jobs: list[Job], parent=None):
         super().__init__(parent)
+
         self.setWindowTitle("Generating Spectrogram")
-        self.resize(480, 220)
-        self._job = job
-        self._job_id = job.id
-        self._output_path = job.output_path
+        self.resize(480, 240)
+
+        self._jobs = jobs
+        self._total_jobs = len(jobs)
+        self._completed_jobs = 0
+        self._failed_jobs = 0
+        self._current_job_index = 1
         self._cancelled = False
         self._finished = False
-        self._status_label = QLabel("Scanning waveform...")
+
+        self._status_label = QLabel(self._status_text())
         self._status_label.setProperty("class", "dialog-title")
 
-        current_file_label = QLabel("SOURCE FILE:")
+        current_file_label = QLabel("CURRENT FILE:")
         current_file_label.setProperty("class", "section-caption")
 
-        self._source_label = QLabel(job.audio_file.filename)
+        self._source_label = QLabel("-")
         self._source_label.setWordWrap(True)
 
         current_file_layout = QVBoxLayout()
@@ -56,7 +61,9 @@ class SpectrogramProgressDialog(QDialog):
         current_file_frame.setLayout(current_file_layout)
 
         self._progress_panel = ProgressPanel()
-        self._progress_panel.reset(total=1)
+        self._progress_panel.reset(total=self._total_jobs)
+
+        self._stats_label = QLabel("+ 0 Completed     - 0 Failed")
 
         self._buttons = QDialogButtonBox()
 
@@ -71,6 +78,7 @@ class SpectrogramProgressDialog(QDialog):
         layout.addWidget(self._status_label)
         layout.addWidget(current_file_label)
         layout.addWidget(current_file_frame)
+        layout.addWidget(self._stats_label)
         layout.addWidget(self._progress_panel)
         layout.addWidget(self._buttons)
 
@@ -81,8 +89,26 @@ class SpectrogramProgressDialog(QDialog):
         self.cancelRequested.emit()
         self.reject()
 
+    def _status_text(self) -> str:
+        if self._total_jobs == 1:
+            return "Generating Spectrogram..."
+
+        return (
+            f"Generating {self._current_job_index} "
+            f"of {self._total_jobs} spectrograms"
+        )
+
+    def set_current_file(self, source_name: str) -> None:
+        if self._cancelled or self._finished:
+            return
+
+        self._source_label.setText(source_name)
+
+        if self._total_jobs > 1:
+            self._status_label.setText(self._status_text())
+
     def update_job_progress(self, job_id: str, percent: float) -> None:
-        if (self._cancelled or self._finished or job_id != self._job_id):
+        if self._cancelled or self._finished:
             return
 
         self._progress_panel.update_job_progress(job_id, percent)
@@ -91,75 +117,115 @@ class SpectrogramProgressDialog(QDialog):
         if self._cancelled or self._finished:
             return
 
-        self._finished = True
-
         self._progress_panel.mark_job_done()
 
-        logger.info("Spectrogram generation finished: failed=%s", failed)
-        self.accept()
+        if failed:
+            self._failed_jobs += 1
+        else:
+            self._completed_jobs += 1
 
-        if not failed:
-            self._show_result()
+        finished_jobs = self._completed_jobs + self._failed_jobs
+
+        self._stats_label.setText(
+            f"+ {self._completed_jobs} Completed     "
+            f"- {self._failed_jobs} Failed"
+        )
+
+        if finished_jobs >= self._total_jobs:
+            self._on_generation_finished()
+            return
+
+        self._current_job_index = finished_jobs + 1
+        self._status_label.setText(self._status_text())
+
+    def _on_generation_finished(self) -> None:
+        if self._cancelled or self._finished:
+            return
+
+        self._finished = True
+
+        logger.info(
+            "Spectrogram generation finished: %d completed, %d failed",
+            self._completed_jobs,
+            self._failed_jobs,
+        )
+
+        self.accept()
+        self._show_result()
+
+    def is_finished(self) -> bool:
+        return self._finished
 
     def _show_result(self) -> None:
-        job = self._job
+        all_success = self._failed_jobs == 0
 
-        output_path = Path(self._output_path)
-        output_name = output_path.name
-        output_dir = str(output_path.parent)
-
-        status_label = QLabel("Spectrogram Generated")
-        status_label.setProperty("class", "dialog-title")
-
-        current_file_label = QLabel("SOURCE FILE:")
-        current_file_label.setProperty("class", "section-caption")
-
-        source_label = QLabel(job.audio_file.filename)
-        source_label.setWordWrap(True)
-
-        current_file_layout = QVBoxLayout()
-        current_file_layout.setContentsMargins(10, 8, 10, 8)
-        current_file_layout.setSpacing(2)
-        current_file_layout.addWidget(source_label)
-
-        current_file_frame = QFrame()
-        current_file_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        current_file_frame.setLayout(current_file_layout)
-
-        output_label = QLabel("OUTPUT FILE:")
-        output_label.setProperty("class", "section-caption")
-
-        output_name_label = QLabel(output_name)
-        output_name_label.setWordWrap(True)
-
-        output_layout = QVBoxLayout()
-        output_layout.setContentsMargins(10, 8, 10, 8)
-        output_layout.setSpacing(2)
-        output_layout.addWidget(output_name_label)
-
-        output_frame = QFrame()
-        output_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        output_frame.setLayout(output_layout)
+        if all_success:
+            title = "Spectrograms Generated"
+            text = (
+                f"{self._completed_jobs} spectrogram"
+                f"{'s' if self._completed_jobs != 1 else ''} "
+                "generated successfully."
+            )
+        else:
+            title = "Spectrogram Generation Completed with Errors"
+            text = (
+                f"{self._completed_jobs} of {self._total_jobs} "
+                "spectrograms were generated successfully.\n"
+                f"{self._failed_jobs} failed."
+            )
 
         result_dialog = QDialog(self.parentWidget())
-        result_dialog.setWindowTitle("Spectrogram Generated")
+        result_dialog.setWindowTitle(title)
         result_dialog.resize(480, 220)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+        status_label = QLabel(title)
+        status_label.setProperty("class", "dialog-title")
+
+        detail_label = QLabel(text)
+        detail_label.setWordWrap(True)
+
+        detail_layout = QVBoxLayout()
+        detail_layout.setContentsMargins(10, 8, 10, 8)
+        detail_layout.setSpacing(2)
+        detail_layout.addWidget(detail_label)
+
+        detail_frame = QFrame()
+        detail_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        detail_frame.setLayout(detail_layout)
+
+        stats_label = QLabel(
+            f"+ {self._completed_jobs} Completed     "
+            f"- {self._failed_jobs} Failed"
+        )
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok
+        )
         buttons.accepted.connect(result_dialog.accept)
 
-        open_folder_btn = buttons.addButton("Open Output", QDialogButtonBox.ButtonRole.ActionRole)
+        open_folder_btn = buttons.addButton(
+            "Open Output",
+            QDialogButtonBox.ButtonRole.ActionRole,
+        )
+
+        output_dir = (
+            str(Path(self._jobs[0].output_path).parent)
+            if self._jobs
+            else ""
+        )
+
         open_folder_btn.clicked.connect(result_dialog.accept)
-        open_folder_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(output_dir)))
+        open_folder_btn.clicked.connect(
+            lambda: QDesktopServices.openUrl(
+                QUrl.fromLocalFile(output_dir)
+            )
+        )
 
         layout = QVBoxLayout(result_dialog)
         layout.setSpacing(8)
         layout.addWidget(status_label)
-        layout.addWidget(current_file_label)
-        layout.addWidget(current_file_frame)
-        layout.addWidget(output_label)
-        layout.addWidget(output_frame)
-        layout.addWidget(self._progress_panel)
+        layout.addWidget(detail_frame)
+        layout.addWidget(stats_label)
         layout.addWidget(buttons)
 
         result_dialog.show()
