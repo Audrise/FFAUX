@@ -21,7 +21,7 @@
   <img src="https://img.shields.io/badge/Windows%20Terminal-0C0C0C?style=for-the-badge&logo=windows-terminal&logoColor=white"/>
   <br>
   <a href="https://github.com/Audrise/FFAUX">
-    <img src="https://img.shields.io/badge/FFAUX-1.0.1-0078D4?style=for-the-badge"/>
+    <img src="https://img.shields.io/badge/FFAUX-1.0.2-0078D4?style=for-the-badge"/>
   </a>
   <a href="https://github.com/Audrise/FFAUX?tab=GPL-3.0-1-ov-file">
     <img src="https://img.shields.io/badge/LICENSE-GPL%203.0-6B7280?style=for-the-badge"/>
@@ -32,7 +32,7 @@
 
 </div>
 
-## 📖 Description
+## Description
 
 <p align="center"><b>Python 3 based FFmpeg wrapper with a PySide6 GUI</b></p>
 
@@ -41,7 +41,7 @@ It uses FFmpeg and FFprobe to handle audio conversion and metadata, while PySide
 
 FFAUX runs FFmpeg and FFprobe as external processes instead of reimplementing their functionality. Because of this, a working FFmpeg installation is required for audio conversion and media probing.
 
-## 📌 Features
+## Features
 
 * Batch audio conversion with FFmpeg, with options for:
 
@@ -72,7 +72,7 @@ FFAUX runs FFmpeg and FFprobe as external processes instead of reimplementing th
 
 * Discord Rich Presence integration that shows the app's current status (idle / converting) on Discord. It can be left disabled, and the application continues normally if Discord is not installed or running.
 
-## 📋 Requirements
+## Requirements
 
 * Python 3.10 or newer
 * pip
@@ -80,9 +80,9 @@ FFAUX runs FFmpeg and FFprobe as external processes instead of reimplementing th
 * FFmpeg and FFprobe executables
 * pypresence
 
-## 📦Installation
+## Installation
 
-### 🖥️ Desktop Application
+### Desktop Application
 
 The desktop application is distributed as a Windows installer with FFmpeg and FFprobe bundled with the application.
 
@@ -135,7 +135,7 @@ For developers or users who want to run FFAUX directly from the source code:
 
 6. Launch the FFAUX:
    ```bash
-   python main.py
+   python -m FFAUX
    ```
    - The main window will open with an empty track list and the main toolbar and menu.
 
@@ -149,11 +149,12 @@ For developers or users who want to run FFAUX directly from the source code:
 
    - To edit metadata, select one or more tracks and open the metadata editor. The available fields are generated from the tags found in the selected file(s). You can apply a saved template, edit fields directly, or preview a template before applying it.
 
-## 🗂️ Structure
+## Structure
 
 ```
 FFAUX/
-├── main.py                   # Application entry point
+├── __init__.py                   # Application entry point
+├── __main__.py                   # Application entry point
 │
 ├── requirements.txt          # Python dependencies
 │
@@ -184,7 +185,7 @@ FFAUX/
 └── tests/                    # Automated tests (backend, no GUI required)
 ```
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 ### 1. The application cannot find FFmpeg or FFprobe.
 - Make sure `ffmpeg` and `ffprobe` are either available through the system PATH, placed inside the `bin/` directory, or configured with the correct paths in the application's settings dialog.
@@ -221,10 +222,10 @@ FFAUX/
 This tool is designed to help you **view, edit, and manage audio metadata and cover art** in a safe, local environment. 
 **it doesn't download, stream, or acquire audio content from any source.**
 
-## 📝 Changelog
+## Changelog
 
-### v1.0.1 - Spectrogram Update
-- Generating Spectrogram now support multiple file
+### v1.0.2 - Entry Point And Structure Update
+- Now you can run FFAUX with `python -m FFAUX` in Source Code Version
 
 <h1></h1>
 <h4 align="center">

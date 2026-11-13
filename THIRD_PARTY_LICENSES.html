@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FFAUX - Third-Party Licenses</title>
+  <style>
+    :root {
+      --bg: #1a1a1a;
+      --surface: #202020;
+      --surface-hover: #2b2b2b;
+      --border: #2a2a2a;
+      --border-light: #3a3a3a;
+      --text: #d4d4d4;
+      --text-muted: #888888;
+      --heading: #ffffff;
+      --link: #5a8fbd;
+      --link-hover: #7aa9d0;
+      --code-bg: #141414;
+      --accent: #2d5f8a;
+      --table-header: #232323;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Helvetica,
+        Arial,
+        sans-serif;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .container {
+      width: min(100% - 48px, 960px);
+      margin: 0 auto;
+      padding: 36px 0 48px;
+    }
+
+    header {
+      padding: 0 0 24px;
+      margin-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h1,
+    h2,
+    h3 {
+      color: var(--heading);
+      line-height: 1.3;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 27px;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 40px 0 18px;
+      padding: 8px 12px;
+      border-left: 3px solid var(--accent);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 19px;
+      font-weight: 600;
+    }
+
+    h3 {
+      margin: 28px 0 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #b8b8b8;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    .intro {
+      max-width: 760px;
+      margin: 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    a {
+      transition: all 0.2s;
+      color: var(--link);
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: var(--link-hover);
+      text-decoration: underline;
+      transition: all 0.2s;
+    }
+
+    hr {
+      height: 1px;
+      margin: 32px 0;
+      border: 0;
+      background: var(--border);
+    }
+
+    .license-card {
+      margin: 0 0 36px;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+    }
+
+    .license-card h2 {
+      margin-top: 0;
+    }
+
+    .license-info {
+      margin: 16px 0 20px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--border-light);
+      border-radius: 3px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    th,
+    td {
+      padding: 9px 12px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      width: 190px;
+      color: #b8b8b8;
+      background: var(--table-header);
+      font-weight: 600;
+    }
+
+    td {
+      color: var(--text);
+    }
+
+    tr:last-child th,
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    ul {
+      margin: 8px 0 18px;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    code {
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      color: #d4d4d4;
+      font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Monaco,
+        Consolas,
+        "Liberation Mono",
+        monospace;
+      font-size: 0.92em;
+    }
+
+    .badge {
+      transition: all 0.2s;
+      display: inline-block;
+      margin: 3px 5px 3px 0;
+      padding: 4px 9px;
+      border: 1px solid var(--border-light);
+      border-radius: 3px;
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .badge:hover {
+      background: var(--surface-hover);
+      border-color: #4a7ba6;
+      transition: all 0.2s;
+    }
+
+    .project-links {
+      margin-top: 12px;
+    }
+
+    .copyright {
+      padding: 11px 14px;
+      margin-top: 12px;
+      border-left: 3px solid var(--accent);
+      background: var(--surface);
+      color: var(--text-muted);
+    }
+
+    .note {
+      padding: 13px 15px;
+      margin-top: 12px;
+      border-left: 3px solid var(--link);
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .note p:last-child {
+      margin-bottom: 0;
+    }
+
+    .note ul {
+      margin-bottom: 0;
+    }
+
+    footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    footer code {
+      color: var(--text);
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        width: min(100% - 24px, 960px);
+        padding-top: 24px;
+        padding-bottom: 32px;
+      }
+
+      h1 {
+        font-size: 23px;
+      }
+
+      h2 {
+        font-size: 17px;
+      }
+
+      .license-card {
+        margin-bottom: 28px;
+      }
+
+      th,
+      td {
+        display: block;
+        width: 100%;
+      }
+
+      th {
+        padding-bottom: 5px;
+        border-bottom: 0;
+      }
+
+      td {
+        padding-top: 5px;
+      }
+
+      .badge {
+        margin-right: 3px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <header>
+      <h1 align="center">FFAUX - Third-Party Licenses</h1>
+
+      <p class="intro">
+        This document contains licensing information for third-party
+        software distributed with FFAUX. <br>
+        The copyright and licenses for the following software remain the property of their respective copyright holders.
+      </p>
+    </header>
+
+    <!-- FFmpeg -->
+    <section class="license-card" id="ffmpeg">
+      <h2>1. FFmpeg</h2>
+
+      <p>
+        FFAUX bundles selected <strong>FFmpeg</strong> binaries
+        for media processing.
+      </p>
+
+      <p>
+        The bundled FFmpeg executables and shared libraries are
+        redistributed without modification from the official
+        <strong>BtbN FFmpeg-Builds</strong> release.
+      </p>
+
+      <h3>Bundled Components</h3>
+
+      <ul>
+        <li><code>ffmpeg.exe</code></li>
+        <li><code>ffprobe.exe</code></li>
+        <li><code>avcodec-62.dll</code></li>
+        <li><code>avdevice-62.dll</code></li>
+        <li><code>avfilter-11.dll</code></li>
+        <li><code>avformat-62.dll</code></li>
+        <li><code>avutil-60.dll</code></li>
+        <li><code>swresample-6.dll</code></li>
+        <li><code>swscale-9.dll</code></li>
+      </ul>
+
+      <h3>Excluded Components</h3>
+
+      <p>
+        The following executable from the original distribution
+        is <strong>not included</strong>:
+      </p>
+
+      <ul>
+        <li><code>ffplay.exe</code></li>
+      </ul>
+
+      <h3>Build Information</h3>
+
+      <div class="license-info">
+        <table>
+          <tbody>
+            <tr>
+              <th>Provider</th>
+              <td>BtbN FFmpeg-Builds</td>
+            </tr>
+
+            <tr>
+              <th>Build</th>
+              <td>
+                <code>
+                  <a href="https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-08-03-14-02/ffmpeg-n8.1.2-34-g9b6c8969e0-win64-gpl-shared-8.1.zip">
+                    ffmpeg-n8.1.2-34-g9b6c8969e0-win64-gpl-shared-8.1
+                  </a>
+                </code>
+              </td>
+            </tr>
+
+            <tr>
+              <th>Architecture</th>
+              <td>Windows x64</td>
+            </tr>
+
+            <tr>
+              <th>Configuration</th>
+              <td>GPL shared build</td>
+            </tr>
+
+            <tr>
+              <th>License</th>
+              <td>
+                GNU General Public License Version 3 (GPLv3)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Project Links</h3>
+
+      <div class="project-links">
+        <span class="badge">
+          <a href="https://ffmpeg.org/" target="_blank" rel="noopener">
+            FFmpeg Website
+          </a>
+        </span>
+
+        <span class="badge">
+          <a href="https://github.com/BtbN/FFmpeg-Builds" target="_blank" rel="noopener">
+            BtbN FFmpeg-Builds
+          </a>
+        </span>
+
+        <span class="badge">
+          <a href="https://ffmpeg.org/download.html" target="_blank" rel="noopener">
+            FFmpeg Source Code
+          </a>
+        </span>
+      </div>
+
+      <h3>Copyright</h3>
+
+      <div class="copyright">
+        © The FFmpeg developers.
+      </div>
+
+      <h3>Why This Matters (GPLv3 &amp; Dynamic Linking)</h3>
+
+      <div class="note">
+        <p>
+          FFAUX bundles FFmpeg's official <strong>GPLv3-licensed</strong>
+          shared libraries (the <code>.dll</code> files listed above) and
+          dynamically links against them at runtime. Because of this,
+          FFAUX as a whole is distributed under the terms of the
+          <strong>GPLv3</strong> as well (see the <code><a href="LICENSE">LICENSE</a></code>
+          file). In practice, this means:
+        </p>
+
+        <ul>
+          <li>FFAUX's own source code is available under GPL-compatible terms.</li>
+          <li>You are free to swap the bundled FFmpeg binaries for your own ABI-compatible build/version if you prefer.</li>
+          <li>The corresponding source code for this exact FFmpeg build is available from the links above, matching the build info in the table above.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- PySide6 -->
+    <section class="license-card" id="pyside6">
+      <h2>2. Qt for Python (PySide6)</h2>
+
+      <p>
+        <strong>Project:</strong> Qt for Python (PySide6)
+      </p>
+
+      <p>
+        <strong>Purpose:</strong> Graphical user interface framework.
+      </p>
+
+      <h3>License</h3>
+
+      <p>
+        Qt for Python is licensed under:
+      </p>
+
+      <ul>
+        <li>
+          <strong>
+            GNU Lesser General Public License Version 3 (LGPLv3)
+          </strong>
+        </li>
+
+        <li>
+          <strong>
+            GNU General Public License Version 3 (GPLv3)
+          </strong>
+        </li>
+      </ul>
+
+      <p>
+        depending on the applicable distribution terms.
+      </p>
+
+      <h3>Project Links</h3>
+
+      <div class="project-links">
+        <span class="badge">
+          <a href="https://www.qt.io/qt-for-python" target="_blank" rel="noopener">
+            Qt for Python
+          </a>
+        </span>
+
+        <span class="badge">
+          <a href="https://code.qt.io/" target="_blank" rel="noopener">
+            Qt Source Code
+          </a>
+        </span>
+      </div>
+
+      <h3>Copyright</h3>
+
+      <div class="copyright">
+        © The Qt Company Ltd.
+      </div>
+    </section>
+
+    <!-- License Texts -->
+    <section class="license-card" id="license-texts">
+      <h2>License Texts</h2>
+
+      <p>
+        The full text of the
+        <i><strong>GNU General Public License Version 3 (GPLv3)</strong></i>
+        is included in the <code><a href="LICENSE" target="_blank">LICENSE</a></code> file distributed
+        with FFAUX.
+      </p>
+
+      <p>
+        Where required by the applicable license terms, the
+        corresponding source code for bundled third-party software
+        is available from the respective project websites listed above.
+      </p>
+    </section>
+
+    <footer>
+      <p align="center">
+        This page is provided for informational purposes regarding
+        third-party software distributed with FFAUX.
+      </p>
+
+      <p align="center">
+        &copy; 2026 Audrise. All rights reserved.
+      </p>
+    </footer>
+  </main>
+</body>
+</html>

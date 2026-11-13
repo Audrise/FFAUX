@@ -1,0 +1,629 @@
+"""
+# This table also acts as a drop area:
+
+audio files and folders can be dragged and dropped directly onto it.
+Multiple items can be selected for Edit, Convert, or Delete actions.
+"""
+from __future__ import annotations
+
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QAction, QDragEnterEvent, QDropEvent, QWheelEvent, QIcon, QPixmap
+from PySide6.QtWidgets import (
+    QAbstractItemView, QHeaderView, QMenu, QProgressBar, QTableWidget,
+    QTableWidgetItem, QHBoxLayout, QVBoxLayout, QWidget, QLabel
+)
+
+from FFAUX.core.models.audio_file import AudioFile, FileStatus
+from FFAUX.utils.file_utils import (
+    collect_audio_files, format_duration, format_file_size,
+    format_bit_depth, format_sample_rate, format_bitrate
+)
+from FFAUX.utils.paths import icons_path
+
+_STATUS_LABELS = {
+    FileStatus.PENDING: "Pending",
+    FileStatus.QUEUED: "Queued",
+    FileStatus.RUNNING: "Processing",
+    FileStatus.DONE: "Completed",
+    FileStatus.FAILED: "Failed",
+    FileStatus.CANCELLED: "Cancelled",
+}
+
+(
+    _COL_COVER, _COL_FILE_NAME, _COL_TRACK, _COL_DISC, _COL_TITLE, _COL_ARTIST, _COL_ALBUM_ARTIST,
+    _COL_ALBUM, _COL_YEAR, _COL_DURATION, _COL_BIT_DEPTH, _COL_SAMPLE_RATE, _COL_BITRATE, _COL_SIZE,
+    _COL_CODEC, _COL_RATING, _COL_STATUS, _COL_PROGRESS,
+) = range(18)
+
+_HEADERS = [
+    "Cover", "File Name", "Track", "Disc No", "Title", "Artist", "Album Artist",
+    "Album", "Year", "Duration", "Bit Depth", "Sample Rate", "Bitrate", "File size",
+    "Codec", "Rating", "Status", "Progress",
+]
+
+_COVER_SIZE = 28
+_ROW_HEIGHT_WITH_COVER = 40
+_ROW_HEIGHT_DEFAULT = 35
+
+_DEFAULT_HIDDEN_COLUMNS = {
+    _COL_COVER,
+    _COL_FILE_NAME,
+    _COL_RATING,
+    _COL_DISC,
+    _COL_ALBUM_ARTIST,
+}
+
+_DEFAULT_WIDTHS = {
+    _COL_COVER: 48,
+    _COL_FILE_NAME: 240,
+    _COL_TRACK: 65,
+    _COL_DISC: 65,
+    _COL_TITLE: 220,
+    _COL_ARTIST: 120,
+    _COL_ALBUM_ARTIST: 120,
+    _COL_ALBUM: 420,
+    _COL_YEAR: 90,
+    _COL_DURATION: 85,
+    _COL_BIT_DEPTH: 75,
+    _COL_SAMPLE_RATE: 90,
+    _COL_BITRATE: 90,
+    _COL_SIZE: 90,
+    _COL_CODEC: 90,
+    _COL_RATING: 90,
+    _COL_STATUS: 90,
+    _COL_PROGRESS: 115,
+}
+
+_ID_ROLE = Qt.ItemDataRole.UserRole
+
+_SORT_COLUMNS = {
+    "track_no": _COL_TRACK,
+    "disc_no": _COL_DISC,
+    "title": _COL_TITLE,
+    "artist": _COL_ARTIST,
+    "album_artist": _COL_ALBUM_ARTIST,
+    "album": _COL_ALBUM,
+    "date": _COL_YEAR,
+}
+
+class NumericTableWidgetItem(QTableWidgetItem):
+    def __lt__(self, other: QTableWidgetItem) -> bool:
+        try:
+            return int(self.text()) < int(other.text())
+        except (ValueError, TypeError):
+            return super().__lt__(other)
+
+class TrackTable(QTableWidget):
+    filesDropped = Signal(list)  # list[str] path of dropped audio files
+
+    def __init__(self, parent=None):
+        super().__init__(0, len(_HEADERS), parent)
+        self.setHorizontalHeaderLabels(_HEADERS)
+        self.setAlternatingRowColors(True)
+        self.setShowGrid(False)
+        self._ffaux_icons = icons_path()
+
+        header = self.horizontalHeader()
+        header.setHighlightSections(False)
+        header.setFixedHeight(24)
+        header.setSectionsMovable(True)
+        header.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        header.customContextMenuRequested.connect(self._on_header_context_menu)
+
+        self.verticalHeader().setVisible(False)
+        self.setTextElideMode(Qt.TextElideMode.ElideRight)
+        self.setTabKeyNavigation(True)
+
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+
+        self.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setCurrentCell(-1, -1)
+        self.setAcceptDrops(True)
+        self._row_by_id: dict[str, int] = {}
+        self._empty_state = self._build_empty_state()
+
+        for col in range(len(_HEADERS)):
+            header.setSectionResizeMode(col, QHeaderView.ResizeMode.Interactive)
+            header.resizeSection(col, _DEFAULT_WIDTHS.get(col, 100))
+        self.reset_column_widths()
+
+        for col in _DEFAULT_HIDDEN_COLUMNS:
+            header.setSectionHidden(col, True)
+
+        self._update_header_visibility()
+
+    def _build_empty_state(self) -> QWidget:
+        empty_state = QWidget(self.viewport())
+        empty_state.setObjectName("emptyState")
+
+        outer_layout = QVBoxLayout(empty_state)
+        outer_layout.setContentsMargins(0, 0, 0, 0)
+        outer_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        content = QWidget()
+        content.setObjectName("emptyStateContent")
+        content.setFixedWidth(400)
+
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(8)
+
+        shortcuts = [
+            ("Open File", ["Ctrl", "O"]),
+            ("Open Folder", ["Ctrl", "Shift", "O"]),
+            ("Show FFAUX Log", ["Ctrl", "/"]),
+            ("Settings", ["Ctrl", ","]),
+        ]
+
+        for label_text, keys in shortcuts:
+            row = QHBoxLayout()
+            row.setContentsMargins(0, 0, 0, 0)
+            row.setSpacing(6)
+
+            label = QLabel(label_text)
+            label.setObjectName("shortcutLabel")
+            label.setFixedWidth(160)
+            label.setAlignment(
+                Qt.AlignmentFlag.AlignLeft |
+                Qt.AlignmentFlag.AlignVCenter
+            )
+            row.addWidget(label)
+
+            key_layout = QHBoxLayout()
+            key_layout.setContentsMargins(0, 0, 0, 0)
+            key_layout.setSpacing(6)
+            key_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+            for index, key in enumerate(keys):
+                if index > 0:
+                    plus_label = QLabel("+")
+                    plus_label.setObjectName("shortcutPlus")
+                    plus_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                    key_layout.addWidget(plus_label)
+
+                key_label = QLabel(key)
+                key_label.setObjectName("shortcutKey")
+                key_label.setFixedSize(30, 20)
+                key_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                key_layout.addWidget(key_label)
+
+            row.addLayout(key_layout)
+
+            layout.addLayout(row)
+
+        outer_layout.addWidget(content)
+
+        empty_state.setGeometry(self.viewport().rect())
+        empty_state.raise_()
+
+        return empty_state
+
+    def column_widths(self) -> list[int]:
+        header = self.horizontalHeader()
+        return [header.sectionSize(col) for col in range(self.columnCount())]
+
+    def apply_column_widths(self, widths: list[int]) -> None:
+        header = self.horizontalHeader()
+        for col, width in enumerate(widths):
+            if col >= self.columnCount():
+                break
+            if width > 0:
+                header.resizeSection(col, width)
+
+    def reset_column_widths(self) -> None:
+        header = self.horizontalHeader()
+        for col in range(len(_HEADERS)):
+            header.setSectionResizeMode(col, QHeaderView.ResizeMode.Interactive)
+            header.resizeSection(col, _DEFAULT_WIDTHS.get(col, 100))
+
+    def reset_layout(self) -> None:
+        # Reset column widths, visibility, and order to defaults in one call.
+        header = self.horizontalHeader()
+
+        for logical in range(self.columnCount()):
+            current_visual = header.visualIndex(logical)
+            if current_visual != logical:
+                header.moveSection(current_visual, logical)
+
+        # Visibility: only the columns hidden by default start hidden again.
+        for col in range(self.columnCount()):
+            header.setSectionHidden(col, col in _DEFAULT_HIDDEN_COLUMNS)
+
+        self.reset_column_widths()
+        self._update_row_heights()
+
+    def build_column_toggle_actions(self, parent) -> list[QAction]:
+        header = self.horizontalHeader()
+        actions: list[QAction] = []
+        for col, label in enumerate(_HEADERS):
+            action = QAction(label, parent)
+            action.setCheckable(True)
+            action.setChecked(not header.isSectionHidden(col))
+            action.toggled.connect(lambda checked, c=col: self._set_column_visible(c, checked))
+            actions.append(action)
+        return actions
+
+    def _on_header_context_menu(self, pos) -> None:
+        header = self.horizontalHeader()
+        menu = QMenu(self)
+        columns_menu = menu.addMenu("Columns")
+        columns_menu.setIcon(QIcon(str(self._ffaux_icons / "Columns.ico")))
+        for action in self.build_column_toggle_actions(columns_menu):
+            columns_menu.addAction(action)
+
+        reset_col_menu = menu.addAction("Reset Column Layout", self.reset_layout)
+        reset_col_menu.setIcon(QIcon(str(self._ffaux_icons / "Reset.ico")))
+        reset_col_menu.setShortcut("Ctrl+>")
+
+        menu.exec(header.mapToGlobal(pos))
+
+    def _set_column_visible(self, col: int, visible: bool) -> None:
+        header = self.horizontalHeader()
+        header.setSectionHidden(col, not visible)
+
+        if visible:
+            # Keep hidden sections slots by moving them to the far right.
+            last_visual = header.count() - 1
+            current_visual = header.visualIndex(col)
+            if current_visual != last_visual:
+                header.moveSection(current_visual, last_visual)
+
+        if col == _COL_COVER:
+            self._update_row_heights()
+
+    # Save the current column order (see MainWindow.closeEvent).
+    # The order contains logical column indices from left to right.
+    def column_order(self) -> list[int]:
+        header = self.horizontalHeader()
+        return [header.logicalIndex(visual) for visual in range(header.count())]
+
+    def apply_column_order(self, order: list[int]) -> None:
+        header = self.horizontalHeader()
+        for target_visual, logical in enumerate(order):
+            if not (0 <= logical < self.columnCount()):
+                continue
+            current_visual = header.visualIndex(logical)
+            if current_visual != target_visual:
+                header.moveSection(current_visual, target_visual)
+
+    # Persist hidden columns (see MainWindow.closeEvent).
+    def hidden_columns(self) -> list[int]:
+        header = self.horizontalHeader()
+        return [col for col in range(self.columnCount()) if header.isSectionHidden(col)]
+
+    def apply_hidden_columns(self, hidden_columns: list[int]) -> None:
+        header = self.horizontalHeader()
+        hidden_set = set(hidden_columns)
+        for col in range(self.columnCount()):
+            header.setSectionHidden(col, col in hidden_set)
+        self._update_row_heights()
+
+    # Drag and drop directly within the table.
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dragMoveEvent(self, event: QDragEnterEvent) -> None:
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent) -> None:
+        raw_paths = [url.toLocalFile() for url in event.mimeData().urls() if url.isLocalFile()]
+        audio_files = collect_audio_files(raw_paths)
+        if audio_files:
+            self.filesDropped.emit(audio_files)
+        event.acceptProposedAction()
+
+    # Once vertical scrolling reaches the top or bottom, further scrolling moves horizontally.
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        if self.rowCount() == 0:
+            event.accept()
+            return
+
+        delta = event.pixelDelta().y() or event.angleDelta().y()
+
+        vbar = self.verticalScrollBar()
+        hbar = self.horizontalScrollBar()
+
+        if delta < 0:
+            if vbar.value() >= vbar.maximum():
+                if hbar.value() < hbar.maximum():
+                    hbar.setValue(hbar.value() - delta)
+                    event.accept()
+                    return
+
+        elif delta > 0:
+            if vbar.value() >= vbar.maximum():
+                if hbar.value() > hbar.minimum():
+                    hbar.setValue(hbar.value() - delta)
+                    event.accept()
+                    return
+
+        super().wheelEvent(event)
+
+    # Fill & read row data
+    def add_file(self, audio_file: AudioFile) -> None:
+        row = self.rowCount()
+        self.insertRow(row)
+
+        meta = audio_file.metadata
+
+        values = {
+            _COL_FILE_NAME: audio_file.filename,
+            _COL_TRACK: meta.track_number or "-",
+            _COL_DISC: meta.disc_number or "-",
+            _COL_TITLE: meta.title or "-",
+            _COL_ARTIST: meta.artist or "",
+            _COL_ALBUM_ARTIST: meta.album_artist or "-",
+            _COL_ALBUM: meta.album or "-",
+            _COL_YEAR: meta.year or "-",
+            _COL_DURATION: format_duration(audio_file.duration_seconds),
+            _COL_BIT_DEPTH: format_bit_depth(audio_file.bit_depth),
+            _COL_SAMPLE_RATE: format_sample_rate(audio_file.sample_rate_hz),
+            _COL_BITRATE: format_bitrate(audio_file.bitrate_kbps),
+            _COL_SIZE: format_file_size(audio_file.file_size_bytes),
+            _COL_CODEC: audio_file.codec or "-",
+            _COL_RATING: meta.rating or "-",
+            _COL_STATUS: _STATUS_LABELS[audio_file.status],
+        }
+        for col, text in values.items():
+            if col in (_COL_TRACK, _COL_DISC):
+                item = NumericTableWidgetItem(str(text))
+            else:
+                item = QTableWidgetItem(str(text))
+
+            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.setItem(row, col, item)
+
+        # audio_file.id is stored as data in the Title column item; it is used
+        # to rebuild _row_by_id whenever the row structure changes.
+        self.item(row, _COL_TITLE).setData(_ID_ROLE, audio_file.id)
+
+        progress_bar = QProgressBar()
+        progress_bar.setRange(0, 100)
+        progress_bar.setValue(0)
+        progress_bar.setTextVisible(True)
+        progress_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        progress_container = QWidget()
+        progress_container.setObjectName("progressContainer")
+        progress_layout = QHBoxLayout(progress_container)
+        progress_layout.setContentsMargins(4, 2, 4, 2)
+        progress_layout.addWidget(progress_bar)
+        progress_container.progress_bar = progress_bar
+        self.setCellWidget(row, _COL_PROGRESS, progress_container)
+        self.setCellWidget(row, _COL_COVER, self._build_cover_cell())
+        self.setRowHeight(row, self._current_row_height())
+
+        self._row_by_id[audio_file.id] = row
+        self._update_header_visibility()
+
+    def _build_cover_cell(self) -> QWidget:
+        cover_label = QLabel()
+        cover_label.setObjectName("coverThumbnail")
+        cover_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        cover_label.setFixedSize(_COVER_SIZE, _COVER_SIZE)
+
+        container = QWidget()
+        container.setObjectName("coverContainer")
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(cover_label)
+        container.cover_label = cover_label
+        return container
+
+    def set_cover_art(self, audio_file_id: str, image_path: str | None) -> None:
+        # Show a cover thumbnail for a row. Pass None (or a path that
+        # fails to load) to leave the cell blank, for tracks with no
+        # embedded artwork.
+        row = self._row_by_id.get(audio_file_id)
+        if row is None:
+            return  # row was removed before the extraction finished
+
+        container = self.cellWidget(row, _COL_COVER)
+        label = getattr(container, "cover_label", None)
+        if label is None:
+            return
+
+        if not image_path:
+            label.clear()
+            return
+
+        pixmap = QPixmap(image_path)
+        if pixmap.isNull():
+            label.clear()
+            return
+
+        label.setPixmap(
+            pixmap.scaled(
+                _COVER_SIZE, _COVER_SIZE,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+        )
+
+    def _current_row_height(self) -> int:
+        cover_visible = not self.horizontalHeader().isSectionHidden(_COL_COVER)
+        return _ROW_HEIGHT_WITH_COVER if cover_visible else _ROW_HEIGHT_DEFAULT
+
+    def _update_row_heights(self) -> None:
+        height = self._current_row_height()
+        for row in range(self.rowCount()):
+            self.setRowHeight(row, height)
+
+    def update_metadata(self, audio_file_id: str, audio_file: AudioFile) -> None:
+        # Refresh only metadata-dependent columns after async ffprobe completes.
+        row = self._row_by_id.get(audio_file_id)
+        if row is None:
+            return  # row was removed (e.g. user deleted it) before the probe finished
+
+        meta = audio_file.metadata
+        values = {
+            _COL_FILE_NAME: audio_file.filename,
+            _COL_TRACK: meta.track_number or "-",
+            _COL_TITLE: meta.title or "-",
+            _COL_ARTIST: meta.artist or "-",
+            _COL_ALBUM: meta.album or "-",
+            _COL_YEAR: meta.year or "-",
+            _COL_DURATION: format_duration(audio_file.duration_seconds),
+            _COL_BIT_DEPTH: format_bit_depth(audio_file.bit_depth),
+            _COL_SAMPLE_RATE: format_sample_rate(audio_file.sample_rate_hz),
+            _COL_BITRATE: format_bitrate(audio_file.bitrate_kbps),
+            _COL_SIZE: format_file_size(audio_file.file_size_bytes),
+            _COL_CODEC: audio_file.codec or "-",
+            _COL_RATING: meta.rating or "-",
+        }
+        for col, text in values.items():
+            item = self.item(row, col)
+
+            if item is None:
+                if col in (_COL_TRACK, _COL_DISC):
+                    item = NumericTableWidgetItem(str(text))
+                else:
+                    item = QTableWidgetItem(str(text))
+
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.setItem(row, col, item)
+            else:
+                item.setText(str(text))
+
+    def remove_ids(self, audio_file_ids: list[str]) -> None:
+        # Delete rows for a set of audio_file_ids at once (multi-select)
+        ids_to_remove = set(audio_file_ids)
+        rows_to_remove = sorted(
+            (row for file_id, row in self._row_by_id.items() if file_id in ids_to_remove),
+            reverse=True,
+        )
+        for row in rows_to_remove:
+            self.removeRow(row)
+        self._rebuild_row_index()
+        self._update_header_visibility()
+
+    # def _update_header_visibility(self) -> None:
+    #     self.horizontalHeader().setVisible(self.rowCount() > 0)
+
+    def _update_header_visibility(self) -> None:
+        has_rows = self.rowCount() > 0
+
+        self.horizontalHeader().setVisible(has_rows)
+        self.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+            if has_rows
+            else Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+
+        self._empty_state.setVisible(not has_rows)
+        self._empty_state.setGeometry(self.viewport().rect())
+        self._empty_state.raise_()
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+
+        if hasattr(self, "_empty_state"):
+            self._empty_state.setGeometry(self.viewport().rect())
+
+    def remove_selected_rows(self) -> list[str]:
+        # Delete all currently selected rows.
+        # Returns the IDs of the deleted rows.
+        selected_ids = self.selected_row_ids()
+        self.remove_ids(selected_ids)
+        return selected_ids
+
+    def _rebuild_row_index(self) -> None:
+        self._row_by_id.clear()
+        for row in range(self.rowCount()):
+            item = self.item(row, _COL_TITLE)
+            file_id = item.data(_ID_ROLE) if item else None
+            if file_id:
+                self._row_by_id[file_id] = row
+
+    def update_status(self, audio_file_id: str, status: FileStatus) -> None:
+        row = self._row_by_id.get(audio_file_id)
+        if row is None:
+            return
+        item = self.item(row, _COL_STATUS)
+        if item:
+            item.setText(_STATUS_LABELS.get(status, status.value))
+
+    def update_progress(self, audio_file_id: str, percent: float) -> None:
+        row = self._row_by_id.get(audio_file_id)
+        if row is None:
+            return
+        container = self.cellWidget(row, _COL_PROGRESS)
+        bar = getattr(container, "progress_bar", None)
+        if isinstance(bar, QProgressBar):
+            bar.setValue(int(round(percent)))
+
+    def clear_all(self) -> None:
+        self.setRowCount(0)
+        self._row_by_id.clear()
+        self._update_header_visibility()
+
+    # Selection
+    def selected_row_id(self) -> str | None:
+        # Return the first selected row ID for legacy single-file callers.
+        ids = self.selected_row_ids()
+        return ids[0] if ids else None
+
+    def selected_row_ids(self) -> list[str]:
+        # Return all currently selected audio_file_ids (multi-select).
+        rows = sorted({index.row() for index in self.selectionModel().selectedRows()})
+        ids = []
+        for row in rows:
+            item = self.item(row, _COL_TITLE)
+            file_id = item.data(_ID_ROLE) if item else None
+            if file_id:
+                ids.append(file_id)
+        return ids
+
+    # Search (View > Show Search Bar / Ctrl+F, or right-click on the table).
+    def filter_rows(self, query: str) -> None:
+        query = query.strip().lower()
+        search_cols = (_COL_FILE_NAME, _COL_TITLE, _COL_ARTIST, _COL_ALBUM, _COL_YEAR, _COL_CODEC)
+
+        for row in range(self.rowCount()):
+            if not query:
+                self.setRowHidden(row, False)
+                continue
+
+            match = any(
+                query in (self.item(row, col).text().lower() if self.item(row, col) else "")
+                for col in search_cols
+            )
+            self.setRowHidden(row, not match)
+
+    def sort_by(self, key: str, ascending: bool = True) -> None:
+        # Sorting moves the table items, but not the setCellWidget() widgets.
+        # Keep progress bars mapped by audio_file_id and re-attach them after sorting.
+        col = _SORT_COLUMNS.get(key)
+        if col is None:
+            return
+
+        widgets_by_id: dict[str, dict[int, QWidget]] = {}
+        for row in range(self.rowCount()):
+            item = self.item(row, _COL_TITLE)
+            file_id = item.data(_ID_ROLE) if item else None
+            if not file_id:
+                continue
+            for widget_col in (_COL_PROGRESS, _COL_COVER):
+                widget = self.cellWidget(row, widget_col)
+                if widget is not None:
+                    widgets_by_id.setdefault(file_id, {})[widget_col] = widget
+
+        order = Qt.SortOrder.AscendingOrder if ascending else Qt.SortOrder.DescendingOrder
+        self.sortItems(col, order)
+
+        for row in range(self.rowCount()):
+            item = self.item(row, _COL_TITLE)
+            file_id = item.data(_ID_ROLE) if item else None
+            for widget_col, widget in widgets_by_id.get(file_id, {}).items():
+                self.setCellWidget(row, widget_col, widget)
+
+        # sortItems() resets row heights back to the default.
+        self._update_row_heights()
+        self._rebuild_row_index()

@@ -27,32 +27,26 @@ installer/
 
 # PyInstaller
 *.manifest
-*.spec
 
 # Build & installer scripts
-*.iss
 *.bat
 
 # =========================
 # App runtime / local config
 # =========================
-config/*
-*.html
+FFAUX/config/*
 
 # =========================
 # Local-only assets
 # =========================
-assets/templates/*.json
-assets/icons/*.ico
-assets/splash/*.png
-bin/*.dll
-bin/*.exe
+FFAUX/assets/templates/*.json
+FFAUX/bin/*.dll
+FFAUX/bin/*.exe
 
 # =========================
 # Misc / working folders
 # =========================
 notes/
-audio/
 
 # =========================
 # Audio test
