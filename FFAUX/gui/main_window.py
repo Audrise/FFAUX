@@ -270,10 +270,10 @@ class MainWindow(QMainWindow):
         self._edit_metadata_action.triggered.connect(self._on_edit_metadata_clicked)
         edit_menu.addAction(self._edit_metadata_action)
 
-        self._spectrogram_action = QAction("Generate Spectrogram...", self)
+        self._spectrogram_action = QAction("Render Spectrogram...", self)
         self._custom_icon(self._spectrogram_action, self._ffaux_icons, "Spectro.ico")
         self._spectrogram_action.setShortcut("Ctrl+G")
-        self._spectrogram_action.triggered.connect(self._on_generate_spectrogram_clicked)
+        self._spectrogram_action.triggered.connect(self._on_render_spectrogram_clicked)
         edit_menu.addAction(self._spectrogram_action)
 
         self._settings_action = QAction("Settings...", self)
@@ -422,8 +422,8 @@ class MainWindow(QMainWindow):
         convert_action.setShortcut("Ctrl+R")
 
         spectrogram_action = menu.addAction(
-            "Generate Spectrogram...",
-            self._on_generate_spectrogram_clicked
+            "Rendering Spectrogram...",
+            self._on_render_spectrogram_clicked
         )
         self._custom_icon(spectrogram_action, self._ffaux_icons, "Spectro.ico")
         spectrogram_action.setShortcut("Ctrl+G")
@@ -699,13 +699,13 @@ class MainWindow(QMainWindow):
     def _on_cancel_clicked(self) -> None:
         self._job_manager.cancel_all()
 
-    def _on_generate_spectrogram_clicked(self) -> None:
+    def _on_render_spectrogram_clicked(self) -> None:
         selected_ids = self._track_table.selected_row_ids()
         if not selected_ids:
             QMessageBox.information(
                 self,
                 "Select Files",
-                "Please select files to generate spectrograms for.",
+                "Please select files to render spectrograms for.",
             )
             return
 
@@ -783,7 +783,7 @@ class MainWindow(QMainWindow):
             jobs.append(
                 Job(
                     audio_file=audio_file,
-                    operation=OperationType.GENERATE_SPECTROGRAM,
+                    operation=OperationType.RENDER_SPECTROGRAM,
                     params={"resolution": resolution},
                     output_path=output_path,
                 )
@@ -795,7 +795,7 @@ class MainWindow(QMainWindow):
 
         self._discord_presence.update(
             PresenceState(
-                details=f"Generating {len(jobs)} spectrogram"
+                details=f"Rendering {len(jobs)} spectrogram"
                 f"{'s' if len(jobs) != 1 else ''}",
                 large_image=_DISCORD_LARGE_IMAGE,
             )
@@ -1060,7 +1060,7 @@ class MainWindow(QMainWindow):
                 target_name = Path(job.output_path).name
                 self._conversion_progress_dialog.set_current_file(source_name, target_name)
 
-            elif (job.operation == OperationType.GENERATE_SPECTROGRAM and self._spectrogram_progress_dialog is not None):
+            elif (job.operation == OperationType.RENDER_SPECTROGRAM and self._spectrogram_progress_dialog is not None):
                 self._spectrogram_progress_dialog.set_current_file(job.audio_file.filename)
 
             elif (job.operation in {OperationType.APPLY_METADATA, OperationType.SET_COVER, OperationType.REMOVE_COVER} and self._metadata_progress_dialog is not None):
@@ -1073,7 +1073,7 @@ class MainWindow(QMainWindow):
             if job.operation == OperationType.CONVERT and self._conversion_progress_dialog is not None:
                 self._conversion_progress_dialog.update_job_progress(job_id, percent)
 
-            elif job.operation == OperationType.GENERATE_SPECTROGRAM and self._spectrogram_progress_dialog is not None:
+            elif job.operation == OperationType.RENDER_SPECTROGRAM and self._spectrogram_progress_dialog is not None:
                 self._spectrogram_progress_dialog.update_job_progress(job_id, percent)
 
             elif (job.operation in {OperationType.APPLY_METADATA, OperationType.SET_COVER, OperationType.REMOVE_COVER}
@@ -1095,7 +1095,7 @@ class MainWindow(QMainWindow):
                 if self._conversion_progress_dialog is not None:
                     self._conversion_progress_dialog.mark_job_done()
 
-            elif (job.operation == OperationType.GENERATE_SPECTROGRAM and self._spectrogram_progress_dialog is not None):
+            elif (job.operation == OperationType.RENDER_SPECTROGRAM and self._spectrogram_progress_dialog is not None):
                 self._spectrogram_progress_dialog.mark_job_done(failed=not success)
 
                 if self._spectrogram_progress_dialog.is_finished():

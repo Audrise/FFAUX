@@ -60,24 +60,14 @@ class FFmpegWorker(QRunnable):
             return
 
         parser = ProgressParser(total_duration_seconds=job.audio_file.duration_seconds)
-        """print("SOURCE DURATION:", job.audio_file.duration_seconds)"""
 
         def on_line(line: str) -> None:
             self.signals.log.emit(job.id, line)
-            """print("FFMPEG LINE:", repr(line))"""
 
             state = parser.feed_line(line)
 
             if state is not None:
                 percent = parser.percent(state)
-
-                """print(
-                    "PARSED:",
-                    state.out_time_seconds,
-                    percent,
-                    state.is_done,
-                )"""
-
                 if percent is not None:
                     self.signals.progress.emit(job.id, percent)
 

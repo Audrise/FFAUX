@@ -62,7 +62,9 @@ def _build_convert(job: Job) -> list[str]:
 
     args += [job.output_path]
 
-    """print("\nFFMPEG COMMAND:")
+    """
+    junk debug
+    print("\nFFMPEG COMMAND:")
     print(" ".join(f'"{arg}"' if " " in str(arg) else str(arg) for arg in args))
     print()"""
 
@@ -167,7 +169,7 @@ _BUILDERS: dict[OperationType, Callable[[Job], list[str]]] = {
     OperationType.REMOVE_COVER: _build_remove_cover,
     OperationType.NORMALIZE: _build_normalize,
     OperationType.TRIM: _build_trim,
-    OperationType.GENERATE_SPECTROGRAM: _build_spectrogram,
+    OperationType.RENDER_SPECTROGRAM: _build_spectrogram,
 }
 
 def build(job: Job) -> list[str]:

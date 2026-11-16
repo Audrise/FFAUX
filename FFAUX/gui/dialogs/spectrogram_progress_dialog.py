@@ -1,5 +1,5 @@
 """
-# Dialog shown after clicking "Generate" in Spectrogram Settings.
+# Dialog shown after clicking "Render" in Spectrogram Settings.
 
 Similar to ConversionProgressDialog, but for a single job. Reuses
 ProgressPanel and the same 0-100% progress reporting used by CONVERT jobs.
@@ -31,7 +31,7 @@ class SpectrogramProgressDialog(QDialog):
     def __init__(self, jobs: list[Job], parent=None):
         super().__init__(parent)
 
-        self.setWindowTitle("Generating Spectrogram")
+        self.setWindowTitle("Rendering Spectrogram")
         self.resize(480, 240)
 
         self._jobs = jobs
@@ -84,18 +84,18 @@ class SpectrogramProgressDialog(QDialog):
 
     def _on_cancel_clicked(self) -> None:
         self._cancelled = True
-        logger.warning("Spectrogram generation cancelled")
+        logger.warning("Spectrogram rendering cancelled")
 
         self.cancelRequested.emit()
         self.reject()
 
     def _status_text(self) -> str:
         if self._total_jobs == 1:
-            return "Generating Spectrogram..."
+            return "Rendering Spectrogram..."
 
         return (
-            f"Generating {self._current_job_index} "
-            f"of {self._total_jobs} spectrograms"
+            f"Rendering {self._current_job_index} "
+            f"of {self._total_jobs} Spectrograms"
         )
 
     def set_current_file(self, source_name: str) -> None:
@@ -132,20 +132,20 @@ class SpectrogramProgressDialog(QDialog):
         )
 
         if finished_jobs >= self._total_jobs:
-            self._on_generation_finished()
+            self._on_rendering_finished()
             return
 
         self._current_job_index = finished_jobs + 1
         self._status_label.setText(self._status_text())
 
-    def _on_generation_finished(self) -> None:
+    def _on_rendering_finished(self) -> None:
         if self._cancelled or self._finished:
             return
 
         self._finished = True
 
         logger.info(
-            "Spectrogram generation finished: %d completed, %d failed",
+            "Spectrogram rendering finished: %d completed, %d failed",
             self._completed_jobs,
             self._failed_jobs,
         )
@@ -160,17 +160,17 @@ class SpectrogramProgressDialog(QDialog):
         all_success = self._failed_jobs == 0
 
         if all_success:
-            title = "Spectrograms Generated"
+            title = "Spectrograms Rendered"
             text = (
-                f"{self._completed_jobs} spectrogram"
+                f"{self._completed_jobs} Spectrogram"
                 f"{'s' if self._completed_jobs != 1 else ''} "
-                "generated successfully."
+                "Rendered successfully."
             )
         else:
-            title = "Spectrogram Generation Completed with Errors"
+            title = "Spectrogram Render Completed with Errors"
             text = (
                 f"{self._completed_jobs} of {self._total_jobs} "
-                "spectrograms were generated successfully.\n"
+                "Spectrograms were Rendered successfully.\n"
                 f"{self._failed_jobs} failed."
             )
 

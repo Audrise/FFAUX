@@ -32,7 +32,7 @@ _SECTIONS: list[tuple[str, list[str]]] = [
         "Dark mode support.",
     ]),
     ("Improvements", [
-        "Spectrogram generator now support multiple files.",
+        "Spectrogram Renderer now support multiple files.",
         "Improved conversion progress reporting.",
         "Improved metadata and cover art handling.",
         "Improved conversion reliability.",

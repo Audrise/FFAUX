@@ -20,7 +20,7 @@ class OperationType(str, Enum):
     SET_COVER = "set_cover"
     NORMALIZE = "normalize"
     TRIM = "trim"
-    GENERATE_SPECTROGRAM = "generate_spectrogram"
+    RENDER_SPECTROGRAM = "render_spectrogram"
 
 class JobStatus(str, Enum):
     PENDING = "pending"

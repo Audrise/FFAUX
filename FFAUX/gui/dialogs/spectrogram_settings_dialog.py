@@ -1,8 +1,8 @@
 """
-# Spectrogram generation settings dialog.
+# Spectrogram rendering settings dialog.
 
-Shown before queuing a GENERATE_SPECTROGRAM job from the track table or
-Edit > Generate Spectrogram...
+Shown before queuing a RENDER_SPECTROGRAM job from the track table or
+Edit > Render Spectrogram...
 
 Similar to ConversionSettingsDialog, but only has output naming,
 image resolution, and output folder options.
@@ -29,7 +29,7 @@ _DEFAULT_RESOLUTION = "1920x1080"
 class SpectrogramSettingsDialog(QDialog):
     def __init__(self, default_output_dir: str = "", default_spectrogram_suffix: str = "" ,source_filename: str = "", parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Generate Spectrogram")
+        self.setWindowTitle("Render Spectrogram")
         self.setMinimumSize(420, 200)
         self._spectrogram_suffix = default_spectrogram_suffix
 
@@ -58,7 +58,7 @@ class SpectrogramSettingsDialog(QDialog):
         form.addRow("Output path:", output_dir_row)
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel)
-        self._generate_btn = buttons.addButton("Generate", QDialogButtonBox.ButtonRole.AcceptRole)
+        self._render_btn = buttons.addButton("Render", QDialogButtonBox.ButtonRole.AcceptRole)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
 

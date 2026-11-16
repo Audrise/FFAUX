@@ -36,7 +36,7 @@ _STATUS_LABELS = {
 ) = range(18)
 
 _HEADERS = [
-    "Cover", "File Name", "Track", "Disc No", "Title", "Artist", "Album Artist",
+    "Cover", "File Name", "Track", "Disc", "Title", "Artist", "Album Artist",
     "Album", "Year", "Duration", "Bit Depth", "Sample Rate", "Bitrate", "File size",
     "Codec", "Rating", "Status", "Progress",
 ]
@@ -466,6 +466,7 @@ class TrackTable(QTableWidget):
         values = {
             _COL_FILE_NAME: audio_file.filename,
             _COL_TRACK: meta.track_number or "-",
+            _COL_DISC: meta.disc_number or "-",
             _COL_TITLE: meta.title or "-",
             _COL_ARTIST: meta.artist or "-",
             _COL_ALBUM: meta.album or "-",
