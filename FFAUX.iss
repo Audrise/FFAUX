@@ -1,9 +1,3 @@
-; Bundled with FFmpeg Shared
-
-; BUILD:
-;   1. Build dist\FFAUX.exe with PyInstaller first.
-;   2. Ensure FFAUX\bin\ffmpeg.exe and FFAUX\bin\ffprobe.exe exist.
-;   3. Compile this file with Inno Setup.
 
 #define MyAppName "FFAUX"
 #define MyAppVersion "1.0.2"
@@ -17,24 +11,21 @@ AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 UninstallDisplayName={#MyAppName}
 
-; Metadata executable
 VersionInfoProductName={#MyAppName}
 VersionInfoProductVersion={#MyAppVersion}
 VersionInfoVersion={#MyAppVersion}
 VersionInfoCompany={#MyAppPublisher}
 
-; Compile in x64 architectures
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 
-; Install per-user to avoid Program Files permission restrictions.
 DefaultDirName={userappdata}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 PrivilegesRequired=lowest
 
 LicenseFile=LICENSE
 
-OutputBaseFilename=FFAUX-v1.0.2-GPL-Win-x64-Bundled-Installer
+OutputBaseFilename=FFAUX-v{#MyAppVersion}-GPL-Win-x64-Installer
 OutputDir=installer
 
 Compression=lzma2/ultra64
@@ -51,29 +42,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional shortcuts:"
 
 [Files]
-; Main application (PyInstaller output remains in the project-root dist folder)
 Source: "dist\FFAUX.exe"; DestDir: "{app}"; Flags: ignoreversion
 
-; License files
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "THIRD_PARTY_LICENSES.html"; DestDir: "{app}"; Flags: ignoreversion
 
-; FFmpeg executables
-Source: "FFAUX\bin\ffmpeg.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "FFAUX\bin\ffprobe.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
-
-; FFmpeg libraries
-Source: "FFAUX\bin\swresample-6.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "FFAUX\bin\avutil-60.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "FFAUX\bin\avdevice-62.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "FFAUX\bin\swscale-9.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "FFAUX\bin\avformat-62.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "FFAUX\bin\avfilter-11.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "FFAUX\bin\avcodec-62.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
-
 [Dirs]
-; User-writable folders created during installation.
-Name: "{app}\bin"
 Name: "{app}\config"
 Name: "{app}\assets\templates"
 
