@@ -84,7 +84,7 @@ class SpectrogramProgressDialog(QDialog):
 
     def _on_cancel_clicked(self) -> None:
         self._cancelled = True
-        logger.warning("Spectrogram rendering cancelled")
+        logger.warning("Spectrogram Render cancelled")
 
         self.cancelRequested.emit()
         self.reject()

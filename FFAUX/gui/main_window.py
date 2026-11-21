@@ -733,7 +733,7 @@ class MainWindow(QMainWindow):
             return
 
         detail = (
-            f"Preparing {len(audio_files)} spectrogram"
+            f"Preparing {len(audio_files)} Spectrogram"
             f"{'s' if len(audio_files) != 1 else ''}"
         )
         self._discord_presence.update(
@@ -795,7 +795,7 @@ class MainWindow(QMainWindow):
 
         self._discord_presence.update(
             PresenceState(
-                details=f"Rendering {len(jobs)} spectrogram"
+                details=f"Rendering {len(jobs)} Spectrogram"
                 f"{'s' if len(jobs) != 1 else ''}",
                 large_image=_DISCORD_LARGE_IMAGE,
             )

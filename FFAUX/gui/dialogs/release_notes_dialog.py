@@ -24,7 +24,7 @@ _RELEASED = "Released: November 2026"
 _SECTIONS: list[tuple[str, list[str]]] = [
     ("What's New", [
         "Fixing Some Bugs And Performance",
-        "Audio format conversion with FFmpeg.",
+        "Fizing Cover Art resolution and size become smaller when downsampling/resampling",
         "Metadata editing and management.",
         "Cover art management.",
         "Batch audio processing.",
