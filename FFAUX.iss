@@ -1,6 +1,6 @@
 
 #define MyAppName "FFAUX"
-#define MyAppVersion "3"
+#define MyAppVersion "1.0.3"
 #define MyAppPublisher "F. Audris Labs"
 #define MyAppExeName "FFAUX.exe"
 
