@@ -92,32 +92,40 @@ def _build_apply_metadata(job: Job) -> list[str]:
     return args
 
 def _build_extract_cover(job: Job) -> list[str]:
+    stream_index = job.params.get("cover_stream_index")
+
+    if stream_index is None:
+        raise ValueError("Cover art stream index is missing")
+
     return [
         "-y",
         "-i", job.audio_file.path,
-        "-an",
-        "-vcodec", "copy",
+        "-map", f"0:{stream_index}",
+        "-c:v", "copy",
+        "-frames:v", "1",
         job.output_path,
     ]
 
 def _build_set_cover(job: Job) -> list[str]:
-    # Fixed: this used to only add `-map_metadata 0`, which copied tags
-    # from the source file on disk instead of the current metadata.
     cover_path = job.params["cover_path"]
+
     args = [
         "-y",
         "-i", job.audio_file.path,
         "-i", cover_path,
         "-map", "0:a",
-        "-map", "1",
+        "-map", "1:v:0",
         "-c:a", "copy",
-        "-c:v:0", "mjpeg",
+        "-c:v:0", "copy",
     ]
+
     args += _metadata_args(job)
+
     args += [
         "-disposition:v:0", "attached_pic",
         job.output_path,
     ]
+
     return args
 
 def _build_remove_cover(job: Job) -> list[str]:

@@ -1,10 +1,12 @@
+
 """
-# Release notes window, shown once on first launch (see main_window.py).
+Release notes window, shown once on first launch (see main_window.py).
 
 Built from real widgets instead of a rich-text QMessageBox, so everything
 is styled from assets/styles/main.qss via setObjectName() like the rest
 of the app.
 """
+
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
@@ -17,31 +19,28 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-_VERSION = "Update FFAUX v1.0.2 [x64]"
+_VERSION = "Update FFAUX v1.0.3 [x64]"
 _SUBTITLE = "Flexible Format Audio Utility eXchange"
 _RELEASED = "Released: November 2026"
 
 _SECTIONS: list[tuple[str, list[str]]] = [
     ("What's New", [
-        "Fixing Some Bugs And Performance",
-        "Fixing Cover Art resolution and size become smaller when downsampling/resampling",
-        "Metadata editing and management.",
-        "Cover art management.",
-        "Batch audio processing.",
-        "Support for MP3, AAC/M4A, FLAC, WAV, OGG, OPUS, and ALAC/M4A.",
-        "Dark mode support.",
+        "Improved metadata editing and management.",
+        "Enhanced cover art extraction and embedding.",
+        "Improved batch processing workflow.",
     ]),
     ("Improvements", [
-        "Spectrogram Renderer now support multiple files.",
-        "Improved conversion progress reporting.",
-        "Improved metadata and cover art handling.",
-        "Improved conversion reliability.",
-        "Improved application startup and resource handling.",
+        "Improved audio conversion command generation.",
+        "Improved metadata preservation during audio conversion.",
+        "Improved FFmpeg and FFprobe integration.",
+        "Improved error handling and process reliability.",
+        "Refined application resource management.",
     ]),
     ("Bug Fixes", [
-        "Fixed corrupted output in certain WAV conversions.",
-        "Fixed conversion progress issues involving M4A cover art streams.",
-        "Fixed unwanted video streams being included in audio-only conversions.",
+        "Fixed issues affecting audio conversion settings.",
+        "Fixed metadata handling inconsistencies.",
+        "Fixed cover art handling in supported audio formats.",
+        "Fixed minor application stability issues.",
     ]),
     ("Notes", [
         "FFmpeg and FFprobe are required to use FFAUX.",
@@ -50,15 +49,18 @@ _SECTIONS: list[tuple[str, list[str]]] = [
     ]),
 ]
 
+
 class ReleaseNotesDialog(QDialog):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+
         self.setWindowTitle("Release Notes")
         self.setObjectName("releaseNotesDialog")
-        self.resize(1200, 600)
+        self.resize(800, 600)
 
         content = QWidget()
         content.setObjectName("releaseNotesContent")
+
         content_layout = QVBoxLayout(content)
         content_layout.setSpacing(6)
 
@@ -81,15 +83,16 @@ class ReleaseNotesDialog(QDialog):
         for heading, items in _SECTIONS:
             section_label = QLabel(heading)
             section_label.setObjectName("releaseNotesSection")
+
             content_layout.addSpacing(10)
             content_layout.addWidget(section_label)
 
             for item in items:
-                # Bullet is part of the text (not a rich-text <li>) so the
-                # label stays plain text and fully QSS-styleable.
+                # Bullet is part of the text, not a rich-text list element.
                 item_label = QLabel(f"•  {item}")
                 item_label.setObjectName("releaseNotesItem")
                 item_label.setWordWrap(True)
+
                 content_layout.addWidget(item_label)
 
         content_layout.addStretch(1)
@@ -99,7 +102,9 @@ class ReleaseNotesDialog(QDialog):
         scroll.setWidgetResizable(True)
         scroll.setWidget(content)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Close
+        )
         buttons.rejected.connect(self.reject)
         buttons.accepted.connect(self.accept)
 

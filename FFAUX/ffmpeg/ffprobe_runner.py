@@ -53,6 +53,56 @@ class ProbeResult:
         return None
 
     @property
+    def cover_art_stream(self) -> Optional[dict[str, Any]]:
+        streams = self.raw.get("streams", [])
+
+        # Prefer the stream explicitly marked as attached picture.
+        for stream in streams:
+            if (
+                stream.get("codec_type") == "video"
+                and stream.get("disposition", {}).get("attached_pic")
+            ):
+                return stream
+
+        # Fallback for containers that do not expose attached_pic.
+        for stream in streams:
+            if stream.get("codec_type") == "video":
+                return stream
+
+        return None
+
+    @property
+    def cover_art_stream_index(self) -> Optional[int]:
+        stream = self.cover_art_stream
+        if stream is None:
+            return None
+
+        try:
+            return int(stream["index"])
+        except (KeyError, TypeError, ValueError):
+            return None
+
+    @property
+    def cover_art_extension(self) -> Optional[str]:
+        stream = self.cover_art_stream
+        if stream is None:
+            return None
+
+        extensions = {
+            "mjpeg": ".jpg",
+            "png": ".png",
+            "webp": ".webp",
+            "bmp": ".bmp",
+            "gif": ".gif",
+            "tiff": ".tiff",
+            "jpeg2000": ".jp2",
+            "jpegls": ".jls",
+            "ljpeg": ".jpg",
+        }
+
+        return extensions.get(stream.get("codec_name"))
+
+    @property
     def sample_rate_hz(self) -> Optional[int]:
         for stream in self.raw.get("streams", []):
             if stream.get("codec_type") == "audio":
@@ -78,10 +128,7 @@ class ProbeResult:
 
     @property
     def has_cover_art(self) -> bool:
-        for stream in self.raw.get("streams", []):
-            if stream.get("codec_type") == "video":
-                return True
-        return False
+        return self.cover_art_stream is not None
 
 class FFprobeRunner:
     def __init__(self, ffprobe_path: str = "ffprobe"):

@@ -11,7 +11,6 @@ can't emit signals directly
 from __future__ import annotations
 
 import os
-import shutil
 import threading
 
 from pathlib import Path
@@ -21,6 +20,7 @@ from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 from FFAUX.core.models.job import Job, JobStatus
 from FFAUX.ffmpeg.command_builder import build as build_command
 from FFAUX.ffmpeg.ffmpeg_runner import FFmpegRunner
+from FFAUX.ffmpeg.ffprobe_runner import FFprobeRunner
 from FFAUX.ffmpeg.progress_parser import ProgressParser
 
 class WorkerSignals(QObject):
@@ -34,11 +34,13 @@ class FFmpegWorker(QRunnable):
         self,
         job: Job,
         ffmpeg_runner: FFmpegRunner,
+        ffprobe_runner: FFprobeRunner,
         cancel_event: threading.Event | None = None,
     ):
         super().__init__()
         self.job = job
         self._ffmpeg_runner = ffmpeg_runner
+        self._ffprobe_runner = ffprobe_runner
         self._cancel_event = cancel_event or threading.Event()
         self.signals = WorkerSignals()
         self.setAutoDelete(True)
@@ -154,14 +156,28 @@ class FFmpegWorker(QRunnable):
         )
         output_path = Path(job.output_path)
 
-        cover_path = output_path.with_suffix(".cover.jpg")
+        probe = self._ffprobe_runner.probe(str(source_path))
+
+        if not probe.success:
+            return False
+
+        extension = probe.cover_art_extension
+        stream_index = probe.cover_art_stream_index
+
+        # No embedded cover art in the source file.
+        if extension is None or stream_index is None:
+            return True
+
+        cover_path = output_path.with_name(
+            f"{output_path.stem}.cover{extension}"
+        )
 
         extract_args = [
             "-y",
             "-i", str(source_path),
-            "-map", "0:v:0",
-            "-c", "copy",
-            "-f", "image2",
+            "-map", f"0:{stream_index}",
+            "-c:v", "copy",
+            "-frames:v", "1",
             str(cover_path),
         ]
 
@@ -171,22 +187,18 @@ class FFmpegWorker(QRunnable):
             extra_args=["-nostdin"],
         )
 
-        """print("COVER EXTRACT CMD:", extract_args)
-        print("COVER EXTRACT SUCCESS:", extract_result.success)
-        print("COVER EXTRACT ERROR:", extract_result.error_message)
-        print("COVER PATH:", cover_path)
-        print("COVER EXISTS:", cover_path.exists())"""
-
         if not extract_result.success:
             return False
 
-        if output_path.suffix.lower() == ".m4a":
+        suffix = output_path.suffix.lower()
+
+        if suffix == ".m4a":
             temp_path = output_path.with_suffix(".cover_tmp.m4a")
-        elif output_path.suffix.lower() == ".mp3":
+        elif suffix == ".mp3":
             temp_path = output_path.with_suffix(".cover_tmp.mp3")
-        elif output_path.suffix.lower() == ".opus":
+        elif suffix == ".opus":
             temp_path = output_path.with_suffix(".cover_tmp.opus")
-        elif output_path.suffix.lower() == ".ogg":
+        elif suffix == ".ogg":
             temp_path = output_path.with_suffix(".cover_tmp.ogg")
         else:
             temp_path = output_path.with_suffix(".cover_tmp.flac")
@@ -199,11 +211,11 @@ class FFmpegWorker(QRunnable):
             "-map", "1:v:0",
             "-map_metadata", "0",
             "-c:a", "copy",
-            "-c:v", "mjpeg",
+            "-c:v", "copy",
             "-disposition:v:0", "attached_pic",
         ]
 
-        if output_path.suffix.lower() == ".m4a":
+        if suffix == ".m4a":
             attach_args += [
                 "-metadata:s:v:0", "title=Cover",
                 "-metadata:s:v:0", "comment=Cover (front)",
@@ -217,26 +229,25 @@ class FFmpegWorker(QRunnable):
             extra_args=["-nostdin"],
         )
 
-        """print("COVER ATTACH CMD:", attach_args)
-        print("COVER ATTACH SUCCESS:", attach_result.success)
-        print("COVER ATTACH ERROR:", attach_result.error_message)
-        print("TEMP PATH:", temp_path)
-        print("TEMP EXISTS:", temp_path.exists())"""
-
         if not attach_result.success:
             if cover_path.exists():
                 cover_path.unlink()
+
             if temp_path.exists():
                 temp_path.unlink()
+
             return False
 
         try:
             os.replace(temp_path, output_path)
+
         except OSError:
             if cover_path.exists():
                 cover_path.unlink()
+
             if temp_path.exists():
                 temp_path.unlink()
+
             return False
 
         if cover_path.exists():

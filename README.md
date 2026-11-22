@@ -21,7 +21,7 @@
   <img src="https://img.shields.io/badge/Windows%20Terminal-0C0C0C?style=for-the-badge&logo=windows-terminal&logoColor=white"/>
   <br>
   <a href="https://github.com/Audrise/FFAUX">
-    <img src="https://img.shields.io/badge/FFAUX-1.0.2-0078D4?style=for-the-badge"/>
+    <img src="https://img.shields.io/badge/FFAUX-1.0.3-0078D4?style=for-the-badge"/>
   </a>
   <a href="https://github.com/Audrise/FFAUX?tab=GPL-3.0-1-ov-file">
     <img src="https://img.shields.io/badge/LICENSE-GPL%203.0-6B7280?style=for-the-badge"/>
@@ -221,11 +221,6 @@ FFAUX/
 **FFAUX** is developed strictly for **personal use**, **audio organization**, and **educational purposes**. 
 This tool is designed to help you **view, edit, and manage audio metadata and cover art** in a safe, local environment. 
 **it doesn't download, stream, or acquire audio content from any source.**
-
-## Changelog
-
-### v1.0.2 - Entry Point And Structure Update
-- Now you can run FFAUX with `python -m FFAUX` in Source Code Version
 
 <h1></h1>
 <h4 align="center">

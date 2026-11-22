@@ -22,14 +22,29 @@ def test_extract_cover_art_returns_none_when_no_embedded_cover():
 def test_extract_cover_art_success(tmp_path):
     ffmpeg_runner = MagicMock()
     ffmpeg_runner.run.return_value = MagicMock(success=True)
-    service = MetadataService(ffprobe_runner=MagicMock(), ffmpeg_runner=ffmpeg_runner)
 
-    audio_file = AudioFile(path="song.mp3")
+    ffprobe_runner = MagicMock()
+    ffprobe_runner.probe.return_value = MagicMock(
+        success=True,
+        cover_art_extension=".png",
+        cover_art_stream_index=1,
+    )
+
+    service = MetadataService(
+        ffprobe_runner=ffprobe_runner,
+        ffmpeg_runner=ffmpeg_runner,
+    )
+
+    audio_file = AudioFile(path="song.flac")
     audio_file.metadata.cover_art_path = "<embedded>"
 
-    result = service.extract_cover_art_sync(audio_file, str(tmp_path))
+    result = service.extract_cover_art_sync(
+        audio_file,
+        str(tmp_path),
+    )
+
     assert result is not None
-    assert result.endswith("_cover.jpg")
+    assert result.endswith("_cover.png")
     ffmpeg_runner.run.assert_called_once()
 
 def test_read_metadata_preserves_original_casing_for_extra_tags():

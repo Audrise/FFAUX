@@ -6,7 +6,7 @@
 ;   3. Compile this file with Inno Setup.
 
 #define MyAppName "FFAUX"
-#define MyAppVersion "1.0.2"
+#define MyAppVersion "1.0.3"
 #define MyAppPublisher "F. Audris Labs"
 #define MyAppExeName "FFAUX.exe"
 
@@ -34,7 +34,7 @@ PrivilegesRequired=lowest
 
 LicenseFile=LICENSE
 
-OutputBaseFilename=FFAUX-v1.0.2-GPL-Win-x64-Bundled-Installer
+OutputBaseFilename=FFAUX-v1.0.3-GPL-Win-x64-Bundled-Installer
 OutputDir=installer
 
 Compression=lzma2/ultra64

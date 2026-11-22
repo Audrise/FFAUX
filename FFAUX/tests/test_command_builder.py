@@ -89,6 +89,9 @@ def test_build_set_cover_writes_current_metadata_explicitly():
     assert "title=New Title" in args
     assert "artist=New Artist" in args
     assert "-map_metadata" not in args
+    assert "-c:v:0" in args
+    assert args[args.index("-c:v:0") + 1] == "copy"
+    assert "mjpeg" not in args
 
 def test_build_set_cover_applies_deleted_keys_too():
     audio_file = AudioFile(path="input.flac")

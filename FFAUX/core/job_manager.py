@@ -14,6 +14,7 @@ from PySide6.QtCore import QObject, QThreadPool, Signal
 from FFAUX.core.models.job import Job
 from FFAUX.core.ffmpeg_worker import FFmpegWorker
 from FFAUX.ffmpeg.ffmpeg_runner import FFmpegRunner
+from FFAUX.ffmpeg.ffprobe_runner import FFprobeRunner
 
 class JobManager(QObject):
     jobAdded = Signal(str)
@@ -23,9 +24,12 @@ class JobManager(QObject):
     jobFinished = Signal(str, bool, str)
     batchFinished = Signal()
 
-    def __init__(self, ffmpeg_path: str = "ffmpeg", max_parallel_jobs: int = 2, parent=None):
+    def __init__(self, ffmpeg_path: str = "ffmpeg", max_parallel_jobs: int = 2, parent=None, ffprobe_path: str = "ffprobe"):
         super().__init__(parent)
+
         self._ffmpeg_runner = FFmpegRunner(ffmpeg_path)
+        self._ffprobe_runner = FFprobeRunner(ffprobe_path)
+
         self._pool = QThreadPool()
         self._pool.setMaxThreadCount(max(1, max_parallel_jobs))
 
@@ -45,7 +49,7 @@ class JobManager(QObject):
         cancel_event = threading.Event()
         self._cancel_events[job.id] = cancel_event
 
-        worker = FFmpegWorker(job, self._ffmpeg_runner, cancel_event)
+        worker = FFmpegWorker(job, self._ffmpeg_runner, self._ffprobe_runner, cancel_event)
         worker.signals.started.connect(self.jobStarted)
         worker.signals.progress.connect(self.jobProgress)
         worker.signals.log.connect(self.jobLog)

@@ -112,6 +112,7 @@ def main() -> int:
 
     job_manager = JobManager(
         ffmpeg_path=resolve_tool_path(config.ffmpeg_path),
+        ffprobe_path=resolve_tool_path(config.ffprobe_path),
         max_parallel_jobs=config.max_parallel_jobs,
     )
 

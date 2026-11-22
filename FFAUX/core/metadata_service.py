@@ -99,20 +99,38 @@ class MetadataService:
         return str(source.with_name(f".{source.stem}.ffaux-{uuid4().hex}{source.suffix}"))
 
     def extract_cover_art_sync(self, audio_file: AudioFile, output_dir: str) -> Optional[str]:
-        # Runs synchronously (blocking). Returns None if there's no cover art or ffmpeg_runner is unset.
         if self._ffmpeg is None:
             return None
+
         if audio_file.metadata.cover_art_path != "<embedded>":
             return None
 
+        probe = self._ffprobe.probe(audio_file.path)
+
+        if not probe.success:
+            return None
+
+        extension = probe.cover_art_extension
+        stream_index = probe.cover_art_stream_index
+
+        if extension is None or stream_index is None:
+            return None
+
         Path(output_dir).mkdir(parents=True, exist_ok=True)
-        output_path = str(Path(output_dir) / f"{Path(audio_file.path).stem}_cover.jpg")
+
+        output_path = str(
+            Path(output_dir)
+            / f"{Path(audio_file.path).stem}_cover{extension}"
+        )
 
         job = Job(
             audio_file=audio_file,
             operation=OperationType.EXTRACT_COVER,
+            params={"cover_stream_index": stream_index},
             output_path=output_path,
         )
+
         args = build_command(job)
         result = self._ffmpeg.run(args)
+
         return output_path if result.success else None
